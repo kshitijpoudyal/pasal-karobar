@@ -16,6 +16,7 @@ type TransactionActivityCardProps = {
   iconWrapClassName: string;
   iconClassName?: string;
   borderClassName: string;
+  onDelete?: () => void;
 };
 
 export function TransactionActivityCard({
@@ -29,6 +30,7 @@ export function TransactionActivityCard({
   iconWrapClassName,
   iconClassName,
   borderClassName,
+  onDelete,
 }: TransactionActivityCardProps) {
   return (
     <div
@@ -94,7 +96,9 @@ export function TransactionActivityCard({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-11 rounded-full text-error hover:bg-error-container"
+            disabled={!onDelete}
+            onClick={onDelete}
+            className="size-11 rounded-full text-error hover:bg-error-container disabled:opacity-40"
           >
             <Trash2 className="size-5" strokeWidth={1.75} />
           </Button>

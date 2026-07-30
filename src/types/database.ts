@@ -230,6 +230,15 @@ export type Database = {
         Args: { p_business_id: string };
         Returns: boolean;
       };
+      create_business_for_owner: {
+        Args: {
+          p_name: string;
+          p_business_type?: BusinessType;
+          p_currency?: string;
+          p_timezone?: string;
+        };
+        Returns: Business;
+      };
     };
     Enums: {
       transaction_type: TransactionType;

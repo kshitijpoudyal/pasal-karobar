@@ -1,83 +1,122 @@
-import {
-  Home,
-  Scissors,
-  ShoppingCart,
-  Sparkles,
-} from "lucide-react";
+"use client";
+
+import { Scissors, ShoppingCart } from "lucide-react";
+import { format, isToday, isYesterday, parseISO } from "date-fns";
+import type { LucideIcon } from "lucide-react";
 
 import {
   TimelineDateDivider,
   TransactionActivityCard,
 } from "@/features/activity/components/transaction-activity-card";
+import type { Transaction } from "@/types/database";
+import { formatNpr } from "@/utils/format";
+import { dbPaymentToLabel } from "@/utils/payment-method";
 
-export function TransactionTimeline() {
+type TransactionTimelineProps = {
+  grouped: [string, Transaction[]][];
+  serviceNames: Map<string, string>;
+  categoryNames: Map<string, string>;
+  onDelete: (transactionId: string) => Promise<void>;
+  isDeleting: boolean;
+};
+
+function formatDayLabel(dateKey: string): string {
+  const date = parseISO(`${dateKey}T12:00:00`);
+  if (isToday(date)) return `Today, ${format(date, "do MMM")}`;
+  if (isYesterday(date)) return `Yesterday, ${format(date, "do MMM")}`;
+  return format(date, "EEEE, do MMM");
+}
+
+function titleForTransaction(
+  tx: Transaction,
+  serviceNames: Map<string, string>,
+  categoryNames: Map<string, string>,
+): string {
+  if (tx.type === "INCOME") {
+    const name = tx.service_id
+      ? serviceNames.get(tx.service_id)
+      : undefined;
+    return name ?? tx.note ?? "Income";
+  }
+  const cat = tx.expense_category_id
+    ? categoryNames.get(tx.expense_category_id)
+    : undefined;
+  return tx.note ?? cat ?? "Expense";
+}
+
+function iconForTransaction(tx: Transaction): LucideIcon {
+  if (tx.type === "EXPENSE") return ShoppingCart;
+  return Scissors;
+}
+
+export function TransactionTimeline({
+  grouped,
+  serviceNames,
+  categoryNames,
+  onDelete,
+  isDeleting,
+}: TransactionTimelineProps) {
   return (
     <div className="flex flex-col gap-6">
-      <TimelineDateDivider label="Today, 24th Oct" />
-      <div className="grid grid-cols-1 gap-6">
-        <TransactionActivityCard
-          title="Standard Haircut + Beard"
-          time="10:45 AM"
-          paymentLabel="Cash"
-          paymentClassName="bg-secondary-container/50 text-on-secondary-container"
-          amountLabel="Amount / Tip"
-          amount={
-            <>
-              <span className="text-secondary">रू 800</span>{" "}
-              <span className="text-sm font-normal text-on-surface-variant">
-                + रू 150
-              </span>
-            </>
-          }
-          icon={Scissors}
-          iconWrapClassName="bg-secondary-container text-on-secondary-container"
-          borderClassName="border-l-secondary"
-        />
-        <TransactionActivityCard
-          title="Shaving Cream & Blades"
-          time="09:15 AM"
-          paymentLabel="eSewa"
-          paymentClassName="bg-surface-container-high text-tertiary"
-          amountLabel="Expense"
-          amount={<span className="text-tertiary">- रू 2,400</span>}
-          icon={ShoppingCart}
-          iconWrapClassName="bg-surface-container-high text-tertiary"
-          borderClassName="border-l-tertiary"
-        />
-        <TransactionActivityCard
-          title="Royal Grooming Package"
-          time="08:30 AM"
-          paymentLabel="FonePay"
-          paymentClassName="bg-secondary-container/50 text-on-secondary-container"
-          amountLabel="Amount / Tip"
-          amount={
-            <>
-              <span className="text-secondary">रू 2,500</span>{" "}
-              <span className="text-sm font-normal text-on-surface-variant">
-                + रू 500
-              </span>
-            </>
-          }
-          icon={Sparkles}
-          iconWrapClassName="bg-secondary-container text-on-secondary-container"
-          borderClassName="border-l-secondary"
-        />
-      </div>
+      {grouped.map(([dayKey, transactions]) => (
+        <div key={dayKey}>
+          <TimelineDateDivider label={formatDayLabel(dayKey)} />
+          <div className="mb-6 grid grid-cols-1 gap-6">
+            {transactions.map((tx) => {
+              const isIncome = tx.type === "INCOME";
+              const Icon = iconForTransaction(tx);
+              const tip = Number(tx.tip);
+              const total = Number(tx.total);
 
-      <TimelineDateDivider label="Yesterday, 23rd Oct" />
-      <div className="mb-24 grid grid-cols-1 gap-6">
-        <TransactionActivityCard
-          title="Monthly Shop Rent"
-          time="04:00 PM"
-          paymentLabel="Bank Transfer"
-          paymentClassName="bg-surface-container-high text-tertiary"
-          amountLabel="Expense"
-          amount={<span className="text-tertiary">- रू 15,000</span>}
-          icon={Home}
-          iconWrapClassName="bg-surface-container-high text-tertiary"
-          borderClassName="border-l-tertiary"
-        />
-      </div>
+              return (
+                <TransactionActivityCard
+                  key={tx.id}
+                  title={titleForTransaction(tx, serviceNames, categoryNames)}
+                  time={format(parseISO(tx.transaction_date), "h:mm a")}
+                  paymentLabel={dbPaymentToLabel(tx.payment_method)}
+                  paymentClassName={
+                    isIncome
+                      ? "bg-secondary-container/50 text-on-secondary-container"
+                      : "bg-surface-container-high text-tertiary"
+                  }
+                  amountLabel={isIncome ? "Amount / Tip" : "Expense"}
+                  amount={
+                    isIncome ? (
+                      <>
+                        <span className="text-secondary">{formatNpr(total - tip)}</span>{" "}
+                        {tip > 0 ? (
+                          <span className="text-sm font-normal text-on-surface-variant">
+                            + {formatNpr(tip)}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span className="text-tertiary">- {formatNpr(total)}</span>
+                    )
+                  }
+                  icon={Icon}
+                  iconWrapClassName={
+                    isIncome
+                      ? "bg-secondary-container text-on-secondary-container"
+                      : "bg-surface-container-high text-tertiary"
+                  }
+                  borderClassName={
+                    isIncome ? "border-l-secondary" : "border-l-tertiary"
+                  }
+                  onDelete={
+                    isDeleting
+                      ? undefined
+                      : () => {
+                          void onDelete(tx.id);
+                        }
+                  }
+                />
+              );
+            })}
+          </div>
+        </div>
+      ))}
+      <div className="mb-24" />
     </div>
   );
 }

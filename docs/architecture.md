@@ -80,7 +80,7 @@ React Components never communicate directly with Supabase.
 | Admin client (server-only) | `src/supabase/admin.ts` |
 | Types | `src/types/database.ts` |
 | Repositories | `src/repository/*.repository.ts` |
-| Services | `src/services/*.service.ts` |
+| Services | `src/services/*.service.ts` (includes `dashboard.service.ts`) |
 | Query hooks | `src/hooks/queries/` |
 | SQL migrations | `supabase/migrations/` |
 
@@ -142,7 +142,8 @@ features/
 
 ## React Context
 
-- Business
+- Auth (Supabase session)
+- Business (active business for the signed-in user)
 - Theme
 
 ## TanStack Query

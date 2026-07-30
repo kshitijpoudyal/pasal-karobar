@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useId, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import {
   Banknote,
   Bolt,
@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
 import { cn } from "@/lib/utils";
+import type { UiPaymentMethod } from "@/utils/payment-method";
 
 type RecordTransactionModalProps = {
   open: boolean;
@@ -26,9 +28,9 @@ type RecordTransactionModalProps = {
 
 type Tab = "income" | "expense";
 
-type PaymentMethod = "Cash" | "eSewa" | "Khalti" | "eBank" | "fonPay";
+type PaymentMethod = UiPaymentMethod;
 
-const INCOME_SERVICES = [
+const FALLBACK_SERVICES = [
   { name: "Haircut", price: 500, icon: Scissors },
   { name: "Beard", price: 300, icon: UserRound },
   { name: "Facial", price: 1200, icon: Sparkles },
@@ -37,12 +39,35 @@ const INCOME_SERVICES = [
 export function RecordTransactionModal({ open, onClose }: RecordTransactionModalProps) {
   const titleId = useId();
   const [tab, setTab] = useState<Tab>("income");
-  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
   const [price, setPrice] = useState("");
   const [tip, setTip] = useState("");
   const [payment, setPayment] = useState<PaymentMethod>("Cash");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDesc, setExpenseDesc] = useState("");
+  const [expenseCategoryId, setExpenseCategoryId] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const {
+    servicesQuery,
+    categoriesQuery,
+    createMutation,
+    submitIncome,
+    submitExpense,
+    resolveCategoryIdByName,
+  } = useRecordTransactionSubmit(onClose);
+
+  const resetFormState = useCallback(() => {
+    setTab("income");
+    setSelectedServiceId(null);
+    setPrice("");
+    setTip("");
+    setPayment("Cash");
+    setExpenseAmount("");
+    setExpenseDesc("");
+    setExpenseCategoryId(null);
+    setFormError(null);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -54,16 +79,10 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
   }, [open, onClose]);
 
   useEffect(() => {
-    if (!open) {
-      setTab("income");
-      setSelectedService(null);
-      setPrice("");
-      setTip("");
-      setPayment("Cash");
-      setExpenseAmount("");
-      setExpenseDesc("");
+    if (open) {
+      resetFormState();
     }
-  }, [open]);
+  }, [open, resetFormState]);
 
   if (!open) return null;
 
@@ -71,14 +90,79 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
   const tipNum = parseFloat(tip) || 0;
   const incomeTotal = priceNum + tipNum;
 
-  function selectService(name: string, servicePrice: number) {
-    setSelectedService(name);
+  function selectService(serviceId: string, servicePrice: number) {
+    setSelectedServiceId(serviceId);
     setPrice(String(servicePrice));
+    setFormError(null);
   }
 
-  function fillExpense(category: string) {
-    setExpenseDesc(category);
+  function fillExpense(categoryName: string) {
+    setExpenseDesc(categoryName);
+    const id = resolveCategoryIdByName(categoryName);
+    if (id) setExpenseCategoryId(id);
+    setFormError(null);
   }
+
+  async function handleSubmit() {
+    setFormError(null);
+    try {
+      if (tab === "income") {
+        const subtotal = parseFloat(price) || 0;
+        const tipNum = parseFloat(tip) || 0;
+        if (!selectedServiceId) {
+          setFormError("Select a service.");
+          return;
+        }
+        await submitIncome({
+          serviceId: selectedServiceId,
+          subtotal,
+          tip: tipNum,
+          payment,
+        });
+        return;
+      }
+      const amount = parseFloat(expenseAmount) || 0;
+      let categoryId = expenseCategoryId;
+      if (!categoryId && expenseDesc) {
+        categoryId = resolveCategoryIdByName(expenseDesc) ?? null;
+      }
+      if (!categoryId) {
+        setFormError("Select or match an expense category.");
+        return;
+      }
+      await submitExpense({
+        expenseCategoryId: categoryId,
+        amount,
+        note: expenseDesc,
+        payment,
+      });
+    } catch (error) {
+      setFormError(
+        error instanceof Error ? error.message : "Could not save transaction.",
+      );
+    }
+  }
+
+  const catalogServices = servicesQuery.data?.filter((s) => s.is_active) ?? [];
+  const quickCategories = (categoriesQuery.data ?? [])
+    .filter((c) => c.is_active)
+    .slice(0, 3);
+  const quickCategoryIcons = [Home, Bolt, Package] as const;
+
+  const quickServices =
+    catalogServices.length > 0
+      ? catalogServices.slice(0, 3).map((s) => ({
+          id: s.id,
+          name: s.name,
+          price: Number(s.default_price),
+          icon: Scissors,
+        }))
+      : FALLBACK_SERVICES.map((s, i) => ({
+          id: `fallback-${i}`,
+          name: s.name,
+          price: s.price,
+          icon: s.icon,
+        }));
 
   const submitLabel =
     tab === "income" ? `Add Rs. ${incomeTotal}` : "Add Expense";
@@ -154,20 +238,27 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                   Quick Select Service
                 </p>
                 <div className="grid grid-cols-3 gap-4">
-                  {INCOME_SERVICES.map(({ name, price: p, icon: Icon }) => (
+                  {quickServices.map(({ id, name, price: p, icon: Icon }) => (
                     <button
-                      key={name}
+                      key={id}
                       type="button"
-                      onClick={() => selectService(name, p)}
+                      onClick={() => {
+                        if (id.startsWith("fallback-")) {
+                          setFormError("Add services in Settings or connect Supabase.");
+                          setPrice(String(p));
+                          return;
+                        }
+                        selectService(id, p);
+                      }}
                       className={cn(
                         "service-card squircle group flex flex-col items-center justify-center border border-transparent bg-surface-container-low p-5 transition-all hover:bg-surface-container active:scale-95",
-                        selectedService === name && "active bg-surface-container",
+                        selectedServiceId === id && "active bg-surface-container",
                       )}
                     >
                       <Icon
                         className={cn(
                           "mb-2 size-8 text-outline transition-colors group-hover:text-primary",
-                          selectedService === name && "text-primary",
+                          selectedServiceId === id && "text-primary",
                         )}
                         strokeWidth={1.75}
                       />
@@ -275,21 +366,41 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                   Quick Category
                 </p>
                 <div className="grid grid-cols-3 gap-4">
-                  <QuickExpense
-                    label="Rent"
-                    icon={Home}
-                    onClick={() => fillExpense("Rent")}
-                  />
-                  <QuickExpense
-                    label="Power"
-                    icon={Bolt}
-                    onClick={() => fillExpense("Electricity")}
-                  />
-                  <QuickExpense
-                    label="Supplies"
-                    icon={Package}
-                    onClick={() => fillExpense("Supplies")}
-                  />
+                  {quickCategories.length > 0
+                    ? quickCategories.map((cat, i) => {
+                        const Icon = quickCategoryIcons[i % quickCategoryIcons.length] ?? Home;
+                        return (
+                          <QuickExpense
+                            key={cat.id}
+                            label={cat.name}
+                            icon={Icon}
+                            onClick={() => {
+                              setExpenseCategoryId(cat.id);
+                              setExpenseDesc(cat.name);
+                              setFormError(null);
+                            }}
+                          />
+                        );
+                      })
+                    : (
+                      <>
+                        <QuickExpense
+                          label="Rent"
+                          icon={Home}
+                          onClick={() => fillExpense("Rent")}
+                        />
+                        <QuickExpense
+                          label="Power"
+                          icon={Bolt}
+                          onClick={() => fillExpense("Electricity")}
+                        />
+                        <QuickExpense
+                          label="Supplies"
+                          icon={Package}
+                          onClick={() => fillExpense("Supplies")}
+                        />
+                      </>
+                    )}
                 </div>
               </div>
               <div className="relative">
@@ -323,13 +434,25 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
           )}
         </div>
 
-        <footer className="border-t border-outline-variant/40 p-6">
+        <footer className="border-t border-outline-variant/40 p-6 space-y-3">
+          {formError ? (
+            <p className="text-center text-sm text-error" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          {createMutation.isError ? (
+            <p className="text-center text-sm text-error" role="alert">
+              {createMutation.error.message}
+            </p>
+          ) : null}
           <Button
             type="button"
+            disabled={createMutation.isPending}
+            onClick={handleSubmit}
             className="font-headline flex h-14 w-full items-center justify-center gap-3 rounded-full text-lg font-bold"
           >
             <CirclePlus className="size-6" strokeWidth={2} />
-            {submitLabel}
+            {createMutation.isPending ? "Saving…" : submitLabel}
           </Button>
         </footer>
       </div>

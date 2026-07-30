@@ -6,7 +6,20 @@ import {
   UserRound,
 } from "lucide-react";
 
-export function DashboardBottomSection() {
+import { formatCompactNpr } from "@/utils/format";
+
+type TopService = { name: string; total: number };
+
+type DashboardBottomSectionProps = {
+  topServices?: TopService[];
+};
+
+export function DashboardBottomSection({
+  topServices = [],
+}: DashboardBottomSectionProps) {
+  const rows = topServices.slice(0, 3);
+  const icons = [Scissors, UserRound, Sparkles];
+
   return (
     <section className="grid grid-cols-12 gap-8">
       <div className="squircle col-span-4 bg-surface-container-low p-10">
@@ -14,33 +27,29 @@ export function DashboardBottomSection() {
           Premium Services
         </h3>
         <div className="space-y-4">
-          <div className="squircle flex items-center justify-between bg-surface-container p-5">
-            <div className="flex items-center gap-4">
-              <div className="squircle flex size-12 items-center justify-center bg-primary/10 text-primary">
-                <Scissors className="size-6" strokeWidth={1.75} />
-              </div>
-              <span className="font-bold text-on-surface">Classic Sculpt</span>
-            </div>
-            <span className="font-bold text-primary">रू 15k</span>
-          </div>
-          <div className="squircle flex items-center justify-between bg-surface-container p-5">
-            <div className="flex items-center gap-4">
-              <div className="squircle flex size-12 items-center justify-center bg-secondary/10 text-secondary">
-                <UserRound className="size-6" strokeWidth={1.75} />
-              </div>
-              <span className="font-bold text-on-surface">Grooming Detail</span>
-            </div>
-            <span className="font-bold text-primary">रू 8.2k</span>
-          </div>
-          <div className="squircle flex items-center justify-between bg-surface-container p-5">
-            <div className="flex items-center gap-4">
-              <div className="squircle flex size-12 items-center justify-center bg-primary-container/10 text-primary-container">
-                <Sparkles className="size-6" strokeWidth={1.75} />
-              </div>
-              <span className="font-bold text-on-surface">Ritual Therapy</span>
-            </div>
-            <span className="font-bold text-primary">रू 4.5k</span>
-          </div>
+          {rows.length === 0 ? (
+            <p className="text-sm text-on-surface-variant">No service revenue yet.</p>
+          ) : (
+            rows.map(({ name, total }, index) => {
+              const Icon = icons[index] ?? Scissors;
+              return (
+                <div
+                  key={name}
+                  className="squircle flex items-center justify-between bg-surface-container p-5"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="squircle flex size-12 items-center justify-center bg-primary/10 text-primary">
+                      <Icon className="size-6" strokeWidth={1.75} />
+                    </div>
+                    <span className="font-bold text-on-surface">{name}</span>
+                  </div>
+                  <span className="font-bold text-primary">
+                    {formatCompactNpr(total)}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

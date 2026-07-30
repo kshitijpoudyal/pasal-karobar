@@ -55,12 +55,45 @@ export function useCreateTransactionMutation(businessId: string) {
   return useMutation({
     mutationFn: (input: CreateTransactionInput) =>
       getClientAppServices().transaction.create(input),
-    onSuccess: async () => {
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
+      const listKey = queryKeys.transactions.list(businessId);
+      const previous = queryClient.getQueryData<Transaction[]>(listKey);
+
+      const optimistic: Transaction = {
+        id: `optimistic-${Date.now()}`,
+        business_id: businessId,
+        type: input.type,
+        service_id: input.type === "INCOME" ? input.service_id : null,
+        expense_category_id:
+          input.type === "EXPENSE" ? input.expense_category_id : null,
+        subtotal: input.subtotal,
+        tip: input.type === "INCOME" ? (input.tip ?? 0) : 0,
+        total: input.total,
+        payment_method: input.payment_method,
+        note: input.note ?? null,
+        transaction_date: input.transaction_date,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData<Transaction[]>(listKey, (current) =>
+        current ? [optimistic, ...current] : [optimistic],
+      );
+
+      return { previous, listKey };
+    },
+    onError: (_error, _input, context) => {
+      if (context?.listKey && context.previous) {
+        queryClient.setQueryData(context.listKey, context.previous);
+      }
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.transactions.all,
       });
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.summary(businessId),
+        queryKey: queryKeys.dashboard.all,
       });
     },
   });
@@ -80,7 +113,7 @@ export function useUpdateTransactionMutation(
         queryKey: queryKeys.transactions.all,
       });
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.summary(businessId),
+        queryKey: queryKeys.dashboard.all,
       });
     },
   });
@@ -92,12 +125,28 @@ export function useDeleteTransactionMutation(businessId: string) {
   return useMutation({
     mutationFn: (transactionId: string) =>
       getClientAppServices().transaction.delete(transactionId),
-    onSuccess: async () => {
+    onMutate: async (transactionId) => {
+      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
+      const listKey = queryKeys.transactions.list(businessId);
+      const previous = queryClient.getQueryData<Transaction[]>(listKey);
+
+      queryClient.setQueryData<Transaction[]>(listKey, (current) =>
+        current?.filter((tx) => tx.id !== transactionId),
+      );
+
+      return { previous, listKey };
+    },
+    onError: (_error, _id, context) => {
+      if (context?.listKey && context.previous) {
+        queryClient.setQueryData(context.listKey, context.previous);
+      }
+    },
+    onSettled: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.transactions.all,
       });
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.summary(businessId),
+        queryKey: queryKeys.dashboard.all,
       });
     },
   });

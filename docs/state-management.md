@@ -35,13 +35,16 @@ getServerAppServices() → service → repository → Supabase
 | `use-service-catalog-queries`       | Services catalog    |
 | `use-expense-category-queries`      | Expense categories  |
 | `use-business-setting-queries`      | Business settings   |
+| `use-dashboard-queries`               | Dashboard summary   |
 
-Dashboard analytics queries will use `queryKeys.dashboard` when implemented.
+Feature-level hooks (UI orchestration, filters, forms) live under `src/features/*/hooks/` and call the query modules above — they must not import Supabase or repositories directly.
 
 ## Client / UI state
 
 - **Theme:** `next-themes` (`src/providers/theme-provider.tsx`)
-- **Business context:** _TBD_ (active business selection for multi-device use)
+- **Auth:** `AuthProvider` — Supabase session, email/password sign-in (`src/providers/auth-provider.tsx`)
+- **Active business:** `BusinessProvider` — first business for the signed-in user, bootstrap create when empty (`src/providers/business-provider.tsx`)
+- **Supabase gate:** `SupabaseGate` — blocks the app until env, auth, and business are ready (`src/components/layout/supabase-gate.tsx`)
 
 ## Forms
 
@@ -49,4 +52,4 @@ Dashboard analytics queries will use `queryKeys.dashboard` when implemented.
 
 ## Global providers
 
-Composed in `src/providers/app-providers.tsx`: Theme, TanStack Query
+Composed in `src/providers/app-providers.tsx`: Theme → TanStack Query → Auth → Business → SupabaseGate → record-transaction modal provider.

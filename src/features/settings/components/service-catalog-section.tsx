@@ -1,8 +1,16 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { Baby, Pencil, Plus, Scissors, Trash2, UserRound } from "lucide-react";
+import { useState } from "react";
 
+import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
+import { useServiceCatalogSection } from "@/features/settings/hooks/use-service-catalog-section";
 import { cn } from "@/lib/utils";
+import { formatNpr } from "@/utils/format";
+
+const ICON_CYCLE: LucideIcon[] = [Scissors, UserRound, Baby];
 
 type ServiceCatalogCardProps = {
   title: string;
@@ -11,6 +19,8 @@ type ServiceCatalogCardProps = {
   rateClassName?: string;
   icon: LucideIcon;
   iconWrapClassName: string;
+  onDelete: () => void;
+  isRemoving: boolean;
 };
 
 function ServiceCatalogCard({
@@ -20,6 +30,8 @@ function ServiceCatalogCard({
   rateClassName,
   icon: Icon,
   iconWrapClassName,
+  onDelete,
+  isRemoving,
 }: ServiceCatalogCardProps) {
   return (
     <div className="squircle group bg-surface-container-low p-8 transition-all hover:bg-surface-container-high">
@@ -38,6 +50,8 @@ function ServiceCatalogCard({
             variant="ghost"
             size="icon"
             className="squircle text-on-surface-variant hover:bg-surface-container-highest"
+            disabled
+            aria-label="Edit service (coming soon)"
           >
             <Pencil className="size-5" strokeWidth={1.75} />
           </Button>
@@ -45,14 +59,19 @@ function ServiceCatalogCard({
             type="button"
             variant="ghost"
             size="icon"
+            disabled={isRemoving}
+            onClick={onDelete}
             className="squircle text-error hover:bg-error-container"
+            aria-label="Remove service"
           >
             <Trash2 className="size-5" strokeWidth={1.75} />
           </Button>
         </div>
       </div>
       <h4 className="font-headline mb-1 text-xl font-semibold">{title}</h4>
-      <p className="mb-8 line-clamp-2 text-sm text-on-surface-variant">{description}</p>
+      <p className="mb-8 line-clamp-2 text-sm text-on-surface-variant">
+        {description || "Catalog service"}
+      </p>
       <div className="squircle flex items-center justify-between bg-surface-container-high p-5">
         <span className="text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
           Rate
@@ -65,50 +84,119 @@ function ServiceCatalogCard({
   );
 }
 
+const wrapClasses = [
+  "bg-primary-container text-on-primary-container",
+  "bg-secondary-container text-on-secondary-container",
+  "bg-tertiary-container text-on-tertiary-container",
+];
+
 export function ServiceCatalogSection() {
+  const [showRegister, setShowRegister] = useState(false);
+  const {
+    services,
+    isLoading,
+    error,
+    refetch,
+    registerForm,
+    submitRegister,
+    isRegistering,
+    removeService,
+    isRemoving,
+  } = useServiceCatalogSection();
+
+  const {
+    register,
+    formState: { errors },
+  } = registerForm;
+
   return (
-    <section className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="squircle bg-secondary-container p-3 text-on-secondary-container">
-            <Scissors className="size-6" strokeWidth={1.75} />
+    <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
+      <section className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="squircle bg-secondary-container p-3 text-on-secondary-container">
+              <Scissors className="size-6" strokeWidth={1.75} />
+            </div>
+            <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
           </div>
-          <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
+          <Button
+            type="button"
+            onClick={() => setShowRegister((v) => !v)}
+            className="squircle flex h-14 items-center gap-2 border-0 bg-surface-container-high px-8 font-semibold text-primary hover:bg-surface-container-highest active:scale-95"
+          >
+            <Plus className="size-5" strokeWidth={2.25} />
+            Register Service
+          </Button>
         </div>
-        <Button
-          type="button"
-          className="squircle flex h-14 items-center gap-2 border-0 bg-surface-container-high px-8 font-semibold text-primary hover:bg-surface-container-highest active:scale-95"
-        >
-          <Plus className="size-5" strokeWidth={2.25} />
-          Register Service
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-        <ServiceCatalogCard
-          title="Haircut"
-          description="Professional curation of facial hair and scalp styling."
-          rate="रू 500"
-          rateClassName="text-primary"
-          icon={Scissors}
-          iconWrapClassName="bg-primary-container text-on-primary-container"
-        />
-        <ServiceCatalogCard
-          title="Beard Trim"
-          description="Precision facial grooming with archival oil treatment."
-          rate="रू 350"
-          rateClassName="text-on-secondary-container"
-          icon={UserRound}
-          iconWrapClassName="bg-secondary-container text-on-secondary-container"
-        />
-        <ServiceCatalogCard
-          title="Junior Cut"
-          description="Simplified styling for children under the age of twelve."
-          rate="रू 300"
-          rateClassName="text-on-tertiary-container"
-          icon={Baby}
-          iconWrapClassName="bg-tertiary-container text-on-tertiary-container"
-        />
-      </div>
-    </section>
+
+        {showRegister ? (
+          <form
+            className="squircle grid gap-4 bg-surface-container-low p-6 md:grid-cols-3"
+            onSubmit={submitRegister}
+          >
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+                Name
+              </label>
+              <input
+                className="squircle h-12 w-full bg-surface-container-high px-4"
+                {...register("name")}
+              />
+              {errors.name ? (
+                <p className="text-xs text-error">{errors.name.message}</p>
+              ) : null}
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+                Default price
+              </label>
+              <input
+                type="number"
+                className="squircle h-12 w-full bg-surface-container-high px-4"
+                {...register("default_price", { valueAsNumber: true })}
+              />
+              {errors.default_price ? (
+                <p className="text-xs text-error">{errors.default_price.message}</p>
+              ) : null}
+            </div>
+            <div className="flex items-end">
+              <Button type="submit" disabled={isRegistering} className="h-12 w-full">
+                {isRegistering ? "Saving…" : "Add service"}
+              </Button>
+            </div>
+          </form>
+        ) : null}
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service, index) => {
+            const Icon = ICON_CYCLE[index % ICON_CYCLE.length] ?? Scissors;
+            const iconWrapClassName: string =
+              wrapClasses[index % wrapClasses.length] ??
+              "bg-primary-container text-on-primary-container";
+            return (
+              <ServiceCatalogCard
+                key={service.id}
+                title={service.name}
+                description=""
+                rate={formatNpr(Number(service.default_price))}
+                rateClassName={
+                  index % 3 === 0
+                    ? "text-primary"
+                    : index % 3 === 1
+                      ? "text-on-secondary-container"
+                      : "text-on-tertiary-container"
+                }
+                icon={Icon}
+                iconWrapClassName={iconWrapClassName}
+                onDelete={() => {
+                  void removeService(service.id);
+                }}
+                isRemoving={isRemoving}
+              />
+            );
+          })}
+        </div>
+      </section>
+    </QueryState>
   );
 }

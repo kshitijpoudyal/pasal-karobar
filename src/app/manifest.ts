@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "TBD — see docs/product.md",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#ffffff",
+    background_color: "#faf9fc",
+    theme_color: "#022448",
     icons: [
       {
         src: "/icons/icon-192.png",

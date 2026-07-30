@@ -14,6 +14,27 @@ export class RepositoryError extends Error {
   }
 }
 
+export function isMissingRpcFunctionError(
+  error: PostgrestError | null | undefined,
+  functionName: string,
+): boolean {
+  if (!error) return false;
+  const haystack = `${error.code ?? ""} ${error.message} ${error.details ?? ""}`.toLowerCase();
+  const needle = functionName.toLowerCase();
+  return (
+    error.code === "PGRST202" ||
+    haystack.includes(needle) ||
+    haystack.includes("could not find the function")
+  );
+}
+
 export function mapRepositoryError(error: PostgrestError): never {
+  if (isMissingRpcFunctionError(error, "create_business_for_owner")) {
+    throw new RepositoryError({
+      ...error,
+      message:
+        "Database function create_business_for_owner is not deployed. In Supabase → SQL Editor, run supabase/migrations/20260730194500_create_business_for_owner.sql (after the initial schema migration).",
+    });
+  }
   throw new RepositoryError(error);
 }

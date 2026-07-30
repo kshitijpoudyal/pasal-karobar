@@ -134,7 +134,19 @@ Links Supabase Auth users to a business for row-level isolation. Not a product d
 | user_id      | FK → `auth.users`              |
 | created_at   |                                |
 
-Unique `(business_id, user_id)`. On `business` insert, the creator is added via trigger when authenticated.
+Unique `(business_id, user_id)`. On `business` insert, the creator is added via trigger when authenticated. The app creates businesses through `create_business_for_owner()` (see migration `20260730194500_create_business_for_owner.sql`) so membership and RLS stay consistent.
+
+**Seeded data:** `supabase/seed.sql` does not insert `business_members`. After sign-in, either let the app bootstrap a new business or link your user in the SQL editor:
+
+```sql
+INSERT INTO public.business_members (business_id, user_id)
+SELECT b.id, auth.uid()
+FROM public.business b
+WHERE b.name = 'Royal Cuts Barber Shop'
+ON CONFLICT DO NOTHING;
+```
+
+(Run while authenticated in the SQL editor, or substitute your user UUID for `auth.uid()`.)
 
 ---
 
@@ -145,8 +157,45 @@ SQL migrations live in `supabase/migrations/`.
 | Migration                               | Description        |
 | --------------------------------------- | ------------------ |
 | `20260330183000_initial_schema.sql`     | MVP schema + RLS   |
+| `20260730194500_create_business_for_owner.sql` | Onboarding RPC (avoids business INSERT 403) |
 
 Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supabase dashboard.
+
+**Order matters.** Always apply `20260330183000_initial_schema.sql` before `20260730194500_create_business_for_owner.sql`. If the SQL editor reports `type public.business_type does not exist`, the initial schema has not been applied yet.
+
+### Supabase SQL Editor (empty project)
+
+1. Open **SQL → New query**.
+2. Paste and run the **full** contents of `supabase/migrations/20260330183000_initial_schema.sql`.
+3. Paste and run `supabase/migrations/20260730194500_create_business_for_owner.sql`.
+   (Same SQL is copied at `supabase/sql/create_business_for_owner.sql` for convenience.)
+4. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+
+### RPC 404 but function exists in SQL
+
+If `SELECT proname ... create_business_for_owner` returns a row but the app still gets `POST .../rpc/create_business_for_owner 404`:
+
+1. In SQL Editor, run:
+
+```sql
+NOTIFY pgrst, 'reload schema';
+```
+
+2. Wait ~10 seconds, hard-refresh the app, sign out and sign in again.
+
+3. Confirm execute grant:
+
+```sql
+SELECT has_function_privilege(
+  'authenticated',
+  'public.create_business_for_owner(text, public.business_type, text, text)',
+  'EXECUTE'
+) AS authenticated_can_execute;
+```
+
+`authenticated_can_execute` should be `t`. If not, re-run `supabase/sql/create_business_for_owner.sql`.
+
+4. In the browser Network tab, a successful bootstrap should show **200** on `rpc/create_business_for_owner` (or a **201** on `business` if the app fallback runs).
 
 ---
 

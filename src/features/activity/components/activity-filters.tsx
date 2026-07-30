@@ -1,20 +1,32 @@
 "use client";
 
-import { useState } from "react";
 import { CalendarDays, TrendingUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { formatNpr } from "@/utils/format";
+import {
+  TIMEFRAMES,
+  type ActivityCategoryFilter,
+  type ActivityTimeframe,
+} from "@/features/activity/constants";
 
-const TIMEFRAMES = ["Today", "Yesterday", "This Week"] as const;
-type Timeframe = (typeof TIMEFRAMES)[number];
+export { TIMEFRAMES };
 
-const CATEGORIES = ["All", "Income", "Expense"] as const;
-type Category = (typeof CATEGORIES)[number];
+type ActivityFiltersProps = {
+  timeframe: ActivityTimeframe;
+  category: ActivityCategoryFilter;
+  onTimeframeChange: (value: ActivityTimeframe) => void;
+  onCategoryChange: (value: ActivityCategoryFilter) => void;
+};
 
-export function ActivityFilters() {
-  const [timeframe, setTimeframe] = useState<Timeframe>("Today");
-  const [category, setCategory] = useState<Category>("All");
+const CATEGORIES = ["All", "Income", "Expense"] as const satisfies readonly ActivityCategoryFilter[];
 
+export function ActivityFilters({
+  timeframe,
+  category,
+  onTimeframeChange,
+  onCategoryChange,
+}: ActivityFiltersProps) {
   return (
     <div className="col-span-12 flex flex-col gap-6 lg:col-span-8">
       <div className="flex flex-wrap items-center gap-3">
@@ -25,7 +37,7 @@ export function ActivityFilters() {
           <button
             key={label}
             type="button"
-            onClick={() => setTimeframe(label)}
+            onClick={() => onTimeframeChange(label)}
             className={cn(
               "rounded-full px-6 py-2.5 text-sm font-medium shadow-md transition-colors",
               timeframe === label
@@ -53,7 +65,7 @@ export function ActivityFilters() {
             <button
               key={label}
               type="button"
-              onClick={() => setCategory(label)}
+              onClick={() => onCategoryChange(label)}
               className={cn(
                 "rounded-full px-8 py-2 text-sm font-medium transition-colors",
                 category === label
@@ -70,18 +82,20 @@ export function ActivityFilters() {
   );
 }
 
-export function DailyNetRevenueCard() {
+export function DailyNetRevenueCard({ netRevenue }: { netRevenue: number }) {
   return (
     <div className="relative col-span-12 flex flex-col justify-between overflow-hidden rounded-squircle bg-primary p-8 text-on-primary shadow-xl lg:col-span-4">
       <div className="z-10">
         <p className="text-label-sm font-bold tracking-[0.2em] uppercase opacity-70">
-          Daily Net Revenue
+          Net for period
         </p>
-        <h3 className="font-headline mt-2 text-4xl font-bold">रू 8,450</h3>
+        <h3 className="font-headline mt-2 text-4xl font-bold">
+          {formatNpr(netRevenue)}
+        </h3>
       </div>
       <div className="z-10 mt-4 flex items-center gap-2 text-sm font-medium">
         <TrendingUp className="size-[18px]" strokeWidth={2} />
-        <span className="text-on-primary/90">12% increase from yesterday</span>
+        <span className="text-on-primary/90">Income minus expenses</span>
       </div>
       <div
         className="pointer-events-none absolute inset-0 opacity-10"

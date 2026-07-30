@@ -34,3 +34,5 @@ export {
   useTransactionsQuery,
   useUpdateTransactionMutation,
 } from "@/hooks/queries/use-transaction-queries";
+
+export { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
