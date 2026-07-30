@@ -1,0 +1,120 @@
+import { z } from "zod";
+
+export const businessTypeSchema = z.enum([
+  "BARBER",
+  "SALON",
+  "GROCERY",
+  "PHARMACY",
+  "RESTAURANT",
+  "OTHER",
+]);
+
+export const paymentMethodSchema = z.enum([
+  "CASH",
+  "ESEWA",
+  "KHALTI",
+  "FONEPAY",
+  "BANK_TRANSFER",
+]);
+
+export const transactionTypeSchema = z.enum(["INCOME", "EXPENSE"]);
+
+export const createBusinessSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  business_type: businessTypeSchema.default("BARBER"),
+  currency: z.string().trim().min(3).max(3).default("NPR"),
+  timezone: z.string().trim().min(1).default("Asia/Kathmandu"),
+});
+
+export const updateBusinessSchema = createBusinessSchema.partial();
+
+export const createServiceSchema = z.object({
+  business_id: z.string().uuid(),
+  name: z.string().trim().min(1).max(200),
+  default_price: z.coerce.number().nonnegative(),
+  icon: z.string().trim().max(64).nullable().optional(),
+  color: z.string().trim().max(32).nullable().optional(),
+  display_order: z.coerce.number().int().nonnegative().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export const updateServiceSchema = createServiceSchema
+  .omit({ business_id: true })
+  .partial();
+
+export const createExpenseCategorySchema = z.object({
+  business_id: z.string().uuid(),
+  name: z.string().trim().min(1).max(200),
+  icon: z.string().trim().max(64).nullable().optional(),
+  color: z.string().trim().max(32).nullable().optional(),
+  display_order: z.coerce.number().int().nonnegative().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export const updateExpenseCategorySchema = createExpenseCategorySchema
+  .omit({ business_id: true })
+  .partial();
+
+const transactionBaseSchema = z.object({
+  business_id: z.string().uuid(),
+  payment_method: paymentMethodSchema,
+  note: z.string().trim().max(2000).nullable().optional(),
+  transaction_date: z.string().datetime({ offset: true }),
+});
+
+export const createIncomeTransactionSchema = transactionBaseSchema.extend({
+  type: z.literal("INCOME"),
+  service_id: z.string().uuid(),
+  subtotal: z.coerce.number().nonnegative(),
+  tip: z.coerce.number().nonnegative().default(0),
+  total: z.coerce.number().nonnegative(),
+});
+
+export const createExpenseTransactionSchema = transactionBaseSchema.extend({
+  type: z.literal("EXPENSE"),
+  expense_category_id: z.string().uuid(),
+  subtotal: z.coerce.number().nonnegative(),
+  total: z.coerce.number().nonnegative(),
+});
+
+export const createTransactionSchema = z.discriminatedUnion("type", [
+  createIncomeTransactionSchema,
+  createExpenseTransactionSchema,
+]);
+
+export const updateTransactionSchema = z
+  .object({
+    service_id: z.string().uuid().nullable().optional(),
+    expense_category_id: z.string().uuid().nullable().optional(),
+    subtotal: z.coerce.number().nonnegative().optional(),
+    tip: z.coerce.number().nonnegative().optional(),
+    total: z.coerce.number().nonnegative().optional(),
+    payment_method: paymentMethodSchema.optional(),
+    note: z.string().trim().max(2000).nullable().optional(),
+    transaction_date: z.string().datetime({ offset: true }).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one field is required",
+  });
+
+export const upsertBusinessSettingSchema = z.object({
+  business_id: z.string().uuid(),
+  setting_key: z.string().trim().min(1).max(128),
+  setting_value: z.string().max(4000),
+});
+
+export type CreateBusinessInput = z.infer<typeof createBusinessSchema>;
+export type UpdateBusinessInput = z.infer<typeof updateBusinessSchema>;
+export type CreateServiceInput = z.infer<typeof createServiceSchema>;
+export type UpdateServiceInput = z.infer<typeof updateServiceSchema>;
+export type CreateExpenseCategoryInput = z.infer<
+  typeof createExpenseCategorySchema
+>;
+export type UpdateExpenseCategoryInput = z.infer<
+  typeof updateExpenseCategorySchema
+>;
+export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
+export type UpsertBusinessSettingInput = z.infer<
+  typeof upsertBusinessSettingSchema
+>;
