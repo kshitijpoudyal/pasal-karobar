@@ -11,7 +11,7 @@ import {
   Users,
   Wallet,
 } from "@/features/dashboard/components/dashboard-stat-icons";
-import type { DashboardSummary } from "@/services/dashboard.service";
+import type { DashboardSummary } from "@/services/dashboard-summary";
 import { formatCompactNpr } from "@/utils/format";
 import { cn } from "@/lib/utils";
 

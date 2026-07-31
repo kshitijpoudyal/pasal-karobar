@@ -21,53 +21,37 @@ import {
   startOfYear,
 } from "date-fns";
 
-export type TrajectoryPoint = {
-  label: string;
-  income: number;
-  expense: number;
-};
+export type { TrajectoryPoint } from "@/services/dashboard-summary";
+export type {
+  BusiestDayOfWeekInsight,
+  BusiestWeekOfMonthInsight,
+  BusiestHourRangeInsight,
+  PeakAnalysisInsights,
+} from "@/services/peak-analysis";
+export type {
+  DashboardSummary,
+  DashboardSummaryParams,
+  MonthDayHeatmap,
+  MonthHeatmapDay,
+} from "@/services/dashboard-summary";
+export {
+  EMPTY_DASHBOARD_SUMMARY,
+  normalizeDashboardSummary,
+} from "@/services/dashboard-summary";
 
-export type PeakHourInsight = {
-  peakDayLabel: string;
-  windowStart: string;
-  windowEnd: string;
-  visitCountOnPeakDay: number;
-  periodIncomeCount: number;
-};
-
-export type DashboardSummary = {
-  revenue: number;
-  expenses: number;
-  profit: number;
-  patronCount: number;
-  averageSale: number;
-  dailyNetRevenue: number;
-  topServiceName: string | null;
-  topServiceCount: number;
-  serviceRevenue: { name: string; total: number }[];
-  trajectory: TrajectoryPoint[];
-  peakHourInsight: PeakHourInsight | null;
-};
-
-export type DashboardSummaryParams = {
-  from?: string;
-  to?: string;
-  period?: DashboardPeriod;
-};
-
-export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
-  revenue: 0,
-  expenses: 0,
-  profit: 0,
-  patronCount: 0,
-  averageSale: 0,
-  dailyNetRevenue: 0,
-  topServiceName: null,
-  topServiceCount: 0,
-  serviceRevenue: [],
-  trajectory: [],
-  peakHourInsight: null,
-};
+import type {
+  BusiestDayOfWeekInsight,
+  BusiestWeekOfMonthInsight,
+  BusiestHourRangeInsight,
+  PeakAnalysisInsights,
+} from "@/services/peak-analysis";
+import type {
+  DashboardSummary,
+  DashboardSummaryParams,
+  MonthDayHeatmap,
+  MonthHeatmapDay,
+  TrajectoryPoint,
+} from "@/services/dashboard-summary";
 
 function sumByType(transactions: Transaction[], type: "INCOME" | "EXPENSE") {
   return transactions
@@ -83,43 +67,106 @@ function addToBucket(
   else bucket.expense += Number(tx.total);
 }
 
+function filterTransactionsInRange(
+  transactions: Transaction[],
+  fromIso: string,
+  toIso: string,
+): Transaction[] {
+  return transactions.filter(
+    (tx) => tx.transaction_date >= fromIso && tx.transaction_date <= toIso,
+  );
+}
+
+export function buildMonthDayHeatmap(
+  transactions: Transaction[],
+  referenceDate: Date,
+): MonthDayHeatmap {
+  const anchor = endOfDay(referenceDate);
+  const monthStart = startOfMonth(anchor);
+  const monthEnd = endOfMonth(anchor);
+  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  const byDate = new Map<string, { visitCount: number; revenue: number }>();
+  for (const tx of transactions) {
+    if (tx.type !== "INCOME") continue;
+    const key = tx.transaction_date.slice(0, 10);
+    const d = parseISO(key);
+    if (d < monthStart || d > monthEnd) continue;
+    const bucket = byDate.get(key) ?? { visitCount: 0, revenue: 0 };
+    bucket.visitCount += 1;
+    bucket.revenue += Number(tx.total);
+    byDate.set(key, bucket);
+  }
+
+  const days: MonthHeatmapDay[] = [];
+  const leadingPad = getISODay(monthStart) - 1;
+  for (let i = 0; i < leadingPad; i += 1) {
+    days.push({
+      dateKey: "",
+      dayOfMonth: 0,
+      visitCount: 0,
+      revenue: 0,
+      inMonth: false,
+    });
+  }
+
+  for (const day of monthDays) {
+    const dateKey = format(day, "yyyy-MM-dd");
+    const stats = byDate.get(dateKey) ?? { visitCount: 0, revenue: 0 };
+    days.push({
+      dateKey,
+      dayOfMonth: day.getDate(),
+      visitCount: stats.visitCount,
+      revenue: stats.revenue,
+      inMonth: true,
+    });
+  }
+
+  while (days.length % 7 !== 0) {
+    days.push({
+      dateKey: "",
+      dayOfMonth: 0,
+      visitCount: 0,
+      revenue: 0,
+      inMonth: false,
+    });
+  }
+
+  return {
+    monthLabel: format(monthStart, "MMMM yyyy"),
+    days,
+  };
+}
+
 const PEAK_WINDOW_HOURS = 5;
 
 function formatHourLabel(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
 }
 
-export function buildPeakHourInsight(
-  transactions: Transaction[],
-): PeakHourInsight | null {
-  const incomeTx = transactions.filter((tx) => tx.type === "INCOME");
-  if (incomeTx.length === 0) return null;
-
-  const dayCounts = new Map<number, number>();
-  for (const tx of incomeTx) {
-    const isoDay = getISODay(parseISO(tx.transaction_date));
-    dayCounts.set(isoDay, (dayCounts.get(isoDay) ?? 0) + 1);
-  }
-
-  let peakIsoDay = 1;
-  let peakDayCount = 0;
-  for (const [isoDay, count] of dayCounts) {
-    if (count > peakDayCount) {
-      peakDayCount = count;
-      peakIsoDay = isoDay;
-    }
-  }
-
-  const onPeakDay = incomeTx.filter(
-    (tx) => getISODay(parseISO(tx.transaction_date)) === peakIsoDay,
+function weekRangeLabel(monthStart: Date, weekIndex: number): string {
+  const daysInMonth = getDaysInMonth(monthStart);
+  const startDay = weekIndex * 7 + 1;
+  const endDay = Math.min(startDay + 6, daysInMonth);
+  const start = new Date(
+    monthStart.getFullYear(),
+    monthStart.getMonth(),
+    startDay,
   );
+  const end = new Date(
+    monthStart.getFullYear(),
+    monthStart.getMonth(),
+    endDay,
+  );
+  if (startDay === endDay) return format(start, "MMM d");
+  return `${format(start, "MMM d")} – ${format(end, "MMM d")}`;
+}
 
-  const hourCounts = new Array<number>(24).fill(0);
-  for (const tx of onPeakDay) {
-    const hour = getHours(parseISO(tx.transaction_date));
-    hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
-  }
-
+function findBestHourWindow(hourCounts: number[]): {
+  start: number;
+  end: number;
+  visits: number;
+} {
   let bestStart = 0;
   let bestSum = -1;
   const windowSize = Math.min(PEAK_WINDOW_HOURS, 24);
@@ -133,30 +180,140 @@ export function buildPeakHourInsight(
       bestStart = start;
     }
   }
-
-  const effectiveWindow =
-    bestSum > 0 ? windowSize : 1;
+  const effectiveWindow = bestSum > 0 ? windowSize : 1;
   if (bestSum <= 0) {
     for (let h = 0; h < 24; h += 1) {
-      if ((hourCounts[h] ?? 0) > bestSum) {
-        bestSum = hourCounts[h] ?? 0;
+      const count = hourCounts[h] ?? 0;
+      if (count > bestSum) {
+        bestSum = count;
         bestStart = h;
       }
     }
   }
+  return {
+    start: bestStart,
+    end: Math.min(bestStart + effectiveWindow, 24),
+    visits: Math.max(bestSum, 0),
+  };
+}
 
-  const windowEndHour = Math.min(bestStart + effectiveWindow, 24);
-  const sampleOnPeakDay = onPeakDay[0];
-  const peakDayLabel = sampleOnPeakDay
-    ? format(parseISO(sampleOnPeakDay.transaction_date), "EEEE")
-    : "—";
+export function buildPeakAnalysisInsights(
+  transactions: Transaction[],
+  periodToIso: string,
+): PeakAnalysisInsights {
+  const empty: PeakAnalysisInsights = {
+    busiestDayOfWeek: null,
+    busiestWeekOfMonth: null,
+    busiestHourRange: null,
+  };
+
+  const incomeTx = transactions.filter((tx) => tx.type === "INCOME");
+  if (incomeTx.length === 0) return empty;
+
+  const periodVisitCount = incomeTx.length;
+
+  // Busiest day of week (by visit count in period)
+  const byWeekday = new Map<
+    number,
+    { visits: number; revenue: number; sampleDate: string }
+  >();
+  for (const tx of incomeTx) {
+    const isoDay = getISODay(parseISO(tx.transaction_date));
+    const bucket = byWeekday.get(isoDay) ?? {
+      visits: 0,
+      revenue: 0,
+      sampleDate: tx.transaction_date,
+    };
+    bucket.visits += 1;
+    bucket.revenue += Number(tx.total);
+    byWeekday.set(isoDay, bucket);
+  }
+  let peakWeekdayVisits = 0;
+  let peakWeekdayRevenue = 0;
+  let peakSampleDate = incomeTx[0]!.transaction_date;
+  for (const [, stats] of byWeekday) {
+    if (
+      stats.visits > peakWeekdayVisits ||
+      (stats.visits === peakWeekdayVisits && stats.revenue > peakWeekdayRevenue)
+    ) {
+      peakWeekdayVisits = stats.visits;
+      peakWeekdayRevenue = stats.revenue;
+      peakSampleDate = stats.sampleDate;
+    }
+  }
+
+  const busiestDayOfWeek: BusiestDayOfWeekInsight = {
+    dayLabel: format(parseISO(peakSampleDate), "EEEE"),
+    visitCount: peakWeekdayVisits,
+    revenue: peakWeekdayRevenue,
+    periodVisitCount,
+  };
+
+  // Busiest week of month (calendar month of period end)
+  const monthAnchor = startOfMonth(endOfDay(parseISO(periodToIso)));
+  const daysInMonth = getDaysInMonth(monthAnchor);
+  const numWeeks = Math.ceil(daysInMonth / 7);
+  const weekStats = Array.from({ length: numWeeks }, () => ({
+    visits: 0,
+    revenue: 0,
+  }));
+
+  for (const tx of incomeTx) {
+    const d = parseISO(tx.transaction_date);
+    if (!isSameMonth(d, monthAnchor)) continue;
+    const weekIndex = Math.floor((d.getDate() - 1) / 7);
+    const bucket = weekStats[weekIndex];
+    if (!bucket) continue;
+    bucket.visits += 1;
+    bucket.revenue += Number(tx.total);
+  }
+
+  let peakWeekIndex = 0;
+  let peakWeekVisits = 0;
+  let peakWeekRevenue = 0;
+  weekStats.forEach((stats, index) => {
+    if (
+      stats.visits > peakWeekVisits ||
+      (stats.visits === peakWeekVisits && stats.revenue > peakWeekRevenue)
+    ) {
+      peakWeekVisits = stats.visits;
+      peakWeekRevenue = stats.revenue;
+      peakWeekIndex = index;
+    }
+  });
+
+  const busiestWeekOfMonth: BusiestWeekOfMonthInsight | null =
+    peakWeekVisits > 0
+      ? {
+          weekLabel: `W${peakWeekIndex + 1}`,
+          rangeLabel: weekRangeLabel(monthAnchor, peakWeekIndex),
+          monthLabel: format(monthAnchor, "MMMM yyyy"),
+          visitCount: peakWeekVisits,
+          revenue: peakWeekRevenue,
+        }
+      : null;
+
+  // Busiest hour range (period-wide)
+  const hourCounts = new Array<number>(24).fill(0);
+  for (const tx of incomeTx) {
+    const hour = getHours(parseISO(tx.transaction_date));
+    hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
+  }
+  const hourWindow = findBestHourWindow(hourCounts);
+  const busiestHourRange: BusiestHourRangeInsight | null =
+    hourWindow.visits > 0
+      ? {
+          windowStart: formatHourLabel(hourWindow.start),
+          windowEnd: formatHourLabel(hourWindow.end),
+          visitCount: hourWindow.visits,
+          periodVisitCount,
+        }
+      : null;
 
   return {
-    peakDayLabel,
-    windowStart: formatHourLabel(bestStart),
-    windowEnd: formatHourLabel(windowEndHour),
-    visitCountOnPeakDay: onPeakDay.length,
-    periodIncomeCount: incomeTx.length,
+    busiestDayOfWeek,
+    busiestWeekOfMonth,
+    busiestHourRange,
   };
 }
 
@@ -252,13 +409,31 @@ export class DashboardService {
     businessId: string,
     params: DashboardSummaryParams = {},
   ): Promise<DashboardSummary> {
+    const now = new Date();
+    const periodFromIso =
+      params.from ?? startOfDay(now).toISOString();
+    const periodToIso = params.to ?? endOfDay(now).toISOString();
+    const heatmapAnchor = endOfDay(parseISO(periodToIso));
+    const monthStart = startOfMonth(heatmapAnchor);
+    const periodFrom = parseISO(periodFromIso);
+    const fetchFromIso =
+      periodFrom.getTime() < monthStart.getTime()
+        ? periodFromIso
+        : monthStart.toISOString();
+
     const [transactions, services] = await Promise.all([
       this.transactionService.listByBusinessId(businessId, {
-        fromDate: params.from,
-        toDate: params.to,
+        fromDate: fetchFromIso,
+        toDate: periodToIso,
       }),
       this.serviceCatalogService.listByBusinessId(businessId),
     ]);
+
+    const periodTransactions = filterTransactionsInRange(
+      transactions,
+      periodFromIso,
+      periodToIso,
+    );
 
     const serviceNames = new Map(services.map((s) => [s.id, s.name]));
 
@@ -266,11 +441,11 @@ export class DashboardService {
     let expenses = 0;
     let patronCount = 0;
     const serviceTotals = new Map<string, number>();
-    const todayStart = startOfDay(new Date()).toISOString();
+    const todayStart = startOfDay(now).toISOString();
 
     let dailyNetRevenue = 0;
 
-    for (const tx of transactions) {
+    for (const tx of periodTransactions) {
       if (tx.type === "INCOME") {
         revenue += Number(tx.total);
         patronCount += 1;
@@ -298,12 +473,16 @@ export class DashboardService {
     const period = params.period ?? "WEEKLY";
     const trajectory = buildPerformanceTrajectory(
       period,
-      params.from ?? startOfDay(new Date()).toISOString(),
-      params.to ?? endOfDay(new Date()).toISOString(),
-      transactions,
+      periodFromIso,
+      periodToIso,
+      periodTransactions,
     );
 
-    const peakHourInsight = buildPeakHourInsight(transactions);
+    const peakAnalysis = buildPeakAnalysisInsights(
+      periodTransactions,
+      periodToIso,
+    );
+    const monthDayHeatmap = buildMonthDayHeatmap(transactions, heatmapAnchor);
 
     return {
       revenue,
@@ -316,7 +495,8 @@ export class DashboardService {
       topServiceCount: serviceRevenue.length,
       serviceRevenue,
       trajectory,
-      peakHourInsight,
+      peakAnalysis,
+      monthDayHeatmap,
     };
   }
 }

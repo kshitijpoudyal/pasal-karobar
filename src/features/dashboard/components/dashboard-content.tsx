@@ -10,7 +10,7 @@ import { DashboardBottomSection } from "@/features/dashboard/components/dashboar
 import { InsightsSection } from "@/features/dashboard/components/insights-section";
 import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
 import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
-import { EMPTY_DASHBOARD_SUMMARY } from "@/services/dashboard.service";
+import { normalizeDashboardSummary } from "@/services/dashboard-summary";
 import { useActiveBusiness } from "@/providers/business-provider";
 import {
   getDashboardDateRange,
@@ -27,7 +27,7 @@ export function DashboardContent() {
     ...range,
     period,
   });
-  const summary = summaryQuery.data ?? EMPTY_DASHBOARD_SUMMARY;
+  const summary = normalizeDashboardSummary(summaryQuery.data);
   const isEmptyPeriod =
     summary.patronCount === 0 &&
     summary.revenue === 0 &&
@@ -44,10 +44,13 @@ export function DashboardContent() {
         <KpiGrid summary={summary} />
         {isEmptyPeriod ? <DashboardEmptyHint /> : null}
         <InsightsSection
-          trajectory={summary.trajectory ?? []}
-          peakHourInsight={summary.peakHourInsight ?? null}
+          trajectory={summary.trajectory}
+          peakAnalysis={summary.peakAnalysis}
         />
-        <DashboardBottomSection topServices={summary.serviceRevenue} />
+        <DashboardBottomSection
+          topServices={summary.serviceRevenue}
+          monthDayHeatmap={summary.monthDayHeatmap ?? null}
+        />
       </QueryState>
     </div>
   );

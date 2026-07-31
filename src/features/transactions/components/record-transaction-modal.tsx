@@ -8,13 +8,15 @@ import {
   CirclePlus,
   Home,
   Landmark,
+  Loader2,
   Package,
-  Scissors,
-  Sparkles,
-  UserRound,
-  X,
   QrCode,
-} from "lucide-react";
+  Scissors,
+  X,
+  type LucideIcon,
+  QUICK_CATEGORY_ICONS,
+  QUICK_SERVICE_ICONS,
+} from "@/features/transactions/components/record-transaction-modal-icons";
 
 import { Button } from "@/components/ui/button";
 import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
@@ -29,12 +31,6 @@ type RecordTransactionModalProps = {
 type Tab = "income" | "expense";
 
 type PaymentMethod = UiPaymentMethod;
-
-const FALLBACK_SERVICES = [
-  { name: "Haircut", price: 500, icon: Scissors },
-  { name: "Beard", price: 300, icon: UserRound },
-  { name: "Facial", price: 1200, icon: Sparkles },
-] as const;
 
 export function RecordTransactionModal({ open, onClose }: RecordTransactionModalProps) {
   const titleId = useId();
@@ -81,8 +77,9 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
   useEffect(() => {
     if (open) {
       resetFormState();
+      void servicesQuery.refetch();
     }
-  }, [open, resetFormState]);
+  }, [open, resetFormState, servicesQuery.refetch]);
 
   if (!open) return null;
 
@@ -143,26 +140,12 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
     }
   }
 
-  const catalogServices = servicesQuery.data?.filter((s) => s.is_active) ?? [];
+  const catalogServices =
+    servicesQuery.data?.filter((s) => s.is_active !== false) ?? [];
+
   const quickCategories = (categoriesQuery.data ?? [])
     .filter((c) => c.is_active)
     .slice(0, 3);
-  const quickCategoryIcons = [Home, Bolt, Package] as const;
-
-  const quickServices =
-    catalogServices.length > 0
-      ? catalogServices.slice(0, 3).map((s) => ({
-          id: s.id,
-          name: s.name,
-          price: Number(s.default_price),
-          icon: Scissors,
-        }))
-      : FALLBACK_SERVICES.map((s, i) => ({
-          id: `fallback-${i}`,
-          name: s.name,
-          price: s.price,
-          icon: s.icon,
-        }));
 
   const submitLabel =
     tab === "income" ? `Add Rs. ${incomeTotal}` : "Add Expense";
@@ -237,40 +220,54 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                 <p className="font-body mb-3 text-[11px] font-bold tracking-[0.1em] text-outline uppercase">
                   Quick Select Service
                 </p>
-                <div className="grid grid-cols-3 gap-4">
-                  {quickServices.map(({ id, name, price: p, icon: Icon }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => {
-                        if (id.startsWith("fallback-")) {
-                          setFormError("Add services in Settings or connect Supabase.");
-                          setPrice(String(p));
-                          return;
-                        }
-                        selectService(id, p);
-                      }}
-                      className={cn(
-                        "service-card squircle group flex flex-col items-center justify-center border border-transparent bg-surface-container-low p-5 transition-all hover:bg-surface-container active:scale-95",
-                        selectedServiceId === id && "active bg-surface-container",
-                      )}
-                    >
-                      <Icon
-                        className={cn(
-                          "mb-2 size-8 text-outline transition-colors group-hover:text-primary",
-                          selectedServiceId === id && "text-primary",
-                        )}
-                        strokeWidth={1.75}
-                      />
-                      <span className="font-headline text-sm font-bold text-on-surface">
-                        {name}
-                      </span>
-                      <span className="font-body mt-0.5 text-xs text-outline">
-                        Rs. {p}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                {servicesQuery.isLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-on-surface-variant">
+                    <Loader2 className="size-5 animate-spin" aria-hidden />
+                    Loading your services…
+                  </div>
+                ) : catalogServices.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant">
+                    No services in your catalog yet. Add services under{" "}
+                    <span className="font-semibold text-on-surface">Settings</span>
+                    {" → "}
+                    Service Catalog, then try again.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                    {catalogServices.map((service, index) => {
+                      const Icon =
+                        QUICK_SERVICE_ICONS[index % QUICK_SERVICE_ICONS.length] ??
+                        Scissors;
+                      const price = Number(service.default_price);
+                      return (
+                        <button
+                          key={service.id}
+                          type="button"
+                          onClick={() => selectService(service.id, price)}
+                          className={cn(
+                            "service-card squircle group flex flex-col items-center justify-center border border-transparent bg-surface-container-low p-4 transition-all hover:bg-surface-container active:scale-95 sm:p-5",
+                            selectedServiceId === service.id &&
+                              "active bg-surface-container",
+                          )}
+                        >
+                          <Icon
+                            className={cn(
+                              "mb-2 size-8 text-outline transition-colors group-hover:text-primary",
+                              selectedServiceId === service.id && "text-primary",
+                            )}
+                            strokeWidth={1.75}
+                          />
+                          <span className="font-headline line-clamp-2 text-center text-sm font-bold text-on-surface">
+                            {service.name}
+                          </span>
+                          <span className="font-body mt-0.5 text-xs text-outline">
+                            Rs. {price}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -368,7 +365,8 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                 <div className="grid grid-cols-3 gap-4">
                   {quickCategories.length > 0
                     ? quickCategories.map((cat, i) => {
-                        const Icon = quickCategoryIcons[i % quickCategoryIcons.length] ?? Home;
+                        const Icon =
+                          QUICK_CATEGORY_ICONS[i % QUICK_CATEGORY_ICONS.length] ?? Home;
                         return (
                           <QuickExpense
                             key={cat.id}
@@ -494,7 +492,7 @@ function QuickExpense({
   onClick,
 }: {
   label: string;
-  icon: typeof Home;
+  icon: LucideIcon;
   onClick: () => void;
 }) {
   return (

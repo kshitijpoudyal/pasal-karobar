@@ -1,52 +1,52 @@
-import { Package, Sparkles } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { CalendarDays, Clock, Sparkles } from "lucide-react";
 
 import { PerformanceTrajectoryCard } from "@/features/dashboard/components/performance-trajectory-card";
-import type {
-  PeakHourInsight,
-  TrajectoryPoint,
-} from "@/services/dashboard.service";
+import {
+  coalescePeakAnalysis,
+  EMPTY_PEAK_ANALYSIS,
+  type PeakAnalysisInsights,
+} from "@/services/peak-analysis";
+import type { TrajectoryPoint } from "@/services/dashboard-summary";
+import { formatCompactNpr } from "@/utils/format";
 import { cn } from "@/lib/utils";
 
-type PeakAnalysisCardProps = {
-  insight: PeakHourInsight | null;
+type InsightCardProps = {
+  category: string;
+  title: string;
+  body: string;
+  icon: LucideIcon;
+  className: string;
+  iconClassName?: string;
 };
 
-function PeakAnalysisCard({ insight }: PeakAnalysisCardProps) {
-  const hasInsight = insight !== null;
-
+function InsightCard({
+  category,
+  title,
+  body,
+  icon: Icon,
+  className,
+  iconClassName,
+}: InsightCardProps) {
   return (
     <div
       className={cn(
-        "squircle relative overflow-hidden border-none bg-[#F3E5F5] p-8 text-[#4A148C] shadow-sm",
-        hasInsight &&
-          "cursor-pointer transition-transform active:scale-[0.98]",
+        "squircle relative overflow-hidden border-none p-6 shadow-sm md:p-8",
+        className,
       )}
     >
       <div className="relative z-10">
-        <p className="text-label-sm mb-3 font-bold tracking-widest opacity-70">
-          Peak Analysis
+        <p className="text-label-sm mb-2 font-bold tracking-widest opacity-70">
+          {category}
         </p>
-        {hasInsight ? (
-          <>
-            <h4 className="mb-2 text-2xl font-bold">
-              {insight.peakDayLabel} peak
-            </h4>
-            <p className="text-sm leading-relaxed opacity-90">
-              {insight.visitCountOnPeakDay} visit
-              {insight.visitCountOnPeakDay === 1 ? "" : "s"} on{" "}
-              {insight.peakDayLabel}s in this period ({insight.periodIncomeCount}{" "}
-              total). Busiest window: {insight.windowStart} – {insight.windowEnd}.
-              Consider aligning staff for that block.
-            </p>
-          </>
-        ) : (
-          <p className="text-sm leading-relaxed opacity-90">
-            Record income in this period to see peak hours.
-          </p>
-        )}
+        <h4 className="mb-2 text-xl font-bold md:text-2xl">{title}</h4>
+        <p className="text-sm leading-relaxed opacity-90">{body}</p>
       </div>
-      <Sparkles
-        className="absolute -right-6 -bottom-6 size-[140px] opacity-10"
+      <Icon
+        className={cn(
+          "absolute -right-6 -bottom-6 size-[120px] opacity-10 md:size-[140px]",
+          iconClassName,
+        )}
         strokeWidth={1}
       />
     </div>
@@ -54,52 +54,80 @@ function PeakAnalysisCard({ insight }: PeakAnalysisCardProps) {
 }
 
 type CuratedInsightsPanelProps = {
-  peakHourInsight: PeakHourInsight | null;
+  peakAnalysis?: PeakAnalysisInsights | null;
 };
 
-export function CuratedInsightsPanel({
-  peakHourInsight,
-}: CuratedInsightsPanelProps) {
+export function CuratedInsightsPanel(props: CuratedInsightsPanelProps) {
+  const peak =
+    coalescePeakAnalysis(props.peakAnalysis) ?? EMPTY_PEAK_ANALYSIS;
+  const busiestDayOfWeek = peak.busiestDayOfWeek;
+  const busiestWeekOfMonth = peak.busiestWeekOfMonth;
+  const busiestHourRange = peak.busiestHourRange;
+
+  const dayBody = busiestDayOfWeek
+    ? `${busiestDayOfWeek.visitCount} customer visit${busiestDayOfWeek.visitCount === 1 ? "" : "s"} on ${busiestDayOfWeek.dayLabel}s (${formatCompactNpr(busiestDayOfWeek.revenue)} income on that weekday). ${busiestDayOfWeek.periodVisitCount} total visits in this period.`
+    : "Record income in this period to see your busiest weekday.";
+
+  const weekBody = busiestWeekOfMonth
+    ? `${busiestWeekOfMonth.visitCount} visit${busiestWeekOfMonth.visitCount === 1 ? "" : "s"} (${formatCompactNpr(busiestWeekOfMonth.revenue)} income) during ${busiestWeekOfMonth.rangeLabel} in ${busiestWeekOfMonth.monthLabel}.`
+    : "No income in the current month yet for week-level peaks.";
+
+  const hourBody = busiestHourRange
+    ? `${busiestHourRange.visitCount} visit${busiestHourRange.visitCount === 1 ? "" : "s"} between ${busiestHourRange.windowStart} and ${busiestHourRange.windowEnd} across this period (${busiestHourRange.periodVisitCount} total). Staff up for that window.`
+    : "Record income in this period to see peak hour ranges.";
+
   return (
-    <div className="col-span-4 space-y-8">
+    <div className="col-span-4 space-y-4 md:space-y-6">
       <h3 className="font-headline-md text-headline-md text-on-surface">
-        Curated Insights
+        Peak Analysis
       </h3>
-      <PeakAnalysisCard insight={peakHourInsight} />
-      <div className="squircle relative cursor-pointer overflow-hidden border-none bg-[#E8F5E9] p-8 text-[#1B5E20] shadow-sm transition-transform active:scale-[0.98]">
-        <div className="relative z-10">
-          <p className="text-label-sm mb-3 font-bold tracking-widest opacity-70">
-            Resource Warning
-          </p>
-          <h4 className="mb-2 text-2xl font-bold">Stock Critical: Pomade</h4>
-          <p className="text-sm leading-relaxed opacity-90">
-            Inventory forecast suggests replenishment before the weekend cycle
-            commences.
-          </p>
-        </div>
-        <Package
-          className="absolute -right-6 -bottom-6 size-[140px] opacity-10"
-          strokeWidth={1}
-        />
-      </div>
+      <InsightCard
+        category="Busiest day of week"
+        title={busiestDayOfWeek?.dayLabel ?? "—"}
+        body={dayBody}
+        icon={Sparkles}
+        className="bg-[#F3E5F5] text-[#4A148C]"
+      />
+      <InsightCard
+        category="Busiest week of month"
+        title={
+          busiestWeekOfMonth
+            ? `${busiestWeekOfMonth.weekLabel} · ${busiestWeekOfMonth.rangeLabel}`
+            : "—"
+        }
+        body={weekBody}
+        icon={CalendarDays}
+        className="bg-[#E3F2FD] text-[#0D47A1]"
+      />
+      <InsightCard
+        category="Busiest hour range"
+        title={
+          busiestHourRange
+            ? `${busiestHourRange.windowStart} – ${busiestHourRange.windowEnd}`
+            : "—"
+        }
+        body={hourBody}
+        icon={Clock}
+        className="bg-[#FFF3E0] text-[#E65100]"
+      />
     </div>
   );
 }
 
 type InsightsSectionProps = {
   trajectory: TrajectoryPoint[];
-  peakHourInsight: PeakHourInsight | null;
+  peakAnalysis?: PeakAnalysisInsights | null;
 };
 
 export function InsightsSection({
   trajectory,
-  peakHourInsight,
+  peakAnalysis,
 }: InsightsSectionProps) {
   return (
     <section>
       <div className="grid grid-cols-12 gap-8">
         <PerformanceTrajectoryCard points={trajectory} />
-        <CuratedInsightsPanel peakHourInsight={peakHourInsight} />
+        <CuratedInsightsPanel peakAnalysis={peakAnalysis} />
       </div>
     </section>
   );

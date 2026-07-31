@@ -1,6 +1,6 @@
 "use client";
 
-import type { TrajectoryPoint } from "@/services/dashboard.service";
+import type { TrajectoryPoint } from "@/services/dashboard-summary";
 import { formatCompactNpr } from "@/utils/format";
 import { cn } from "@/lib/utils";
 

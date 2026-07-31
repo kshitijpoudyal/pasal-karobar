@@ -7,15 +7,19 @@ import {
 } from "lucide-react";
 
 import { formatCompactNpr } from "@/utils/format";
+import { MonthDayHeatmapCard } from "@/features/dashboard/components/month-day-heatmap-card";
+import type { MonthDayHeatmap } from "@/services/dashboard-summary";
 
 type TopService = { name: string; total: number };
 
 type DashboardBottomSectionProps = {
   topServices?: TopService[];
+  monthDayHeatmap?: MonthDayHeatmap | null;
 };
 
 export function DashboardBottomSection({
   topServices = [],
+  monthDayHeatmap = null,
 }: DashboardBottomSectionProps) {
   const rows = topServices.slice(0, 3);
   const icons = [Scissors, UserRound, Sparkles];
@@ -53,58 +57,7 @@ export function DashboardBottomSection({
         </div>
       </div>
 
-      <div className="squircle col-span-4 bg-surface-container-low p-10">
-        <h3 className="font-headline-md text-headline-md mb-8 text-on-surface">
-          Occupancy Flow
-        </h3>
-        <div className="flex h-60 items-end gap-2 px-2">
-          <div
-            className="squircle h-[15%] flex-1 rounded-b-none bg-surface-container-high"
-            title="9 AM"
-          />
-          <div
-            className="squircle h-[25%] flex-1 rounded-b-none bg-surface-container-high"
-            title="10 AM"
-          />
-          <div
-            className="squircle h-[50%] flex-1 rounded-b-none bg-secondary/20"
-            title="11 AM"
-          />
-          <div
-            className="squircle h-[65%] flex-1 rounded-b-none bg-secondary/40"
-            title="12 PM"
-          />
-          <div
-            className="squircle h-[90%] flex-1 rounded-b-none bg-secondary/60"
-            title="1 PM"
-          />
-          <div
-            className="squircle h-[85%] flex-1 rounded-b-none bg-secondary/80"
-            title="2 PM"
-          />
-          <div
-            className="squircle h-full flex-1 rounded-b-none bg-secondary"
-            title="3 PM"
-          />
-          <div
-            className="squircle h-[95%] flex-1 rounded-b-none bg-secondary/80"
-            title="4 PM"
-          />
-          <div
-            className="squircle h-[75%] flex-1 rounded-b-none bg-secondary/60"
-            title="5 PM"
-          />
-          <div
-            className="squircle h-[35%] flex-1 rounded-b-none bg-surface-container-high"
-            title="6 PM"
-          />
-        </div>
-        <div className="text-label-sm mt-8 flex justify-between font-bold text-on-surface-variant uppercase">
-          <span>09:00</span>
-          <span className="text-secondary">15:00 Apex</span>
-          <span>18:00</span>
-        </div>
-      </div>
+      <MonthDayHeatmapCard heatmap={monthDayHeatmap} />
 
       <div className="squircle col-span-4 flex flex-col bg-surface-container-low p-10">
         <h3 className="font-headline-md text-headline-md mb-8 text-on-surface">
