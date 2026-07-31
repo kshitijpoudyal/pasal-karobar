@@ -5,10 +5,10 @@ import { format, parseISO } from "date-fns";
 
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
 import { QueryState } from "@/components/layout/query-state";
+import { DashboardPeriodBar } from "@/features/dashboard/components/dashboard-period-bar";
 import { DashboardBottomSection } from "@/features/dashboard/components/dashboard-bottom-section";
 import { InsightsSection } from "@/features/dashboard/components/insights-section";
 import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
-import { PeriodFilter } from "@/features/dashboard/components/period-filter";
 import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
 import { EMPTY_DASHBOARD_SUMMARY } from "@/services/dashboard.service";
 import { useActiveBusiness } from "@/providers/business-provider";
@@ -23,7 +23,10 @@ export function DashboardContent() {
 
   const range = useMemo(() => getDashboardDateRange(period), [period]);
 
-  const summaryQuery = useDashboardSummaryQuery(businessId, range);
+  const summaryQuery = useDashboardSummaryQuery(businessId, {
+    ...range,
+    period,
+  });
   const summary = summaryQuery.data ?? EMPTY_DASHBOARD_SUMMARY;
   const isEmptyPeriod =
     summary.patronCount === 0 &&
@@ -32,7 +35,7 @@ export function DashboardContent() {
 
   return (
     <div className="space-y-12 p-12">
-      <PeriodFilter value={period} onChange={setPeriod} />
+      <DashboardPeriodBar period={period} onPeriodChange={setPeriod} />
       <QueryState
         isLoading={summaryQuery.isLoading}
         error={summaryQuery.error}
@@ -40,7 +43,10 @@ export function DashboardContent() {
       >
         <KpiGrid summary={summary} />
         {isEmptyPeriod ? <DashboardEmptyHint /> : null}
-        <InsightsSection />
+        <InsightsSection
+          trajectory={summary.trajectory ?? []}
+          peakHourInsight={summary.peakHourInsight ?? null}
+        />
         <DashboardBottomSection topServices={summary.serviceRevenue} />
       </QueryState>
     </div>

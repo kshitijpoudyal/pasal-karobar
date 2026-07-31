@@ -10,13 +10,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "deep-indigo-gradient border-0 text-white shadow-lg shadow-primary/20 hover:brightness-110 active:scale-[0.98] disabled:opacity-50",
+          "deep-indigo-gradient border-0 text-on-primary shadow-lg shadow-primary/20 hover:brightness-110 active:scale-[0.98] disabled:opacity-50",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+          "border-outline-variant bg-surface-container-lowest text-on-surface hover:bg-surface-container-high hover:text-on-surface aria-expanded:bg-surface-container-high aria-expanded:text-on-surface",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-surface-container-high text-on-surface hover:bg-surface-container-highest aria-expanded:bg-surface-container-highest aria-expanded:text-on-surface",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface aria-expanded:bg-surface-container-high aria-expanded:text-on-surface",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",

@@ -106,20 +106,20 @@ export function DashboardBottomSection({
         </div>
       </div>
 
-      <div className="col-span-4 flex flex-col gap-8">
-        <h3 className="font-headline-md text-headline-md text-on-surface">
+      <div className="squircle col-span-4 flex flex-col bg-surface-container-low p-10">
+        <h3 className="font-headline-md text-headline-md mb-8 text-on-surface">
           Monthly Projection
         </h3>
-        <div className="squircle flex flex-1 flex-col justify-center border-2 border-dashed border-primary/20 bg-primary/5 p-10">
+        <div className="squircle flex flex-1 flex-col justify-center border-2 border-dashed border-outline-variant bg-surface-container p-10">
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-label-sm mb-1 font-bold tracking-widest text-on-surface-variant uppercase">
                   Target Yield
                 </span>
-                <span className="text-3xl font-bold text-primary">रू 52,000</span>
+                <span className="text-3xl font-bold text-on-surface">रू 52,000</span>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-secondary uppercase">
+              <div className="flex items-center gap-1 text-sm font-bold text-on-surface-variant uppercase">
                 +23% <LineChart className="size-[18px]" strokeWidth={2.25} />
               </div>
             </div>
@@ -130,7 +130,7 @@ export function DashboardBottomSection({
                 </span>
                 <span className="text-3xl font-bold text-on-surface">182</span>
               </div>
-              <div className="flex items-center gap-1 text-sm font-bold text-secondary uppercase">
+              <div className="flex items-center gap-1 text-sm font-bold text-on-surface-variant uppercase">
                 +34 <UserPlus className="size-[18px]" strokeWidth={2.25} />
               </div>
             </div>

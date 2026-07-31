@@ -3,7 +3,12 @@ import {
   endOfWeek,
   startOfDay,
   startOfWeek,
+  startOfMonth,
+  startOfYear,
   subDays,
+  subYears,
+  format,
+  parseISO,
 } from "date-fns";
 
 export type ActivityTimeframe = "Today" | "Yesterday" | "This Week";
@@ -36,12 +41,10 @@ export function getActivityDateRange(timeframe: ActivityTimeframe): {
   }
 }
 
-export type DashboardPeriod =
-  | "DAILY"
-  | "WEEKLY"
-  | "MONTHLY"
-  | "QUARTERLY"
-  | "YEARLY";
+export type DashboardPeriod = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+
+/** Max year buckets shown on the yearly view (current year + prior years). */
+export const DASHBOARD_YEARLY_LOOKBACK = 5;
 
 export function getDashboardDateRange(period: DashboardPeriod): {
   from: string;
@@ -51,24 +54,65 @@ export function getDashboardDateRange(period: DashboardPeriod): {
   const to = endOfDay(now).toISOString();
   switch (period) {
     case "DAILY":
-      return { from: startOfDay(now).toISOString(), to };
-    case "WEEKLY":
       return {
         from: startOfWeek(now, { weekStartsOn: 1 }).toISOString(),
         to,
       };
-    case "MONTHLY": {
-      const from = new Date(now.getFullYear(), now.getMonth(), 1);
-      return { from: from.toISOString(), to };
-    }
-    case "QUARTERLY": {
-      const quarter = Math.floor(now.getMonth() / 3);
-      const from = new Date(now.getFullYear(), quarter * 3, 1);
-      return { from: from.toISOString(), to };
-    }
+    case "WEEKLY":
+      return {
+        from: startOfMonth(now).toISOString(),
+        to,
+      };
+    case "MONTHLY":
+      return {
+        from: startOfYear(now).toISOString(),
+        to,
+      };
     case "YEARLY": {
-      const from = new Date(now.getFullYear(), 0, 1);
+      const from = startOfYear(
+        subYears(now, DASHBOARD_YEARLY_LOOKBACK - 1),
+      );
       return { from: from.toISOString(), to };
     }
   }
+}
+
+export function formatDashboardPeriodLabel(
+  period: DashboardPeriod,
+  range: { from: string; to: string },
+): string {
+  const from = parseISO(range.from);
+  const to = parseISO(range.to);
+
+  if (period === "DAILY") {
+    return `${format(from, "MMM d")} – ${format(to, "MMM d, yyyy")}`;
+  }
+
+  if (period === "WEEKLY") {
+    return format(from, "MMMM yyyy");
+  }
+
+  if (period === "MONTHLY") {
+    return format(from, "yyyy");
+  }
+
+  if (period === "YEARLY") {
+    if (from.getFullYear() === to.getFullYear()) {
+      return format(from, "yyyy");
+    }
+    return `${format(from, "yyyy")} – ${format(to, "yyyy")}`;
+  }
+
+  if (
+    from.getFullYear() === to.getFullYear() &&
+    from.getMonth() === to.getMonth()
+  ) {
+    return `${format(from, "MMM d")} – ${format(to, "d, yyyy")}`;
+  }
+
+  if (from.getFullYear() === to.getFullYear()) {
+    return `${format(from, "MMM d")} – ${format(to, "MMM d, yyyy")}`;
+  }
+
+  return `${format(from, "MMM d, yyyy")} – ${format(to, "MMM d, yyyy")}`;
 }

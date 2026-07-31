@@ -9,7 +9,6 @@ import {
   useBusinessQuery,
   useUpdateBusinessMutation,
 } from "@/hooks/queries/use-business-queries";
-import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { businessTypeSchema, updateBusinessSchema } from "@/services/schemas";
 
@@ -26,7 +25,6 @@ export type BusinessIdentityFormValues = z.infer<
 export function useBusinessIdentityForm() {
   const { businessId } = useActiveBusiness();
   const businessQuery = useBusinessQuery(businessId);
-  const summaryQuery = useDashboardSummaryQuery(businessId);
   const updateMutation = useUpdateBusinessMutation(businessId);
 
   const form = useForm<BusinessIdentityFormValues>({
@@ -60,8 +58,6 @@ export function useBusinessIdentityForm() {
     error: businessQuery.error ?? updateMutation.error,
     isSaving: updateMutation.isPending,
     isSaveSuccess: updateMutation.isSuccess,
-    summary: summaryQuery.data,
-    summaryLoading: summaryQuery.isLoading,
     refetch: () => businessQuery.refetch(),
   };
 }

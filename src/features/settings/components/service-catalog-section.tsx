@@ -122,7 +122,7 @@ export function ServiceCatalogSection() {
           <Button
             type="button"
             onClick={() => setShowRegister((v) => !v)}
-            className="squircle flex h-14 items-center gap-2 border-0 bg-surface-container-high px-8 font-semibold text-primary hover:bg-surface-container-highest active:scale-95"
+            className="squircle deep-indigo-gradient flex h-14 items-center gap-2 border-0 px-8 font-semibold text-on-primary shadow-primary/20 hover:brightness-110 active:scale-95"
           >
             <Plus className="size-5" strokeWidth={2.25} />
             Register Service

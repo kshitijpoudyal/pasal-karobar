@@ -5,7 +5,7 @@
   --color-background: #fbf9f3;
   --color-on-background: #1a1c1e;
   --color-on-surface: #1a1c1e;
-  --color-on-surface-variant: #43474e;
+  --color-on-surface-variant: #383b42;
   --color-surface-container-low: #f4f3f7;
   --color-surface-container: #eeedf1;
   --color-surface-container-high: #e9e7eb;
@@ -127,6 +127,7 @@
 
 .deep-indigo-gradient {
   background: linear-gradient(135deg, #022448 0%, #1e3a5f 100%);
+  color: var(--color-on-primary);
 }
 
 .font-body {

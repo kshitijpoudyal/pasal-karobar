@@ -191,7 +191,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
             type="button"
             variant="ghost"
             size="icon"
-            className="size-10 rounded-full hover:bg-surface-container active:scale-95"
+            className="size-10 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface active:scale-95"
             onClick={onClose}
             aria-label="Close"
           >
@@ -324,7 +324,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                     selected={payment}
                     onSelect={setPayment}
                     icon={
-                      <div className="flex size-6 items-center justify-center rounded-md bg-[#4CAF50] text-[8px] font-bold text-white">
+                      <div className="flex size-6 items-center justify-center rounded-md bg-[#4CAF50] text-[8px] font-bold text-surface-bright">
                         eS
                       </div>
                     }
@@ -335,7 +335,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                     selected={payment}
                     onSelect={setPayment}
                     icon={
-                      <div className="flex size-6 items-center justify-center rounded-md bg-[#673AB7] text-[8px] font-bold text-white">
+                      <div className="flex size-6 items-center justify-center rounded-md bg-[#673AB7] text-[8px] font-bold text-surface-bright">
                         K
                       </div>
                     }

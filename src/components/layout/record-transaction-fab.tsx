@@ -31,7 +31,7 @@ export function RecordTransactionFab({
         className="size-9 transition-transform duration-500 group-hover:rotate-90"
         strokeWidth={2}
       />
-      <span className="squircle pointer-events-none absolute right-24 bg-on-surface px-6 py-3 text-sm font-bold tracking-widest whitespace-nowrap text-white uppercase opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+      <span className="squircle pointer-events-none absolute right-24 bg-on-surface px-6 py-3 text-sm font-bold tracking-widest whitespace-nowrap text-surface-bright uppercase opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
         {tooltip}
       </span>
     </Button>

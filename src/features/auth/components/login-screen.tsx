@@ -194,7 +194,7 @@ export function LoginScreen() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="font-headline flex w-full items-center justify-center gap-3 rounded-full bg-primary py-5 text-[20px] font-medium text-on-primary shadow-lg transition-all duration-500 hover:bg-primary-container hover:shadow-xl active:scale-[0.98] disabled:opacity-70"
+                    className="font-headline flex w-full items-center justify-center gap-3 rounded-full bg-primary py-5 text-[20px] font-medium text-on-primary shadow-lg transition-all duration-500 hover:bg-primary-container hover:text-on-primary-container hover:shadow-xl active:scale-[0.98] disabled:opacity-70"
                   >
                     <span>
                       {isSubmitting

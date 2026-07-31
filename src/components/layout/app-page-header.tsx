@@ -24,7 +24,7 @@ export function AppPageHeader({ title }: AppPageHeaderProps) {
           type="button"
           variant="ghost"
           size="icon"
-          className="squircle size-12 hover:bg-surface-container-high active:scale-95"
+          className="squircle size-12 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface active:scale-95"
           aria-label="Open calendar"
         >
           <Calendar className="size-6 text-on-surface-variant" strokeWidth={1.75} />

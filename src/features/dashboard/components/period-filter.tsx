@@ -7,7 +7,6 @@ const PERIODS: DashboardPeriod[] = [
   "DAILY",
   "WEEKLY",
   "MONTHLY",
-  "QUARTERLY",
   "YEARLY",
 ];
 
@@ -19,8 +18,8 @@ type PeriodFilterProps = {
 
 export function PeriodFilter({ value, onChange, className }: PeriodFilterProps) {
   return (
-    <section className={cn("flex", className)}>
-      <div className="squircle flex w-full max-w-2xl bg-surface-container-low p-1.5">
+    <div className={cn("flex shrink-0", className)}>
+      <div className="squircle flex max-w-2xl bg-surface-container-low p-1.5">
         {PERIODS.map((period) => {
           const isActive = value === period;
           return (
@@ -40,7 +39,7 @@ export function PeriodFilter({ value, onChange, className }: PeriodFilterProps) 
           );
         })}
       </div>
-    </section>
+    </div>
   );
 }
 

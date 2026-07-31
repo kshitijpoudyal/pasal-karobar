@@ -12,7 +12,7 @@ export function SettingsPage() {
       <AppLeftNav />
       <AppMain className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto bg-surface">
         <AppPageHeader title="Settings" />
-        <div className="w-full space-y-12 px-12 pb-16">
+        <div className="w-full space-y-12 px-12 pt-12 pb-16">
           <BusinessIdentitySection />
           <ServiceCatalogSection />
           <ExpenseTaxonomySection />
