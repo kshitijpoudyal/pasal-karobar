@@ -7,7 +7,7 @@ import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
-import { groupTransactionsByDay } from "@/services/dashboard.service";
+import { groupTransactionsByDay } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
 import {
   getActivityDateRange,
@@ -59,6 +59,18 @@ export function useActivityPage() {
     }, 0);
   }, [transactionsQuery.data]);
 
+  const { transactionCount, averageTicket } = useMemo(() => {
+    const txs = transactionsQuery.data ?? [];
+    const incomeRows = txs.filter((tx) => tx.type === "INCOME");
+    const count = txs.length;
+    const avg =
+      incomeRows.length > 0
+        ? incomeRows.reduce((sum, tx) => sum + Number(tx.total), 0) /
+          incomeRows.length
+        : 0;
+    return { transactionCount: count, averageTicket: avg };
+  }, [transactionsQuery.data]);
+
   const groupedTransactions = useMemo(
     () => groupTransactionsByDay(transactionsQuery.data ?? []),
     [transactionsQuery.data],
@@ -92,6 +104,8 @@ export function useActivityPage() {
     category,
     setCategory,
     netRevenue,
+    transactionCount,
+    averageTicket,
     groupedTransactions,
     serviceNames,
     categoryNames,

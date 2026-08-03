@@ -25,7 +25,7 @@ export function DashboardBottomSection({
   const icons = [Scissors, UserRound, Sparkles];
 
   return (
-    <section className="grid grid-cols-12 gap-8">
+    <section className="hidden grid-cols-12 gap-8 lg:grid">
       <div className="squircle col-span-4 bg-surface-container-low p-10">
         <h3 className="font-headline-md text-headline-md mb-8 text-on-surface">
           Premium Services

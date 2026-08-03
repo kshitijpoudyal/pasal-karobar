@@ -152,7 +152,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-md md:p-8"
+      className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-md lg:items-center lg:p-8"
       role="presentation"
       onClick={onClose}
     >
@@ -160,15 +160,23 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="record-transaction-modal squircle flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden border border-outline-variant/60 shadow-2xl"
+        className={cn(
+          "record-transaction-modal flex w-full max-w-2xl flex-col overflow-hidden border border-outline-variant/60 shadow-2xl",
+          "max-h-[92dvh] rounded-t-[32px] bg-surface/95 backdrop-blur-xl lg:max-h-[90vh] lg:rounded-squircle lg:bg-surface-container-lowest",
+          "animate-[slideUpSheet_0.3s_ease-out] lg:animate-none",
+        )}
         onClick={(event) => event.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b border-outline-variant/40 p-6">
+        <div className="flex justify-center py-3 lg:hidden">
+          <div className="h-1.5 w-12 rounded-full bg-outline-variant/50" />
+        </div>
+        <header className="flex items-center justify-between border-b border-outline-variant/40 px-5 py-4 lg:p-6">
           <h2
             id={titleId}
-            className="font-headline text-2xl font-semibold text-on-surface"
+            className="font-headline text-[28px] leading-tight font-medium text-on-surface lg:text-2xl lg:font-semibold"
           >
-            Record Transaction
+            <span className="lg:hidden">New Entry</span>
+            <span className="hidden lg:inline">Record Transaction</span>
           </h2>
           <Button
             type="button"
@@ -182,11 +190,11 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
           </Button>
         </header>
 
-        <div className="px-6 pt-6">
-          <div className="relative flex rounded-full bg-surface-container-low p-1">
+        <div className="px-5 pt-2 lg:px-6 lg:pt-6">
+          <div className="relative flex rounded-squircle bg-surface-container-high p-1 shadow-[inset_0_2px_4px_rgba(30,58,95,0.08)] lg:rounded-full lg:bg-surface-container-low lg:shadow-none">
             <div
               className={cn(
-                "squircle absolute inset-y-1 left-1 z-0 w-[calc(50%-4px)] bg-white shadow-sm transition-transform duration-300 ease-out",
+                "squircle absolute inset-y-1 left-1 z-0 w-[calc(50%-4px)] bg-primary-container shadow-sm transition-transform duration-300 ease-out lg:bg-white",
                 tab === "expense" && "translate-x-full",
               )}
             />
@@ -194,8 +202,10 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
               type="button"
               onClick={() => setTab("income")}
               className={cn(
-                "relative z-10 flex-1 py-3 text-center text-sm font-semibold transition-colors",
-                tab === "income" ? "text-primary" : "text-outline",
+                "relative z-10 flex-1 py-3 text-center text-label-sm normal-case tracking-[0.12em] transition-colors lg:text-sm lg:font-semibold",
+                tab === "income"
+                  ? "text-on-primary-container lg:text-primary"
+                  : "text-on-surface-variant lg:text-outline",
               )}
             >
               Income
@@ -204,8 +214,10 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
               type="button"
               onClick={() => setTab("expense")}
               className={cn(
-                "relative z-10 flex-1 py-3 text-center text-sm font-semibold transition-colors",
-                tab === "expense" ? "text-primary" : "text-outline",
+                "relative z-10 flex-1 py-3 text-center text-label-sm normal-case tracking-[0.12em] transition-colors lg:text-sm lg:font-semibold",
+                tab === "expense"
+                  ? "text-on-primary-container lg:text-primary"
+                  : "text-on-surface-variant lg:text-outline",
               )}
             >
               Expense
@@ -213,7 +225,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
           </div>
         </div>
 
-        <div className="hide-scrollbar flex-1 space-y-8 overflow-y-auto p-6">
+        <div className="hide-scrollbar flex-1 space-y-8 overflow-y-auto p-5 lg:p-6">
           {tab === "income" ? (
             <div className="space-y-8">
               <div>
@@ -233,7 +245,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                     Service Catalog, then try again.
                   </p>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 sm:gap-4">
                     {catalogServices.map((service, index) => {
                       const Icon =
                         QUICK_SERVICE_ICONS[index % QUICK_SERVICE_ICONS.length] ??
@@ -245,9 +257,9 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                           type="button"
                           onClick={() => selectService(service.id, price)}
                           className={cn(
-                            "service-card squircle group flex flex-col items-center justify-center border border-transparent bg-surface-container-low p-4 transition-all hover:bg-surface-container active:scale-95 sm:p-5",
+                            "service-card squircle group flex flex-col items-center justify-center border border-transparent bg-surface-container p-4 transition-all hover:bg-surface-container-high active:scale-95 sm:p-5",
                             selectedServiceId === service.id &&
-                              "active bg-surface-container",
+                              "border-2 border-primary-container bg-primary-container/10 lg:border-transparent lg:bg-surface-container",
                           )}
                         >
                           <Icon
@@ -307,13 +319,13 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                 <p className="font-body mb-3 text-[11px] font-bold tracking-[0.1em] text-outline uppercase">
                   Payment Method
                 </p>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2">
                   <PaymentOption
                     label="Cash"
                     value="Cash"
                     selected={payment}
                     onSelect={setPayment}
-                    icon={<Banknote className="size-6 text-secondary" strokeWidth={1.75} />}
+                    icon={<Banknote className="size-6 text-on-secondary-container lg:text-secondary" strokeWidth={1.75} />}
                   />
                   <PaymentOption
                     label="eSewa"
@@ -432,7 +444,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
           )}
         </div>
 
-        <footer className="border-t border-outline-variant/40 p-6 space-y-3">
+        <footer className="space-y-3 border-t border-surface-container-high bg-surface/80 p-5 backdrop-blur-xl lg:border-outline-variant/40 lg:bg-transparent lg:p-6 lg:backdrop-blur-none">
           {formError ? (
             <p className="text-center text-sm text-error" role="alert">
               {formError}
@@ -447,7 +459,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
             type="button"
             disabled={createMutation.isPending}
             onClick={handleSubmit}
-            className="font-headline flex h-14 w-full items-center justify-center gap-3 rounded-full text-lg font-bold"
+            className="font-headline flex h-14 w-full items-center justify-center gap-3 rounded-squircle text-lg font-bold lg:rounded-full"
           >
             <CirclePlus className="size-6" strokeWidth={2} />
             {createMutation.isPending ? "Saving…" : submitLabel}
@@ -475,13 +487,14 @@ function PaymentOption({
     <button
       type="button"
       onClick={() => onSelect(value)}
-      className={cn(
-        "payment-method squircle flex min-w-[90px] flex-1 cursor-pointer flex-col items-center gap-1 border border-transparent bg-surface-container-low py-3 transition-all hover:bg-surface-container active:scale-95",
-        selected === value && "bg-surface-container",
+        className={cn(
+        "payment-method squircle flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-1 border border-transparent py-2 transition-all hover:bg-surface-container-high active:scale-95 lg:min-w-[90px] lg:bg-surface-container-low lg:py-3",
+        selected === value &&
+          "bg-primary-container text-on-primary-container lg:bg-surface-container lg:text-inherit",
       )}
     >
       {icon}
-      <span className="font-body text-[11px] font-bold">{label}</span>
+      <span className="font-body text-[10px] font-bold uppercase lg:text-[11px]">{label}</span>
     </button>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format, parseISO } from "date-fns";
 
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
 import { QueryState } from "@/components/layout/query-state";
@@ -34,7 +33,12 @@ export function DashboardContent() {
     summary.expenses === 0;
 
   return (
-    <div className="space-y-12 p-12">
+    <div className="space-y-6 px-5 py-6 lg:space-y-12 lg:p-12">
+      <div className="lg:hidden">
+        <h1 className="font-headline text-[28px] leading-tight font-medium text-on-surface">
+          Financial Landscape
+        </h1>
+      </div>
       <DashboardPeriodBar period={period} onPeriodChange={setPeriod} />
       <QueryState
         isLoading={summaryQuery.isLoading}
@@ -54,8 +58,4 @@ export function DashboardContent() {
       </QueryState>
     </div>
   );
-}
-
-export function formatTransactionTime(iso: string) {
-  return format(parseISO(iso), "h:mm a");
 }

@@ -73,7 +73,7 @@ export function TransactionActivityCard({
           <p className="text-label-sm mb-1 font-medium tracking-widest text-on-surface-variant uppercase">
             {amountLabel}
           </p>
-          <div className="font-headline text-2xl font-bold">{amount}</div>
+          <div className="font-headline text-2xl font-bold text-on-surface">{amount}</div>
         </div>
         <div className="ml-auto flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100 md:ml-0">
           <Button
@@ -110,11 +110,76 @@ export function TransactionActivityCard({
 
 export function TimelineDateDivider({ label }: { label: string }) {
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-6 bg-surface py-4">
+    <div className="sticky top-0 z-10 flex items-center gap-4 bg-surface py-3 lg:gap-6 lg:py-4">
       <span className="text-label-sm font-bold tracking-[0.25em] whitespace-nowrap text-outline uppercase">
         {label}
       </span>
       <div className="h-px flex-1 bg-outline-variant" />
+    </div>
+  );
+}
+
+type TransactionActivityMobileRowProps = {
+  title: string;
+  time: string;
+  paymentLabel: string;
+  amount: ReactNode;
+  tipLabel?: string | null;
+  icon: LucideIcon;
+  iconWrapClassName: string;
+  isIncome: boolean;
+};
+
+export function TransactionActivityMobileRow({
+  title,
+  time,
+  paymentLabel,
+  amount,
+  tipLabel,
+  icon: Icon,
+  iconWrapClassName,
+  isIncome,
+}: TransactionActivityMobileRowProps) {
+  return (
+    <div className="squircle flex items-center gap-4 bg-surface-container-low p-4 transition-colors hover:bg-surface-container">
+      <div
+        className={cn(
+          "flex size-12 shrink-0 items-center justify-center rounded-full",
+          iconWrapClassName,
+        )}
+      >
+        <Icon className="size-6" strokeWidth={1.75} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <h3 className="font-headline truncate text-base font-semibold text-on-surface">
+            {title}
+          </h3>
+          <p
+            className={cn(
+              "shrink-0 font-headline text-base font-semibold",
+              isIncome ? "text-primary" : "text-on-tertiary-container",
+            )}
+          >
+            {amount}
+          </p>
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <span className="text-label-sm normal-case tracking-normal text-on-surface-variant">
+            {time}
+          </span>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="rounded-full bg-surface-container-highest px-2 py-0.5 text-label-sm normal-case tracking-normal text-on-surface">
+              {paymentLabel}
+            </span>
+            {tipLabel ? (
+              <span className="text-label-sm normal-case tracking-normal text-on-secondary-container">
+                {tipLabel}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

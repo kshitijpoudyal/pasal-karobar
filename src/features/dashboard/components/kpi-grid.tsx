@@ -31,12 +31,18 @@ function KpiCard({
   footer,
 }: KpiCardProps) {
   return (
-    <div className="squircle flex flex-col gap-4 bg-surface-container-low p-8">
-      <div className="flex items-center justify-between">
+    <div className="squircle flex flex-col gap-3 bg-surface-container-low p-6 shadow-natural-ink lg:gap-4 lg:p-8 lg:shadow-none">
+      <div className="flex size-10 items-center justify-center rounded-full bg-surface-container-highest lg:hidden">
+        <Icon className={cn("size-5", iconClassName)} strokeWidth={1.75} />
+      </div>
+      <div className="hidden items-center justify-between lg:flex">
         <Icon className={cn("size-6", iconClassName)} strokeWidth={1.75} />
         <span className="text-label-sm text-on-surface-variant">{label}</span>
       </div>
-      <p className="text-4xl font-bold text-on-surface">{value}</p>
+      <span className="text-label-sm text-on-surface-variant lg:hidden">{label}</span>
+      <p className="font-headline text-xl font-semibold text-on-surface lg:text-4xl lg:font-bold">
+        {value}
+      </p>
       {footer}
     </div>
   );
@@ -53,14 +59,14 @@ export function KpiGrid({ summary }: KpiGridProps) {
       : 0;
 
   return (
-    <section className="grid grid-cols-2 gap-6 lg:grid-cols-4">
+    <section className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
       <KpiCard
         icon={Banknote}
         iconClassName="text-primary"
         label="Income"
         value={formatCompactNpr(summary.revenue)}
         footer={
-          <div className="text-label-sm flex items-center gap-1 font-bold text-secondary">
+          <div className="text-label-sm flex items-center gap-1 font-bold text-on-secondary-container">
             <ArrowUp className="size-3.5" strokeWidth={2.5} />
             Live
           </div>
@@ -83,7 +89,7 @@ export function KpiGrid({ summary }: KpiGridProps) {
         label="Net Profit"
         value={formatCompactNpr(summary.profit)}
         footer={
-          <div className="text-label-sm font-bold text-secondary uppercase">
+          <div className="text-label-sm font-bold text-on-secondary-container uppercase">
             {efficiency}% Efficiency
           </div>
         }
@@ -94,7 +100,7 @@ export function KpiGrid({ summary }: KpiGridProps) {
         label="Customers Count"
         value={String(summary.patronCount)}
         footer={
-          <div className="text-label-sm flex items-center gap-1 font-bold text-secondary">
+          <div className="text-label-sm flex items-center gap-1 font-bold text-on-secondary-container">
             <TrendingUp className="size-3.5" strokeWidth={2.5} />
             Income rows
           </div>

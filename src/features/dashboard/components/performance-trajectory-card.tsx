@@ -24,12 +24,12 @@ export function PerformanceTrajectoryCard({
   }, null);
 
   return (
-    <div className="squircle col-span-8 flex flex-col bg-surface-container-low p-10">
-      <div className="mb-10 flex items-center justify-between">
-        <h3 className="font-headline-md text-headline-md text-on-surface">
+    <div className="squircle col-span-12 flex flex-col bg-surface-container-low p-6 shadow-natural-ink lg:col-span-8 lg:p-10 lg:shadow-none">
+      <div className="mb-6 flex items-center justify-between lg:mb-10">
+        <h3 className="font-headline text-xl font-medium text-on-surface lg:font-headline-md lg:text-headline-md">
           Performance Trajectory
         </h3>
-        <div className="flex items-center gap-6">
+        <div className="hidden items-center gap-6 lg:flex">
           <span className="text-label-sm flex items-center gap-2 text-on-surface-variant">
             <span className="squircle size-3 bg-primary" />
             Income
@@ -40,12 +40,22 @@ export function PerformanceTrajectoryCard({
           </span>
         </div>
       </div>
+      <div className="mb-4 flex items-center gap-4 lg:hidden">
+        <span className="text-label-sm flex items-center gap-2 text-on-surface-variant">
+          <span className="squircle size-2.5 bg-primary-container" />
+          Income
+        </span>
+        <span className="text-label-sm flex items-center gap-2 text-on-surface-variant">
+          <span className="squircle size-2.5 bg-surface-container-highest" />
+          Expense
+        </span>
+      </div>
       {safePoints.length === 0 ? (
         <p className="text-sm text-on-surface-variant">
           No transaction data for this period.
         </p>
       ) : (
-        <div className="relative min-h-[350px] flex-1">
+        <div className="relative min-h-48 flex-1 lg:min-h-[350px]">
           <div className="absolute inset-0 flex items-end gap-2 px-2 pb-14 sm:gap-4">
             {safePoints.map((point) => {
               const incomeHeight = (point.income / maxValue) * 100;

@@ -74,6 +74,30 @@
   --color-background: #faf9fc;
 }
 
+@utility shadow-natural-ink {
+  box-shadow: 0 4px 24px rgba(30, 58, 95, 0.08);
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @utility hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

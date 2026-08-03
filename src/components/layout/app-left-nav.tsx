@@ -52,7 +52,7 @@ export function AppLeftNav() {
   return (
     <aside
       className={cn(
-        "fixed top-0 left-0 z-40 flex h-full shrink-0 flex-col border-r border-outline-variant bg-surface-container-low py-8",
+        "fixed top-0 left-0 z-40 hidden h-full shrink-0 flex-col border-r border-outline-variant bg-surface-container-low py-8 lg:flex",
         appShellTransitionClass,
         navWidthClass,
       )}

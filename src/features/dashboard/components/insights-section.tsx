@@ -18,6 +18,7 @@ type InsightCardProps = {
   icon: LucideIcon;
   className: string;
   iconClassName?: string;
+  mobile?: boolean;
 };
 
 function InsightCard({
@@ -27,7 +28,28 @@ function InsightCard({
   icon: Icon,
   className,
   iconClassName,
+  mobile = false,
 }: InsightCardProps) {
+  if (mobile) {
+    return (
+      <div
+        className={cn(
+          "squircle flex items-start gap-4 bg-surface-container p-5 shadow-natural-ink lg:hidden",
+          className,
+        )}
+      >
+        <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-secondary-container">
+          <Icon className="size-6 text-on-secondary-container" strokeWidth={1.75} />
+        </div>
+        <div className="min-w-0">
+          <p className="text-label-sm mb-1 opacity-70">{category}</p>
+          <h4 className="font-headline mb-1 text-lg font-medium">{title}</h4>
+          <p className="text-sm leading-relaxed text-on-surface-variant">{body}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -77,39 +99,75 @@ export function CuratedInsightsPanel(props: CuratedInsightsPanelProps) {
     : "Record income in this period to see peak hour ranges.";
 
   return (
-    <div className="col-span-4 space-y-4 md:space-y-6">
+    <div className="col-span-12 space-y-4 lg:col-span-4 lg:space-y-6">
       <h3 className="font-headline-md text-headline-md text-on-surface">
         Peak Analysis
       </h3>
-      <InsightCard
-        category="Busiest day of week"
-        title={busiestDayOfWeek?.dayLabel ?? "—"}
-        body={dayBody}
-        icon={Sparkles}
-        className="bg-[#F3E5F5] text-[#4A148C]"
-      />
-      <InsightCard
-        category="Busiest week of month"
-        title={
-          busiestWeekOfMonth
-            ? `${busiestWeekOfMonth.weekLabel} · ${busiestWeekOfMonth.rangeLabel}`
-            : "—"
-        }
-        body={weekBody}
-        icon={CalendarDays}
-        className="bg-[#E3F2FD] text-[#0D47A1]"
-      />
-      <InsightCard
-        category="Busiest hour range"
-        title={
-          busiestHourRange
-            ? `${busiestHourRange.windowStart} – ${busiestHourRange.windowEnd}`
-            : "—"
-        }
-        body={hourBody}
-        icon={Clock}
-        className="bg-[#FFF3E0] text-[#E65100]"
-      />
+      <div className="flex flex-col gap-4 lg:hidden">
+        <InsightCard
+          category="Busiest day of week"
+          title={busiestDayOfWeek?.dayLabel ?? "—"}
+          body={dayBody}
+          icon={Sparkles}
+          className="bg-[#F3E5F5] text-[#4A148C]"
+          mobile
+        />
+        <InsightCard
+          category="Busiest week of month"
+          title={
+            busiestWeekOfMonth
+              ? `${busiestWeekOfMonth.weekLabel} · ${busiestWeekOfMonth.rangeLabel}`
+              : "—"
+          }
+          body={weekBody}
+          icon={CalendarDays}
+          className="bg-[#E3F2FD] text-[#0D47A1]"
+          mobile
+        />
+        <InsightCard
+          category="Busiest hour range"
+          title={
+            busiestHourRange
+              ? `${busiestHourRange.windowStart} – ${busiestHourRange.windowEnd}`
+              : "—"
+          }
+          body={hourBody}
+          icon={Clock}
+          className="bg-[#FFF3E0] text-[#E65100]"
+          mobile
+        />
+      </div>
+      <div className="hidden space-y-4 lg:block lg:space-y-6">
+        <InsightCard
+          category="Busiest day of week"
+          title={busiestDayOfWeek?.dayLabel ?? "—"}
+          body={dayBody}
+          icon={Sparkles}
+          className="bg-[#F3E5F5] text-[#4A148C]"
+        />
+        <InsightCard
+          category="Busiest week of month"
+          title={
+            busiestWeekOfMonth
+              ? `${busiestWeekOfMonth.weekLabel} · ${busiestWeekOfMonth.rangeLabel}`
+              : "—"
+          }
+          body={weekBody}
+          icon={CalendarDays}
+          className="bg-[#E3F2FD] text-[#0D47A1]"
+        />
+        <InsightCard
+          category="Busiest hour range"
+          title={
+            busiestHourRange
+              ? `${busiestHourRange.windowStart} – ${busiestHourRange.windowEnd}`
+              : "—"
+          }
+          body={hourBody}
+          icon={Clock}
+          className="bg-[#FFF3E0] text-[#E65100]"
+        />
+      </div>
     </div>
   );
 }
@@ -125,7 +183,7 @@ export function InsightsSection({
 }: InsightsSectionProps) {
   return (
     <section>
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-12 gap-6 lg:gap-8">
         <PerformanceTrajectoryCard points={trajectory} />
         <CuratedInsightsPanel peakAnalysis={peakAnalysis} />
       </div>

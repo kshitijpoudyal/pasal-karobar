@@ -3,12 +3,12 @@
 import { useQuery, type UseQueryOptions } from "@tanstack/react-query";
 
 import { queryKeys } from "@/constants/query-keys";
-import type { DashboardSummaryParams } from "@/services/dashboard-summary";
+import { fetchDashboardSummary } from "@/actions/fetch-dashboard-summary";
 import {
   normalizeDashboardSummary,
   type DashboardSummary,
+  type DashboardSummaryParams,
 } from "@/services/dashboard-summary";
-import { getClientAppServices } from "@/services/client";
 import { isSupabaseConfigured } from "@/utils/env";
 
 export function useDashboardSummaryQuery(
@@ -22,10 +22,7 @@ export function useDashboardSummaryQuery(
   return useQuery({
     queryKey: [...queryKeys.dashboard.summary(businessId), params ?? {}],
     queryFn: async () => {
-      const raw = await getClientAppServices().dashboard.getSummary(
-        businessId,
-        params,
-      );
+      const raw = await fetchDashboardSummary(businessId, params);
       return normalizeDashboardSummary(raw);
     },
     select: (data) => normalizeDashboardSummary(data),

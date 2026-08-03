@@ -73,7 +73,9 @@ export function AppNavProvider({ children }: { children: React.ReactNode }) {
       collapsed,
       toggleCollapsed,
       navWidthClass: collapsed ? NAV_WIDTH_COLLAPSED : NAV_WIDTH_EXPANDED,
-      mainOffsetClass: collapsed ? MAIN_OFFSET_COLLAPSED : MAIN_OFFSET_EXPANDED,
+      mainOffsetClass: collapsed
+        ? `ml-0 lg:${MAIN_OFFSET_COLLAPSED}`
+        : `ml-0 lg:${MAIN_OFFSET_EXPANDED}`,
     }),
     [collapsed, toggleCollapsed],
   );

@@ -7,6 +7,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   TimelineDateDivider,
   TransactionActivityCard,
+  TransactionActivityMobileRow,
 } from "@/features/activity/components/transaction-activity-card";
 import type { Transaction } from "@/types/database";
 import { formatNpr } from "@/utils/format";
@@ -61,20 +62,46 @@ export function TransactionTimeline({
       {grouped.map(([dayKey, transactions]) => (
         <div key={dayKey}>
           <TimelineDateDivider label={formatDayLabel(dayKey)} />
-          <div className="mb-6 grid grid-cols-1 gap-6">
+          <div className="mb-4 flex flex-col gap-3 lg:mb-6 lg:grid lg:grid-cols-1 lg:gap-6">
             {transactions.map((tx) => {
               const isIncome = tx.type === "INCOME";
               const Icon = iconForTransaction(tx);
               const tip = Number(tx.tip);
               const total = Number(tx.total);
+              const title = titleForTransaction(tx, serviceNames, categoryNames);
+              const time = format(parseISO(tx.transaction_date), "h:mm a");
+              const paymentLabel = dbPaymentToLabel(tx.payment_method);
 
               return (
-                <TransactionActivityCard
-                  key={tx.id}
-                  title={titleForTransaction(tx, serviceNames, categoryNames)}
-                  time={format(parseISO(tx.transaction_date), "h:mm a")}
-                  paymentLabel={dbPaymentToLabel(tx.payment_method)}
-                  paymentClassName={
+                <div key={tx.id}>
+                  <div className="lg:hidden">
+                    <TransactionActivityMobileRow
+                      title={title}
+                      time={time}
+                      paymentLabel={paymentLabel}
+                      isIncome={isIncome}
+                      amount={
+                        isIncome
+                          ? formatNpr(total - tip)
+                          : `- ${formatNpr(total)}`
+                      }
+                      tipLabel={
+                        isIncome && tip > 0 ? `+ ${formatNpr(tip)} Tip` : null
+                      }
+                      icon={Icon}
+                      iconWrapClassName={
+                        isIncome
+                          ? "bg-primary-container text-on-primary-container"
+                          : "bg-tertiary-container text-on-tertiary-container"
+                      }
+                    />
+                  </div>
+                  <div className="hidden lg:block">
+                    <TransactionActivityCard
+                      title={title}
+                      time={time}
+                      paymentLabel={paymentLabel}
+                      paymentClassName={
                     isIncome
                       ? "bg-secondary-container/50 text-on-secondary-container"
                       : "bg-surface-container-high text-tertiary"
@@ -83,7 +110,9 @@ export function TransactionTimeline({
                   amount={
                     isIncome ? (
                       <>
-                        <span className="text-secondary">{formatNpr(total - tip)}</span>{" "}
+                        <span className="text-on-secondary-container">
+                          {formatNpr(total - tip)}
+                        </span>{" "}
                         {tip > 0 ? (
                           <span className="text-sm font-normal text-on-surface-variant">
                             + {formatNpr(tip)}
@@ -91,7 +120,9 @@ export function TransactionTimeline({
                         ) : null}
                       </>
                     ) : (
-                      <span className="text-tertiary">- {formatNpr(total)}</span>
+                      <span className="text-on-tertiary-container">
+                        - {formatNpr(total)}
+                      </span>
                     )
                   }
                   icon={Icon}
@@ -103,20 +134,22 @@ export function TransactionTimeline({
                   borderClassName={
                     isIncome ? "border-l-secondary" : "border-l-tertiary"
                   }
-                  onDelete={
-                    isDeleting
-                      ? undefined
-                      : () => {
-                          void onDelete(tx.id);
-                        }
-                  }
-                />
+                      onDelete={
+                        isDeleting
+                          ? undefined
+                          : () => {
+                              void onDelete(tx.id);
+                            }
+                      }
+                    />
+                  </div>
+                </div>
               );
             })}
           </div>
         </div>
       ))}
-      <div className="mb-24" />
+      <div className="mb-8 lg:mb-24" />
     </div>
   );
 }
