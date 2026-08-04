@@ -29,25 +29,27 @@ export function ActivityFilters({
 }: ActivityFiltersProps) {
   return (
     <div className="col-span-12 flex min-w-0 flex-col gap-6 xl:col-span-8">
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-label-sm mr-4 font-semibold tracking-widest text-on-surface-variant uppercase">
+      <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
+        <span className="text-label-sm w-full shrink-0 font-semibold tracking-widest text-on-surface-variant uppercase lg:mr-4 lg:w-auto">
           Timeframe
         </span>
-        {TIMEFRAMES.map((label) => (
-          <button
-            key={label}
-            type="button"
-            onClick={() => onTimeframeChange(label)}
-            className={cn(
-              "rounded-full px-6 py-2.5 text-sm font-medium shadow-md transition-colors",
-              timeframe === label
-                ? "bg-primary text-on-primary"
-                : "border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low",
-            )}
-          >
-            {label}
-          </button>
-        ))}
+        <div className="flex flex-wrap gap-3">
+          {TIMEFRAMES.map((label) => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => onTimeframeChange(label)}
+              className={cn(
+                "rounded-full px-6 py-2.5 text-sm font-medium shadow-md transition-colors",
+                timeframe === label
+                  ? "bg-primary text-on-primary"
+                  : "border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-label-sm mr-4 font-semibold tracking-widest text-on-surface-variant uppercase">

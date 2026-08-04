@@ -26,26 +26,31 @@ function NavTab({
   label,
   icon: Icon,
   active,
+  align = "center",
 }: {
   href: string;
   label: string;
   icon: typeof LayoutGrid;
   active: boolean;
+  align?: "start" | "center" | "end";
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex min-w-0 flex-1 flex-col items-center justify-center rounded-[24px] px-2 py-2 transition-all active:scale-90",
+        "flex min-w-0 flex-1 flex-col items-center justify-center px-2 py-2 transition-all active:scale-90",
+        align === "start" && "rounded-tl-[24px] rounded-tr-2xl rounded-b-2xl",
+        align === "end" && "rounded-tr-[24px] rounded-tl-2xl rounded-b-2xl",
+        align === "center" && "rounded-t-[24px] rounded-b-2xl",
         active
           ? "bg-primary-container text-on-primary-container"
           : "text-on-surface-variant hover:bg-surface-container-high",
       )}
     >
       <Icon className="mb-1 size-6" strokeWidth={active ? 2.25 : 1.75} />
-              <span className="text-label-sm max-w-[4.5rem] truncate text-[10px] sm:max-w-none sm:text-[12px]">
-                {label}
-              </span>
+      <span className="text-label-sm max-w-[4.5rem] truncate text-[10px] sm:max-w-none sm:text-[12px]">
+        {label}
+      </span>
     </Link>
   );
 }
@@ -75,6 +80,7 @@ export function AppMobileBottomNav() {
                 label={label}
                 icon={icon}
                 active={active}
+                align={href === "/" ? "start" : "center"}
               />
             );
           })}
@@ -98,6 +104,7 @@ export function AppMobileBottomNav() {
             label={SETTINGS_ITEM.label}
             icon={SETTINGS_ITEM.icon}
             active={settingsActive}
+            align="center"
           />
           <button
             type="button"
@@ -105,7 +112,7 @@ export function AppMobileBottomNav() {
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
             className={cn(
-              "flex min-w-0 flex-1 flex-col items-center justify-center rounded-[24px] px-2 py-2 transition-all active:scale-90",
+              "flex min-w-0 flex-1 flex-col items-center justify-center rounded-tr-[24px] rounded-tl-2xl rounded-b-2xl px-2 py-2 transition-all active:scale-90",
               menuOpen
                 ? "bg-primary-container text-on-primary-container"
                 : "text-on-surface-variant hover:bg-surface-container-high",
