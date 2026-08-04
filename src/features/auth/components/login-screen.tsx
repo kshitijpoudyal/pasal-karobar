@@ -7,15 +7,27 @@ import {
   Eye,
   EyeOff,
   Lock,
+  Scissors,
 } from "lucide-react";
-import Image from "next/image";
 import { useState } from "react";
 
+import { APP_NAME } from "@/constants/app";
 import { useLoginForm } from "@/features/auth/hooks/use-login-form";
 import { cn } from "@/lib/utils";
 
-const LOGO_SRC =
-  "https://lh3.googleusercontent.com/aida/AP1WRLvkviHadkoAopV5HAJgyA-C4XYoeMIRggyNjvYeQIWMDBEWRBbVUlWkRptCCEFiYRkdzgxKP2YxlO8Gxxie2BhWtq_cv7hTx2SpDsH8PmrodEfPPr-xpA2EKenpuVOI2EtyulhXCUiwdDDzlp610U1dp44Q8maJs1Onkh6pwl5BK7v3E1HEX2XILfBjMmre0LCWKqULA11iuTJjXZWnFlpRK3IahCztWylSJUvkPVcWHEO3a9fNKjxKMjZj";
+function AppLogoMark({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "squircle flex size-10 shrink-0 items-center justify-center bg-primary text-on-primary",
+        className,
+      )}
+      aria-hidden
+    >
+      <Scissors className="size-6" strokeWidth={1.75} />
+    </div>
+  );
+}
 
 const FEATURES = [
   {
@@ -56,15 +68,9 @@ export function LoginScreen() {
     <div className="login-screen font-body-md text-on-surface flex min-h-screen flex-col bg-[#faf9fc]">
       <header className="sticky top-0 z-50 mx-auto flex w-full max-w-[1440px] items-center justify-between bg-surface px-5 py-8 md:px-16">
         <div className="flex items-center gap-4">
-          <Image
-            alt="Kathmandu Ledger Logo"
-            className="h-10 w-10 object-contain grayscale transition-all duration-500 hover:grayscale-0"
-            height={40}
-            width={40}
-            src={LOGO_SRC}
-          />
+          <AppLogoMark />
           <h1 className="font-headline text-[20px] font-medium tracking-widest text-primary uppercase">
-            Kathmandu Ledger
+            {APP_NAME}
           </h1>
         </div>
         <div className="hidden md:block">
@@ -242,7 +248,7 @@ export function LoginScreen() {
 
       <footer className="mt-auto flex w-full max-w-[1440px] flex-col items-center justify-between gap-6 border-t border-surface-container px-5 py-12 md:flex-row md:px-16 mx-auto">
         <div className="text-label-sm text-center text-on-surface-variant uppercase tracking-widest md:text-left">
-          © {new Date().getFullYear()} Kathmandu Ledger. Architectural Precision
+          © {new Date().getFullYear()} {APP_NAME}. Architectural Precision
           in Finance.
         </div>
         <div className="flex gap-8">
@@ -264,14 +270,7 @@ export function LoginLoadingScreen() {
   return (
     <div className="login-screen font-body-md flex min-h-screen flex-col items-center justify-center bg-[#faf9fc] text-on-surface-variant">
       <div className="flex flex-col items-center gap-4">
-        <Image
-          alt=""
-          aria-hidden
-          className="h-10 w-10 object-contain opacity-60"
-          height={40}
-          width={40}
-          src={LOGO_SRC}
-        />
+        <AppLogoMark className="opacity-60" />
         <p className="text-label-sm uppercase tracking-widest">
           Checking session…
         </p>
