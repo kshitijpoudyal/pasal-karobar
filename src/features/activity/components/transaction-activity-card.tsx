@@ -35,31 +35,33 @@ export function TransactionActivityCard({
   return (
     <div
       className={cn(
-        "glass-card group flex flex-col justify-between gap-6 rounded-squircle p-8 transition-all duration-300 hover:-translate-y-1 md:flex-row md:items-center",
-        "border-l-8",
+        "glass-card group flex min-w-0 flex-col justify-between gap-3 rounded-2xl p-4 transition-all duration-300 lg:flex-row lg:items-center lg:gap-5 lg:p-5",
+        "border-l-4",
         borderClassName,
       )}
     >
-      <div className="flex items-center gap-6">
+      <div className="flex min-w-0 items-center gap-4">
         <div
           className={cn(
-            "flex size-16 items-center justify-center rounded-2xl",
+            "flex size-11 shrink-0 items-center justify-center rounded-xl lg:size-12",
             iconWrapClassName,
           )}
         >
-          <Icon className={cn("size-8", iconClassName)} strokeWidth={1.75} />
+          <Icon className={cn("size-6 lg:size-7", iconClassName)} strokeWidth={1.75} />
         </div>
-        <div>
-          <h4 className="font-headline text-xl font-bold text-primary">{title}</h4>
-          <div className="text-label-sm mt-2 flex items-center gap-4 text-on-surface-variant">
-            <span className="flex items-center gap-1.5">
-              <Clock className="size-4" strokeWidth={1.75} />
+        <div className="min-w-0">
+          <h4 className="font-headline truncate text-base font-bold text-primary lg:text-lg">
+            {title}
+          </h4>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-on-surface-variant lg:gap-3">
+            <span className="flex items-center gap-1 text-xs lg:text-sm">
+              <Clock className="size-3.5" strokeWidth={1.75} />
               {time}
             </span>
-            <span className="size-1.5 rounded-full bg-outline-variant" />
+            <span className="hidden size-1 rounded-full bg-outline-variant sm:block" />
             <span
               className={cn(
-                "rounded-full px-4 py-1 text-[11px] font-bold tracking-wider uppercase",
+                "rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase lg:text-[11px]",
                 paymentClassName,
               )}
             >
@@ -68,19 +70,19 @@ export function TransactionActivityCard({
           </div>
         </div>
       </div>
-      <div className="flex w-full items-center gap-12 md:w-auto">
-        <div className="hidden text-right sm:block">
-          <p className="text-label-sm mb-1 font-medium tracking-widest text-on-surface-variant uppercase">
+      <div className="flex min-w-0 items-center justify-between gap-3 lg:justify-end lg:gap-6">
+        <div className="text-left lg:text-right">
+          <p className="text-[10px] font-medium tracking-widest text-on-surface-variant uppercase lg:text-label-sm">
             {amountLabel}
           </p>
-          <div className="font-headline text-2xl font-bold text-on-surface">{amount}</div>
+          <div className="font-headline text-lg font-bold text-on-surface lg:text-xl">{amount}</div>
         </div>
-        <div className="ml-auto flex items-center gap-3 opacity-0 transition-opacity group-hover:opacity-100 md:ml-0">
+        <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity xl:opacity-0 xl:group-hover:opacity-100">
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="size-11 rounded-full text-on-surface-variant hover:bg-surface-container-low"
+            className="size-9 rounded-full text-on-surface-variant hover:bg-surface-container-low"
           >
             <Eye className="size-5" strokeWidth={1.75} />
           </Button>
@@ -88,7 +90,7 @@ export function TransactionActivityCard({
             type="button"
             variant="ghost"
             size="icon"
-            className="size-11 rounded-full text-on-surface-variant hover:bg-surface-container-low"
+            className="size-9 rounded-full text-on-surface-variant hover:bg-surface-container-low"
           >
             <Pencil className="size-5" strokeWidth={1.75} />
           </Button>
@@ -98,7 +100,7 @@ export function TransactionActivityCard({
             size="icon"
             disabled={!onDelete}
             onClick={onDelete}
-            className="size-11 rounded-full text-error hover:bg-error-container disabled:opacity-40"
+            className="size-9 rounded-full text-error hover:bg-error-container disabled:opacity-40"
           >
             <Trash2 className="size-5" strokeWidth={1.75} />
           </Button>
@@ -110,7 +112,7 @@ export function TransactionActivityCard({
 
 export function TimelineDateDivider({ label }: { label: string }) {
   return (
-    <div className="sticky top-0 z-10 flex items-center gap-4 bg-surface py-3 lg:gap-6 lg:py-4">
+    <div className="sticky top-0 z-10 flex items-center gap-3 bg-surface py-2 lg:py-2.5">
       <span className="text-label-sm font-bold tracking-[0.25em] whitespace-nowrap text-outline uppercase">
         {label}
       </span>
@@ -141,39 +143,37 @@ export function TransactionActivityMobileRow({
   isIncome,
 }: TransactionActivityMobileRowProps) {
   return (
-    <div className="squircle flex items-center gap-4 bg-surface-container-low p-4 transition-colors hover:bg-surface-container">
+    <div className="squircle flex items-center gap-3 rounded-2xl bg-surface-container-low px-3 py-2.5 transition-colors hover:bg-surface-container">
       <div
         className={cn(
-          "flex size-12 shrink-0 items-center justify-center rounded-full",
+          "flex size-9 shrink-0 items-center justify-center rounded-full",
           iconWrapClassName,
         )}
       >
-        <Icon className="size-6" strokeWidth={1.75} />
+        <Icon className="size-5" strokeWidth={1.75} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="mb-1 flex items-start justify-between gap-2">
-          <h3 className="font-headline truncate text-base font-semibold text-on-surface">
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-headline min-w-0 truncate text-sm font-semibold text-on-surface">
             {title}
           </h3>
           <p
             className={cn(
-              "shrink-0 font-headline text-base font-semibold",
+              "shrink-0 font-headline text-sm font-semibold tabular-nums",
               isIncome ? "text-primary" : "text-on-tertiary-container",
             )}
           >
             {amount}
           </p>
         </div>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <span className="text-label-sm normal-case tracking-normal text-on-surface-variant">
-            {time}
-          </span>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span className="rounded-full bg-surface-container-highest px-2 py-0.5 text-label-sm normal-case tracking-normal text-on-surface">
+        <div className="mt-0.5 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-on-surface-variant">{time}</span>
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <span className="rounded-full bg-surface-container-highest px-2 py-px text-[10px] font-semibold text-on-surface">
               {paymentLabel}
             </span>
             {tipLabel ? (
-              <span className="text-label-sm normal-case tracking-normal text-on-secondary-container">
+              <span className="text-[10px] font-medium text-on-secondary-container">
                 {tipLabel}
               </span>
             ) : null}

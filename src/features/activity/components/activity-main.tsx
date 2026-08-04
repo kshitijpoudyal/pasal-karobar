@@ -15,8 +15,8 @@ export function ActivityMain() {
 
   return (
     <>
-      <section className="hidden min-h-0 w-full flex-1 flex-col gap-10 overflow-hidden p-12 lg:flex">
-        <div className="grid shrink-0 grid-cols-12 gap-10">
+      <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-8 overflow-hidden p-6 lg:flex xl:gap-10 xl:p-12">
+        <div className="grid shrink-0 grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-10">
           <ActivityFilters
             timeframe={activity.timeframe}
             category={activity.category}
@@ -28,7 +28,7 @@ export function ActivityMain() {
         <ActivityTimelineBody activity={activity} />
       </section>
 
-      <section className="flex min-h-0 flex-1 flex-col gap-6 px-5 pt-2 pb-4 lg:hidden">
+      <section className="flex min-h-0 flex-1 flex-col gap-4 px-5 pt-2 pb-4 lg:hidden">
         <ActivitySummaryMobile
           netRevenue={activity.netRevenue}
           transactionCount={activity.transactionCount}

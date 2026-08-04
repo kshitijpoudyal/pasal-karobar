@@ -24,7 +24,7 @@ export function PerformanceTrajectoryCard({
   }, null);
 
   return (
-    <div className="squircle col-span-12 flex flex-col bg-surface-container-low p-6 shadow-natural-ink lg:col-span-8 lg:p-10 lg:shadow-none">
+    <div className="squircle col-span-12 flex flex-col bg-surface-container-low p-6 shadow-natural-ink xl:col-span-8 xl:p-10 xl:shadow-none">
       <div className="mb-6 flex items-center justify-between lg:mb-10">
         <h3 className="font-headline text-xl font-medium text-on-surface lg:font-headline-md lg:text-headline-md">
           Performance Trajectory
@@ -55,7 +55,7 @@ export function PerformanceTrajectoryCard({
           No transaction data for this period.
         </p>
       ) : (
-        <div className="relative min-h-48 flex-1 lg:min-h-[350px]">
+        <div className="relative min-h-44 flex-1 lg:min-h-[350px]">
           <div className="absolute inset-0 flex items-end gap-2 px-2 pb-14 sm:gap-4">
             {safePoints.map((point) => {
               const incomeHeight = (point.income / maxValue) * 100;

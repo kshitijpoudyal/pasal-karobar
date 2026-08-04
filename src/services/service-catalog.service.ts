@@ -30,7 +30,7 @@ export class ServiceCatalogService {
     return this.serviceCatalogRepository.update(id, payload);
   }
 
-  async delete(id: string): Promise<void> {
-    await this.serviceCatalogRepository.delete(id);
+  async delete(id: string, businessId: string): Promise<void> {
+    await this.serviceCatalogRepository.delete(id, businessId);
   }
 }

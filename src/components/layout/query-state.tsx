@@ -39,7 +39,7 @@ export function QueryState({
         <p className="font-semibold text-on-surface">Could not load data</p>
         <p className="mt-2 text-sm text-on-surface-variant">{error.message}</p>
         {onRetry ? (
-          <Button type="button" variant="outline" className="mt-4" onClick={onRetry}>
+          <Button type="button" variant="primary" className="mt-4" onClick={onRetry}>
             Try again
           </Button>
         ) : null}

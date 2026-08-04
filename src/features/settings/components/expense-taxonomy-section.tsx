@@ -52,20 +52,11 @@ export function ExpenseTaxonomySection() {
   return (
     <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
       <section className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="squircle bg-error-container p-3 text-error">
-              <LayoutGrid className="size-6" strokeWidth={1.75} />
-            </div>
-            <h3 className="font-headline text-xl font-semibold">Taxonomy</h3>
+        <div className="flex items-center gap-4">
+          <div className="squircle bg-error-container p-3 text-error">
+            <LayoutGrid className="size-6" strokeWidth={1.75} />
           </div>
-          <button
-            type="button"
-            className="text-sm font-semibold text-primary underline underline-offset-8 transition-opacity hover:opacity-70"
-            onClick={() => setShowForm(true)}
-          >
-            New Category
-          </button>
+          <h3 className="font-headline text-xl font-semibold">Taxonomy</h3>
         </div>
 
         {showForm ? (
@@ -73,7 +64,7 @@ export function ExpenseTaxonomySection() {
             className="squircle flex flex-wrap items-end gap-4 bg-surface-container-low p-6"
             onSubmit={submitNewCategory}
           >
-            <div className="min-w-[200px] flex-1 space-y-2">
+            <div className="min-w-0 flex-1 basis-[min(100%,12rem)] space-y-2">
               <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
                 Category name
               </label>
@@ -85,10 +76,14 @@ export function ExpenseTaxonomySection() {
                 <p className="text-xs text-error">{errors.name.message}</p>
               ) : null}
             </div>
-            <Button type="submit" disabled={isCreating}>
+            <Button type="submit" variant="primary" disabled={isCreating}>
               {isCreating ? "Saving…" : "Add"}
             </Button>
-            <Button type="button" variant="ghost" onClick={() => setShowForm(false)}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowForm(false)}
+            >
               Cancel
             </Button>
           </form>

@@ -67,14 +67,30 @@ export function useUpdateServiceMutation(businessId: string) {
 
 export function useDeleteServiceMutation(businessId: string) {
   const queryClient = useQueryClient();
+  const listKey = queryKeys.serviceCatalog.list(businessId);
 
   return useMutation({
-    mutationFn: (serviceId: string) =>
-      getClientAppServices().serviceCatalog.delete(serviceId),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.serviceCatalog.list(businessId),
-      });
+    mutationFn: (serviceId: string) => {
+      if (!businessId) {
+        throw new Error("No business selected.");
+      }
+      return getClientAppServices().serviceCatalog.delete(serviceId, businessId);
+    },
+    onMutate: async (serviceId) => {
+      await queryClient.cancelQueries({ queryKey: listKey });
+      const previous = queryClient.getQueryData<ServiceRecord[]>(listKey);
+      queryClient.setQueryData<ServiceRecord[]>(listKey, (current) =>
+        current?.filter((service) => service.id !== serviceId),
+      );
+      return { previous };
+    },
+    onError: (_error, _serviceId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(listKey, context.previous);
+      }
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: listKey });
     },
   });
 }

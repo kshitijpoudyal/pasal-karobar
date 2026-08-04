@@ -105,6 +105,143 @@ CROSS JOIN LATERAL (
     SELECT (floor(random()*4000)+500)::numeric(12,2) AS amount
 ) a;
 
+-- ---------------------------------------------------------------------------
+-- Extra mock volume: current week (Mon–Sun) + heavier today
+-- Re-run: supabase db reset / seed.sql (dates stay relative to seed time)
+-- ---------------------------------------------------------------------------
+
+INSERT INTO transactions
+(id,business_id,type,service_id,expense_category_id,subtotal,tip,total,payment_method,note,transaction_date)
+SELECT
+gen_random_uuid(),
+'11111111-1111-1111-1111-111111111111'::uuid,
+'INCOME'::transaction_type,
+s.id,
+NULL,
+s.default_price,
+tip,
+s.default_price + tip,
+CASE floor(random()*5)
+ WHEN 0 THEN 'CASH'::payment_method
+ WHEN 1 THEN 'CASH'::payment_method
+ WHEN 2 THEN 'ESEWA'::payment_method
+ WHEN 3 THEN 'KHALTI'::payment_method
+ ELSE 'FONEPAY'::payment_method
+END,
+NULL,
+date_trunc('week', now())
+  + (day_idx || ' days')::interval
+  + ((9 + floor(random()*9)) || ' hours')::interval
+  + (floor(random()*60) || ' minutes')::interval
+FROM generate_series(0, 6) AS day_idx
+CROSS JOIN generate_series(1, 22) AS _n
+CROSS JOIN LATERAL (
+    SELECT * FROM services
+    WHERE business_id = '11111111-1111-1111-1111-111111111111'
+    ORDER BY random()
+    LIMIT 1
+) s
+CROSS JOIN LATERAL (
+    SELECT CASE
+      WHEN random() < 0.35 THEN (floor(random()*150)+25)::numeric(12,2)
+      ELSE 0::numeric(12,2)
+    END AS tip
+) t;
+
+INSERT INTO transactions
+(id,business_id,type,service_id,expense_category_id,subtotal,tip,total,payment_method,note,transaction_date)
+SELECT
+gen_random_uuid(),
+'11111111-1111-1111-1111-111111111111'::uuid,
+'INCOME'::transaction_type,
+s.id,
+NULL,
+s.default_price,
+tip,
+s.default_price + tip,
+CASE floor(random()*5)
+ WHEN 0 THEN 'CASH'::payment_method
+ WHEN 1 THEN 'ESEWA'::payment_method
+ WHEN 2 THEN 'KHALTI'::payment_method
+ WHEN 3 THEN 'FONEPAY'::payment_method
+ ELSE 'BANK_TRANSFER'::payment_method
+END,
+NULL,
+date_trunc('day', now())
+  + ((8 + floor(random()*10)) || ' hours')::interval
+  + (floor(random()*60) || ' minutes')::interval
+FROM generate_series(1, 36) AS _n
+CROSS JOIN LATERAL (
+    SELECT * FROM services
+    WHERE business_id = '11111111-1111-1111-1111-111111111111'
+    ORDER BY random()
+    LIMIT 1
+) s
+CROSS JOIN LATERAL (
+    SELECT CASE
+      WHEN random() < 0.40 THEN (floor(random()*200)+30)::numeric(12,2)
+      ELSE 0::numeric(12,2)
+    END AS tip
+) t;
+
+INSERT INTO transactions
+(id,business_id,type,service_id,expense_category_id,subtotal,tip,total,payment_method,note,transaction_date)
+SELECT
+gen_random_uuid(),
+'11111111-1111-1111-1111-111111111111'::uuid,
+'EXPENSE'::transaction_type,
+NULL,
+c.id,
+amount,
+0,
+amount,
+CASE floor(random()*3)
+ WHEN 0 THEN 'CASH'::payment_method
+ WHEN 1 THEN 'BANK_TRANSFER'::payment_method
+ ELSE 'ESEWA'::payment_method
+END,
+NULL,
+date_trunc('week', now())
+  + (day_idx || ' days')::interval
+  + ((10 + floor(random()*6)) || ' hours')::interval
+FROM generate_series(0, 6) AS day_idx
+CROSS JOIN generate_series(1, 2) AS _n
+CROSS JOIN LATERAL (
+    SELECT * FROM expense_categories
+    WHERE business_id = '11111111-1111-1111-1111-111111111111'
+    ORDER BY random()
+    LIMIT 1
+) c
+CROSS JOIN LATERAL (
+    SELECT (floor(random()*2500)+300)::numeric(12,2) AS amount
+) a;
+
+INSERT INTO transactions
+(id,business_id,type,service_id,expense_category_id,subtotal,tip,total,payment_method,note,transaction_date)
+SELECT
+gen_random_uuid(),
+'11111111-1111-1111-1111-111111111111'::uuid,
+'EXPENSE'::transaction_type,
+NULL,
+c.id,
+amount,
+0,
+amount,
+'CASH'::payment_method,
+'Daily supplies',
+date_trunc('day', now()) + ((11 + floor(random()*5)) || ' hours')::interval
+FROM generate_series(1, 3) AS _n
+CROSS JOIN LATERAL (
+    SELECT * FROM expense_categories
+    WHERE business_id = '11111111-1111-1111-1111-111111111111'
+      AND name IN ('Supplies', 'Electricity')
+    ORDER BY random()
+    LIMIT 1
+) c
+CROSS JOIN LATERAL (
+    SELECT (floor(random()*800)+200)::numeric(12,2) AS amount
+) a;
+
 -- Demo owner (local dev); change UUID or use link-demo-business-member.sql
 INSERT INTO public.business_members (business_id, user_id)
 VALUES (

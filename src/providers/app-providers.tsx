@@ -7,6 +7,8 @@ import { BusinessProvider } from "@/providers/business-provider";
 import { BusinessGate } from "@/components/layout/business-gate";
 import { SupabaseGate } from "@/components/layout/supabase-gate";
 import { AppNavProvider } from "@/providers/app-nav-provider";
+import { ConfirmDrawerProvider } from "@/components/confirm-drawer";
+import { ToastViewport } from "@/components/toast";
 import { RecordTransactionModalProvider } from "@/features/transactions";
 
 type AppProvidersProps = {
@@ -22,9 +24,12 @@ export function AppProviders({ children }: AppProvidersProps) {
             <SupabaseGate>
               <BusinessGate>
                 <AppNavProvider>
-                  <RecordTransactionModalProvider>
-                    {children}
-                  </RecordTransactionModalProvider>
+                  <ConfirmDrawerProvider>
+                    <RecordTransactionModalProvider>
+                      {children}
+                      <ToastViewport />
+                    </RecordTransactionModalProvider>
+                  </ConfirmDrawerProvider>
                 </AppNavProvider>
               </BusinessGate>
             </SupabaseGate>

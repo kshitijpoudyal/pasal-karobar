@@ -7,7 +7,6 @@ import { AppMain } from "@/components/layout/app-main";
 import { AppMobileBottomNav } from "@/components/layout/app-mobile-bottom-nav";
 import { AppMobileTopBar } from "@/components/layout/app-mobile-top-bar";
 import { AppPageHeader } from "@/components/layout/app-page-header";
-import { RecordTransactionFab } from "@/components/layout/record-transaction-fab";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -26,7 +25,7 @@ export function AppShell({
   return (
     <div
       className={cn(
-        "font-body-md flex h-[100dvh] overflow-hidden bg-surface text-on-background selection:bg-primary-container selection:text-on-primary-container",
+        "font-body-md flex h-[100dvh] max-w-[100vw] overflow-hidden bg-surface text-on-background selection:bg-primary-container selection:text-on-primary-container",
         shellClassName,
       )}
     >
@@ -46,7 +45,6 @@ export function AppShell({
         {children}
       </AppMain>
       <AppMobileBottomNav />
-      <RecordTransactionFab className="hidden lg:flex" />
     </div>
   );
 }

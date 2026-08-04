@@ -25,9 +25,9 @@ export function DashboardPeriodBar({
   );
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
       <p
-        className="font-headline text-base font-medium text-on-surface sm:text-lg"
+        className="min-w-0 font-headline text-base font-medium text-on-surface sm:text-lg"
         aria-live="polite"
       >
         {rangeLabel}

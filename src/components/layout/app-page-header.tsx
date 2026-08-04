@@ -13,13 +13,13 @@ type AppPageHeaderProps = {
 /** Sticky top bar — same layout and typography on every screen. */
 export function AppPageHeader({ title }: AppPageHeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-24 w-full shrink-0 items-center justify-between border-b border-surface-container-high bg-surface/90 px-12 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 flex h-20 w-full min-w-0 shrink-0 items-center justify-between gap-4 border-b border-surface-container-high bg-surface/90 px-6 backdrop-blur-xl xl:h-24 xl:px-12">
       <div className="flex min-w-0 items-center gap-4">
         <h1 className="font-headline-lg text-headline-lg truncate text-on-surface">
           {title}
         </h1>
       </div>
-      <div className="flex shrink-0 items-center gap-6">
+      <div className="flex shrink-0 items-center gap-3 xl:gap-6">
         <Button
           type="button"
           variant="ghost"

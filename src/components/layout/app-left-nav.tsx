@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { APP_NAME } from "@/constants/app";
+import { APP_NAME, APP_TAGLINE } from "@/constants/app";
 import { useRecordTransactionModal } from "@/features/transactions";
 import { cn } from "@/lib/utils";
 import {
@@ -77,8 +77,8 @@ export function AppLeftNav() {
               <h1 className="font-headline truncate text-xl font-bold tracking-tight text-primary">
                 {APP_NAME}
               </h1>
-              <p className="text-[10px] font-semibold tracking-widest text-on-surface-variant uppercase opacity-60">
-                Barber cash management
+              <p className="text-xs font-normal leading-snug text-on-surface-variant">
+                {APP_TAGLINE}
               </p>
             </div>
           ) : null}
@@ -140,13 +140,12 @@ export function AppLeftNav() {
       >
         <Button
           type="button"
+          variant="primary"
+          size="prominent"
           onClick={openModal}
           aria-label={NEW_ENTRY_LABEL}
           title={NEW_ENTRY_LABEL}
-          className={cn(
-            "squircle flex h-14 w-full items-center justify-center gap-2 font-bold shadow-lg hover:shadow-xl active:scale-95",
-            collapsed && "px-0",
-          )}
+          className={cn("w-full shadow-lg hover:shadow-xl", collapsed && "px-0")}
         >
           <Plus className="size-5 shrink-0" strokeWidth={2.25} />
           {!collapsed ? NEW_ENTRY_LABEL : null}

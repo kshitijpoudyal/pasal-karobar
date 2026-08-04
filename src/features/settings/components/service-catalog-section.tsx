@@ -1,11 +1,14 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Baby, Pencil, Plus, Scissors, Trash2, UserRound } from "lucide-react";
+import { Baby, Pencil, Scissors, Trash2, UserRound } from "lucide-react";
 import { useState } from "react";
 
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
+import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
+import { ServiceCatalogAddCard } from "@/features/settings/components/service-catalog-add-card";
+import { RegisterServiceModal } from "@/features/settings/components/register-service-modal";
 import { useServiceCatalogSection } from "@/features/settings/hooks/use-service-catalog-section";
 import { cn } from "@/lib/utils";
 import { formatNpr } from "@/utils/format";
@@ -19,6 +22,7 @@ type ServiceCatalogCardProps = {
   rateClassName?: string;
   icon: LucideIcon;
   iconWrapClassName: string;
+  onEdit: () => void;
   onDelete: () => void;
   isRemoving: boolean;
 };
@@ -30,11 +34,12 @@ function ServiceCatalogCard({
   rateClassName,
   icon: Icon,
   iconWrapClassName,
+  onEdit,
   onDelete,
   isRemoving,
 }: ServiceCatalogCardProps) {
   return (
-    <div className="squircle group bg-surface-container-low p-8 transition-all hover:bg-surface-container-high">
+    <div className="squircle group min-w-0 bg-surface-container-low p-5 transition-all hover:bg-surface-container-high sm:p-8">
       <div className="mb-8 flex items-start justify-between">
         <div
           className={cn(
@@ -49,9 +54,9 @@ function ServiceCatalogCard({
             type="button"
             variant="ghost"
             size="icon"
+            onClick={onEdit}
             className="squircle text-on-surface-variant hover:bg-surface-container-highest"
-            disabled
-            aria-label="Edit service (coming soon)"
+            aria-label={`Edit ${title}`}
           >
             <Pencil className="size-5" strokeWidth={1.75} />
           </Button>
@@ -68,7 +73,7 @@ function ServiceCatalogCard({
           </Button>
         </div>
       </div>
-      <h4 className="font-headline mb-1 text-xl font-semibold">{title}</h4>
+      <h4 className="font-headline mb-1 truncate text-xl font-semibold">{title}</h4>
       <p className="mb-8 line-clamp-2 text-sm text-on-surface-variant">
         {description || "Catalog service"}
       </p>
@@ -91,83 +96,76 @@ const wrapClasses = [
 ];
 
 export function ServiceCatalogSection() {
-  const [showRegister, setShowRegister] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const { confirm } = useConfirmDrawer();
   const {
     services,
     isLoading,
     error,
+    deleteError,
+    clearDeleteError,
     refetch,
     registerForm,
     submitRegister,
     isRegistering,
+    editingService,
+    editForm,
+    closeEdit,
+    submitEdit,
+    isUpdating,
+    openEdit,
     removeService,
-    isRemoving,
-  } = useServiceCatalogSection();
+    removingServiceId,
+  } = useServiceCatalogSection({
+    onServiceCreated: () => setRegisterOpen(false),
+  });
 
-  const {
-    register,
-    formState: { errors },
-  } = registerForm;
+  const closeRegister = () => {
+    setRegisterOpen(false);
+    registerForm.reset({ name: "", default_price: 0 });
+  };
 
   return (
     <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
       <section className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="squircle bg-secondary-container p-3 text-on-secondary-container">
-              <Scissors className="size-6" strokeWidth={1.75} />
-            </div>
-            <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
+        <div className="flex items-center gap-4">
+          <div className="squircle bg-secondary-container p-3 text-on-secondary-container">
+            <Scissors className="size-6" strokeWidth={1.75} />
           </div>
-          <Button
-            type="button"
-            onClick={() => setShowRegister((v) => !v)}
-            className="squircle deep-indigo-gradient flex h-14 items-center gap-2 border-0 px-8 font-semibold text-on-primary shadow-primary/20 hover:brightness-110 active:scale-95"
-          >
-            <Plus className="size-5" strokeWidth={2.25} />
-            Register Service
-          </Button>
+          <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
         </div>
 
-        {showRegister ? (
-          <form
-            className="squircle grid gap-4 bg-surface-container-low p-6 md:grid-cols-3"
-            onSubmit={submitRegister}
+        {deleteError ? (
+          <div
+            className="squircle flex flex-wrap items-center justify-between gap-3 border border-error/30 bg-error-container/30 px-4 py-3"
+            role="alert"
           >
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
-                Name
-              </label>
-              <input
-                className="squircle h-12 w-full bg-surface-container-high px-4"
-                {...register("name")}
-              />
-              {errors.name ? (
-                <p className="text-xs text-error">{errors.name.message}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
-                Default price
-              </label>
-              <input
-                type="number"
-                className="squircle h-12 w-full bg-surface-container-high px-4"
-                {...register("default_price", { valueAsNumber: true })}
-              />
-              {errors.default_price ? (
-                <p className="text-xs text-error">{errors.default_price.message}</p>
-              ) : null}
-            </div>
-            <div className="flex items-end">
-              <Button type="submit" disabled={isRegistering} className="h-12 w-full">
-                {isRegistering ? "Saving…" : "Add service"}
-              </Button>
-            </div>
-          </form>
+            <p className="text-sm text-on-surface">{deleteError}</p>
+            <Button type="button" variant="secondary" size="sm" onClick={clearDeleteError}>
+              Dismiss
+            </Button>
+          </div>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <RegisterServiceModal
+          open={registerOpen}
+          onClose={closeRegister}
+          form={registerForm}
+          onSubmit={submitRegister}
+          isSubmitting={isRegistering}
+        />
+
+        <RegisterServiceModal
+          open={editingService !== null}
+          onClose={closeEdit}
+          form={editForm}
+          onSubmit={submitEdit}
+          isSubmitting={isUpdating}
+          title="Edit Service"
+          submitLabel="Save changes"
+        />
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {services.map((service, index) => {
             const Icon = ICON_CYCLE[index % ICON_CYCLE.length] ?? Scissors;
             const iconWrapClassName: string =
@@ -188,13 +186,25 @@ export function ServiceCatalogSection() {
                 }
                 icon={Icon}
                 iconWrapClassName={iconWrapClassName}
+                onEdit={() => openEdit(service)}
                 onDelete={() => {
-                  void removeService(service.id);
+                  void runConfirmedAction(
+                    confirm,
+                    {
+                      title: "Remove service?",
+                      description: `"${service.name}" will be removed from your catalog. Past income entries will still reference this service for reporting.`,
+                      confirmLabel: "Delete",
+                      cancelLabel: "Keep",
+                      tone: "destructive",
+                    },
+                    () => removeService(service.id, service.name),
+                  );
                 }}
-                isRemoving={isRemoving}
+                isRemoving={removingServiceId === service.id}
               />
             );
           })}
+          <ServiceCatalogAddCard onClick={() => setRegisterOpen(true)} />
         </div>
       </section>
     </QueryState>

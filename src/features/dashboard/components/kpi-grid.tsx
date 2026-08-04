@@ -59,7 +59,7 @@ export function KpiGrid({ summary }: KpiGridProps) {
       : 0;
 
   return (
-    <section className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+    <section className="grid grid-cols-2 gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:gap-6">
       <KpiCard
         icon={Banknote}
         iconClassName="text-primary"

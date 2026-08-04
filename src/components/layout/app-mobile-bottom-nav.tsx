@@ -41,7 +41,9 @@ function NavTab({
       )}
     >
       <Icon className="mb-1 size-6" strokeWidth={active ? 2.25 : 1.75} />
-      <span className="text-label-sm max-w-full truncate">{label}</span>
+              <span className="text-label-sm max-w-[4.5rem] truncate text-[10px] sm:max-w-none sm:text-[12px]">
+                {label}
+              </span>
     </Link>
   );
 }
@@ -57,7 +59,7 @@ export function AppMobileBottomNav() {
       className="fixed right-0 bottom-0 left-0 z-50 rounded-t-[24px] border-t border-surface-container-high/80 bg-surface-container-lowest/90 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(30,58,95,0.08)] backdrop-blur-lg lg:hidden"
       aria-label="Main"
     >
-      <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-1 px-2 pt-2">
+      <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-0.5 px-1 pt-2 sm:gap-1 sm:px-2">
         <div className="flex min-w-0 gap-1">
           {SIDE_ITEMS.map(({ href, label, icon }) => {
             const active =
@@ -79,7 +81,8 @@ export function AppMobileBottomNav() {
             type="button"
             aria-label="New Entry"
             onClick={openModal}
-            className="size-14 shrink-0 -translate-y-3 rounded-full shadow-[0_8px_24px_rgba(2,36,72,0.35)] active:scale-95"
+            variant="primary"
+            className="size-14 shrink-0 -translate-y-3 rounded-full shadow-[0_8px_24px_rgba(2,36,72,0.35)]"
           >
             <Plus className="size-8" strokeWidth={2.25} />
           </Button>

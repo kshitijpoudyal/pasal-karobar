@@ -12,7 +12,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:daily": "node --env-file=.env.local scripts/seed-daily-transactions.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

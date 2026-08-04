@@ -58,11 +58,11 @@ export function TransactionTimeline({
   isDeleting,
 }: TransactionTimelineProps) {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-4">
       {grouped.map(([dayKey, transactions]) => (
         <div key={dayKey}>
           <TimelineDateDivider label={formatDayLabel(dayKey)} />
-          <div className="mb-4 flex flex-col gap-3 lg:mb-6 lg:grid lg:grid-cols-1 lg:gap-6">
+          <div className="mb-2 flex flex-col gap-2 lg:mb-4 lg:gap-3">
             {transactions.map((tx) => {
               const isIncome = tx.type === "INCOME";
               const Icon = iconForTransaction(tx);
@@ -149,7 +149,7 @@ export function TransactionTimeline({
           </div>
         </div>
       ))}
-      <div className="mb-8 lg:mb-24" />
+      <div className="mb-6 lg:mb-8" />
     </div>
   );
 }

@@ -99,7 +99,7 @@ export function CuratedInsightsPanel(props: CuratedInsightsPanelProps) {
     : "Record income in this period to see peak hour ranges.";
 
   return (
-    <div className="col-span-12 space-y-4 lg:col-span-4 lg:space-y-6">
+    <div className="col-span-12 min-w-0 space-y-4 xl:col-span-4 xl:space-y-6">
       <h3 className="font-headline-md text-headline-md text-on-surface">
         Peak Analysis
       </h3>

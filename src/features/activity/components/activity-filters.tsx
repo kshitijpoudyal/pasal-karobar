@@ -28,7 +28,7 @@ export function ActivityFilters({
   onCategoryChange,
 }: ActivityFiltersProps) {
   return (
-    <div className="col-span-12 flex flex-col gap-6 lg:col-span-8">
+    <div className="col-span-12 flex min-w-0 flex-col gap-6 xl:col-span-8">
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-label-sm mr-4 font-semibold tracking-widest text-on-surface-variant uppercase">
           Timeframe
@@ -84,12 +84,12 @@ export function ActivityFilters({
 
 export function DailyNetRevenueCard({ netRevenue }: { netRevenue: number }) {
   return (
-    <div className="relative col-span-12 flex flex-col justify-between overflow-hidden rounded-squircle bg-primary p-8 text-on-primary shadow-xl lg:col-span-4">
+    <div className="relative col-span-12 flex min-w-0 flex-col justify-between overflow-hidden rounded-squircle bg-primary p-6 text-on-primary shadow-xl xl:col-span-4 xl:p-8">
       <div className="z-10">
         <p className="text-label-sm font-bold tracking-[0.2em] uppercase opacity-70">
           Net for period
         </p>
-        <h3 className="font-headline mt-2 text-4xl font-bold">
+        <h3 className="font-headline mt-2 text-3xl font-bold xl:text-4xl">
           {formatNpr(netRevenue)}
         </h3>
       </div>

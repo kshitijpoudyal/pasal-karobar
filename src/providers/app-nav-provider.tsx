@@ -16,8 +16,10 @@ const TABLET_MEDIA = "(max-width: 1023px)";
 
 const NAV_WIDTH_EXPANDED = "w-80";
 const NAV_WIDTH_COLLAPSED = "w-[4.75rem]";
-const MAIN_OFFSET_EXPANDED = "ml-80";
-const MAIN_OFFSET_COLLAPSED = "ml-[4.75rem]";
+
+/** Full class strings (no runtime `lg:${…}`) so Tailwind includes them in the build. */
+const MAIN_OFFSET_EXPANDED = "ml-0 lg:ml-80";
+const MAIN_OFFSET_COLLAPSED = "ml-0 lg:ml-[4.75rem]";
 
 function isTabletViewport(): boolean {
   if (typeof window === "undefined") return true;
@@ -73,9 +75,7 @@ export function AppNavProvider({ children }: { children: React.ReactNode }) {
       collapsed,
       toggleCollapsed,
       navWidthClass: collapsed ? NAV_WIDTH_COLLAPSED : NAV_WIDTH_EXPANDED,
-      mainOffsetClass: collapsed
-        ? `ml-0 lg:${MAIN_OFFSET_COLLAPSED}`
-        : `ml-0 lg:${MAIN_OFFSET_EXPANDED}`,
+      mainOffsetClass: collapsed ? MAIN_OFFSET_COLLAPSED : MAIN_OFFSET_EXPANDED,
     }),
     [collapsed, toggleCollapsed],
   );

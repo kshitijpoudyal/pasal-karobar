@@ -41,7 +41,7 @@ export function MonthDayHeatmapCard({ heatmap }: MonthDayHeatmapCardProps) {
 
   if (!heatmap) {
     return (
-      <div className="squircle col-span-4 bg-surface-container-low p-10">
+      <div className="squircle col-span-full min-w-0 bg-surface-container-low p-6 xl:col-span-4 xl:p-10">
         <h3 className="font-headline-md text-headline-md mb-4 text-on-surface">
           Monthly Activity
         </h3>
@@ -51,7 +51,7 @@ export function MonthDayHeatmapCard({ heatmap }: MonthDayHeatmapCardProps) {
   }
 
   return (
-    <div className="squircle col-span-4 overflow-visible bg-surface-container-low p-10">
+    <div className="squircle col-span-full min-w-0 overflow-hidden bg-surface-container-low p-6 xl:col-span-4 xl:p-10">
       <div className="mb-6 flex flex-col gap-4">
         <div>
           <h3 className="font-headline-md text-headline-md text-on-surface">
@@ -87,7 +87,7 @@ export function MonthDayHeatmapCard({ heatmap }: MonthDayHeatmapCardProps) {
               </span>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1.5 overflow-visible">
+          <div className="grid grid-cols-7 gap-1 overflow-hidden sm:gap-1.5">
             {heatmap.days.map((day, index) => (
               <HeatmapCell
                 key={day.inMonth ? day.dateKey : `pad-${index}`}

@@ -1,34 +1,51 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 
+import { toast } from "@/components/toast";
 import {
   useCreateServiceMutation,
   useDeleteServiceMutation,
   useServiceCatalogQuery,
+  useUpdateServiceMutation,
 } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
-import { createServiceSchema } from "@/services/schemas";
+import { createServiceSchema, updateServiceSchema } from "@/services/schemas";
+import type { ServiceRecord } from "@/types/database";
 
-const registerServiceFormSchema = createServiceSchema.pick({
+const serviceFormSchema = createServiceSchema.pick({
   name: true,
   default_price: true,
 });
 
-export type RegisterServiceFormValues = z.infer<
-  typeof registerServiceFormSchema
->;
+export type RegisterServiceFormValues = z.infer<typeof serviceFormSchema>;
 
-export function useServiceCatalogSection() {
+type UseServiceCatalogSectionOptions = {
+  onServiceCreated?: () => void;
+  onServiceUpdated?: () => void;
+};
+
+export function useServiceCatalogSection(
+  options: UseServiceCatalogSectionOptions = {},
+) {
   const { businessId } = useActiveBusiness();
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [editingService, setEditingService] = useState<ServiceRecord | null>(null);
   const catalogQuery = useServiceCatalogQuery(businessId);
   const createMutation = useCreateServiceMutation(businessId);
+  const updateMutation = useUpdateServiceMutation(businessId);
   const deleteMutation = useDeleteServiceMutation(businessId);
 
   const registerForm = useForm<RegisterServiceFormValues>({
-    resolver: zodResolver(registerServiceFormSchema),
+    resolver: zodResolver(serviceFormSchema),
+    defaultValues: { name: "", default_price: 0 },
+  });
+
+  const editForm = useForm<RegisterServiceFormValues>({
+    resolver: zodResolver(serviceFormSchema),
     defaultValues: { name: "", default_price: 0 },
   });
 
@@ -40,21 +57,91 @@ export function useServiceCatalogSection() {
     });
     await createMutation.mutateAsync(input);
     registerForm.reset({ name: "", default_price: 0 });
+    toast({
+      title: "Service added",
+      description: `"${values.name.trim()}" is now in your catalog.`,
+    });
+    options.onServiceCreated?.();
   }
 
-  async function removeService(serviceId: string) {
-    await deleteMutation.mutateAsync(serviceId);
+  const openEdit = useCallback(
+    (service: ServiceRecord) => {
+      setEditingService(service);
+      editForm.reset({
+        name: service.name,
+        default_price: Number(service.default_price),
+      });
+    },
+    [editForm],
+  );
+
+  const closeEdit = useCallback(() => {
+    setEditingService(null);
+    editForm.reset({ name: "", default_price: 0 });
+  }, [editForm]);
+
+  async function submitEdit(values: RegisterServiceFormValues) {
+    if (!editingService) return;
+    const input = updateServiceSchema.parse({
+      name: values.name,
+      default_price: values.default_price,
+    });
+    await updateMutation.mutateAsync({
+      serviceId: editingService.id,
+      input,
+    });
+    toast({
+      title: "Service updated",
+      description: `"${values.name.trim()}" was saved.`,
+    });
+    closeEdit();
+    options.onServiceUpdated?.();
   }
+
+  const removeService = useCallback(
+    (serviceId: string, serviceName?: string) => {
+      setDeleteError(null);
+      const name =
+        serviceName ??
+        catalogQuery.data?.find((service) => service.id === serviceId)?.name ??
+        "Service";
+      deleteMutation.mutate(serviceId, {
+        onSuccess: () => {
+          toast({
+            title: "Service deleted",
+            description: `"${name}" was removed from your catalog.`,
+          });
+        },
+        onError: (error) => {
+          setDeleteError(error.message);
+        },
+      });
+    },
+    [deleteMutation, catalogQuery.data],
+  );
+
+  const removingServiceId =
+    deleteMutation.isPending && deleteMutation.variables
+      ? deleteMutation.variables
+      : null;
 
   return {
-    services: catalogQuery.data ?? [],
+    services: (catalogQuery.data ?? []).filter((service) => service.is_active),
     isLoading: catalogQuery.isLoading,
-    error: catalogQuery.error ?? createMutation.error ?? deleteMutation.error,
+    error: catalogQuery.error ?? createMutation.error ?? updateMutation.error,
+    deleteError,
+    clearDeleteError: () => setDeleteError(null),
     refetch: () => catalogQuery.refetch(),
     registerForm,
     submitRegister: registerForm.handleSubmit(submitRegister),
     isRegistering: createMutation.isPending,
+    editingService,
+    editForm,
+    openEdit,
+    closeEdit,
+    submitEdit: editForm.handleSubmit(submitEdit),
+    isUpdating: updateMutation.isPending,
     removeService,
-    isRemoving: deleteMutation.isPending,
+    removingServiceId,
   };
 }

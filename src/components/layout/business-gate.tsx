@@ -47,11 +47,7 @@ export function BusinessGate({ children }: { children: React.ReactNode }) {
             add a row in <code className="text-primary">business_members</code> for
             your user, or refresh to retry automatic setup.
           </p>
-          <Button
-            type="button"
-            className="mt-6"
-            onClick={() => window.location.reload()}
-          >
+          <Button type="button" variant="primary" className="mt-6" onClick={() => window.location.reload()}>
             Retry setup
           </Button>
         </div>
@@ -74,7 +70,7 @@ export function DashboardEmptyHint() {
         Record income or expenses to populate the dashboard. Try a wider period
         filter if you expect older data.
       </p>
-      <Button type="button" className="mt-6" onClick={openModal}>
+      <Button type="button" variant="primary" size="cta" className="mt-6" onClick={openModal}>
         Record transaction
       </Button>
     </div>

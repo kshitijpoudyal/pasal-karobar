@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 
+import { toast } from "@/components/toast";
 import { useCreateTransactionMutation } from "@/hooks/queries/use-transaction-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
@@ -33,6 +34,10 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       transaction_date: new Date().toISOString(),
     } satisfies CreateTransactionInput);
     await createMutation.mutateAsync(payload);
+    toast({
+      title: "Entry added",
+      description: "Income recorded successfully.",
+    });
     onSuccess();
   }
 
@@ -53,6 +58,10 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       transaction_date: new Date().toISOString(),
     } satisfies CreateTransactionInput);
     await createMutation.mutateAsync(payload);
+    toast({
+      title: "Entry added",
+      description: "Expense recorded successfully.",
+    });
     onSuccess();
   }
 

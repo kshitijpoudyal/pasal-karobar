@@ -68,7 +68,9 @@ export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
         <div className="flex flex-col gap-2 p-4">
           <Button
             type="button"
-            className="squircle h-12 w-full justify-start gap-3 font-bold"
+            variant="primary"
+            size="cta"
+            className="w-full justify-start"
             onClick={handleNewEntry}
           >
             <Plus className="size-5" strokeWidth={2.25} />

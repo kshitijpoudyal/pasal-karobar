@@ -56,9 +56,20 @@ export class ServiceCatalogRepository {
     return data;
   }
 
-  async delete(id: string): Promise<void> {
-    const { error } = await this.supabase.from("services").delete().eq("id", id);
+  async delete(id: string, businessId: string): Promise<void> {
+    const { data, error } = await this.supabase
+      .from("services")
+      .update({ is_active: false })
+      .eq("id", id)
+      .eq("business_id", businessId)
+      .select("id")
+      .maybeSingle();
 
     if (error) mapRepositoryError(error);
+    if (!data) {
+      throw new Error(
+        "Service could not be removed. It may have already been removed or you may not have permission.",
+      );
+    }
   }
 }

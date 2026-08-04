@@ -61,6 +61,8 @@ Business
 | created_at     |       |
 | updated_at     |       |
 
+**Remove from catalog (app):** sets `is_active = false` (soft remove). Income rows keep their `service_id`; no FK cascade or check-constraint updates.
+
 ---
 
 ## `expense_categories`
@@ -101,12 +103,12 @@ Business
 
 **Income**
 
-- `service_id` required
+- `service_id` required when recording new income (nullable on existing rows if the service was removed)
 - `expense_category_id` null
 
 **Expense**
 
-- `expense_category_id` required
+- `expense_category_id` required when recording new expenses (nullable on existing rows if the category was removed)
 - `service_id` null
 
 ---
@@ -170,6 +172,25 @@ Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supaba
 3. Paste and run `supabase/migrations/20260730194500_create_business_for_owner.sql`.
    (Same SQL is copied at `supabase/sql/create_business_for_owner.sql` for convenience.)
 4. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+
+### Daily mock transactions (dev / demo)
+
+Add more **today** rows without resetting the database:
+
+1. Set `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` (Supabase → **Project Settings → API → service_role**).
+2. Run:
+
+```bash
+npm run seed:daily
+```
+
+Optional flags: `npm run seed:daily -- --income 60 --expense 5`. Env overrides: `SEED_BUSINESS_ID`, `SEED_INCOME_COUNT`, `SEED_EXPENSE_COUNT`, `SEED_TIMEZONE` (default `Asia/Kathmandu`).
+
+Schedule locally (macOS cron example, 8:00 daily):
+
+```cron
+0 8 * * * cd /path/to/pasal-karobar && npm run seed:daily >> /tmp/pasal-seed-daily.log 2>&1
+```
 
 ### RPC 404 but function exists in SQL
 

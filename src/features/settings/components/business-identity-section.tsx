@@ -42,7 +42,7 @@ export function BusinessIdentitySection() {
     <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
       <section>
         <form
-          className="squircle bg-surface-container-low p-8"
+          className="squircle bg-surface-container-low p-5 lg:p-8"
           onSubmit={onSubmit}
           noValidate
         >
@@ -99,12 +99,13 @@ export function BusinessIdentitySection() {
             <div className="flex flex-col items-end justify-end gap-2">
               <Button
                 type="submit"
+                variant={isSaveSuccess ? "secondary" : "primary"}
+                size="prominent"
                 disabled={isSaving}
                 className={cn(
-                  "squircle h-14 w-full border-0 font-semibold shadow-xl active:scale-95",
-                  isSaveSuccess
-                    ? "bg-secondary-container text-on-secondary-container shadow-secondary/20 hover:opacity-90"
-                    : "deep-indigo-gradient text-on-primary shadow-primary/20 hover:brightness-110",
+                  "w-full shadow-xl",
+                  isSaveSuccess &&
+                    "border-0 bg-secondary-container text-on-secondary-container shadow-secondary/20 hover:bg-secondary-container hover:opacity-90",
                 )}
               >
                 {isSaving ? "Saving…" : isSaveSuccess ? "Confirmed" : "Apply Changes"}

@@ -18,8 +18,8 @@ type PeriodFilterProps = {
 
 export function PeriodFilter({ value, onChange, className }: PeriodFilterProps) {
   return (
-    <div className={cn("flex shrink-0", className)}>
-      <div className="squircle flex max-w-2xl bg-surface-container-low p-1.5">
+    <div className={cn("w-full min-w-0 sm:w-auto", className)}>
+      <div className="hide-scrollbar squircle flex w-full max-w-full min-w-0 overflow-x-auto bg-surface-container-low p-1 sm:max-w-2xl">
         {PERIODS.map((period) => {
           const isActive = value === period;
           return (
@@ -28,7 +28,7 @@ export function PeriodFilter({ value, onChange, className }: PeriodFilterProps) 
               type="button"
               onClick={() => onChange(period)}
               className={cn(
-                "squircle flex-1 px-6 py-3 transition-all",
+                "squircle shrink-0 flex-1 px-2 py-2 text-[10px] transition-all sm:px-4 sm:py-2.5 sm:text-xs lg:px-6 lg:py-3 lg:text-sm",
                 isActive
                   ? "bg-white font-bold text-primary shadow-sm"
                   : "font-medium text-on-surface-variant hover:bg-surface-container-high",

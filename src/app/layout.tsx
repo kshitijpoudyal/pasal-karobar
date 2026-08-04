@@ -1,18 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Work_Sans } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 
 import { AppProviders } from "@/providers/app-providers";
 import "@/styles/globals.css";
 
-const spaceGrotesk = Space_Grotesk({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["300", "400", "500", "600", "700"],
-});
-
-const workSans = Work_Sans({
-  subsets: ["latin"],
-  variable: "--font-work-sans",
+  variable: "--font-dm-sans",
   weight: ["400", "500", "600", "700"],
 });
 
@@ -44,9 +38,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="light" suppressHydrationWarning>
-      <body
-        className={`${spaceGrotesk.variable} ${workSans.variable} antialiased`}
-      >
+      <body className={`${dmSans.variable} font-body font-normal antialiased`}>
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
