@@ -4,6 +4,7 @@ import { LogOut, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -59,6 +60,7 @@ export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
           </Button>
         </div>
         <div className="flex flex-col gap-2 p-4">
+          <PwaInstallCard variant="compact" />
           <Button
             type="button"
             variant="ghost"

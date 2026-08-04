@@ -4,6 +4,7 @@ import { ArrowRight, Eye, EyeOff, Scissors } from "lucide-react";
 import { useState } from "react";
 
 import { APP_NAME } from "@/constants/app";
+import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
 import { useLoginForm } from "@/features/auth/hooks/use-login-form";
 import { cn } from "@/lib/utils";
 
@@ -164,21 +165,24 @@ export function LoginScreen() {
         </div>
       </main>
 
-      <footer className="mx-auto mt-auto flex w-full max-w-[1440px] flex-col items-center gap-2 border-t border-surface-container px-5 py-8 text-center md:px-16">
-        <p className="text-sm text-on-surface-variant">
-          © {new Date().getFullYear()} Pasal Karobar
-        </p>
-        <p className="text-sm text-on-surface-variant">
-          Powered by{" "}
-          <a
-            href="https://www.kshitijstudio.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary transition-opacity hover:opacity-80"
-          >
-            KshitijStudio
-          </a>
-        </p>
+      <footer className="mx-auto mt-auto flex w-full max-w-[1440px] flex-col items-center gap-4 border-t border-surface-container px-5 py-8 text-center md:px-16">
+        <PwaInstallCard variant="compact" />
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-on-surface-variant">
+            © {new Date().getFullYear()} Pasal Karobar
+          </p>
+          <p className="text-sm text-on-surface-variant">
+            Powered by{" "}
+            <a
+              href="https://www.kshitijstudio.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary transition-opacity hover:opacity-80"
+            >
+              KshitijStudio
+            </a>
+          </p>
+        </div>
       </footer>
     </div>
   );

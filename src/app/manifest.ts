@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: "/",
     name: "Pasal Karobar",
     short_name: "Pasal Karobar",
     description: "TBD — see docs/product.md",

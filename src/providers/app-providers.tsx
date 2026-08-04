@@ -10,6 +10,7 @@ import { AppNavProvider } from "@/providers/app-nav-provider";
 import { ConfirmDrawerProvider } from "@/components/confirm-drawer";
 import { ToastViewport } from "@/components/toast";
 import { RecordTransactionModalProvider } from "@/features/transactions";
+import { PwaInstallProvider } from "@/providers/pwa-install-provider";
 
 type AppProvidersProps = {
   children: React.ReactNode;
@@ -19,7 +20,8 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <ThemeProvider>
       <QueryProvider>
-        <AuthProvider>
+        <PwaInstallProvider>
+          <AuthProvider>
           <BusinessProvider>
             <SupabaseGate>
               <BusinessGate>
@@ -34,7 +36,8 @@ export function AppProviders({ children }: AppProvidersProps) {
               </BusinessGate>
             </SupabaseGate>
           </BusinessProvider>
-        </AuthProvider>
+          </AuthProvider>
+        </PwaInstallProvider>
       </QueryProvider>
     </ThemeProvider>
   );

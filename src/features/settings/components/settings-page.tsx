@@ -2,6 +2,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { BusinessIdentitySection } from "@/features/settings/components/business-identity-section";
 import { ExpenseTaxonomySection } from "@/features/settings/components/expense-taxonomy-section";
 import { ServiceCatalogSection } from "@/features/settings/components/service-catalog-section";
+import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
 
 export function SettingsPage() {
   return (
@@ -20,6 +21,7 @@ export function SettingsPage() {
           </p>
         </section>
         <div className="space-y-8 lg:space-y-12">
+          <PwaInstallCard />
           <BusinessIdentitySection />
           <ServiceCatalogSection />
           <ExpenseTaxonomySection />
