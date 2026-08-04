@@ -1,17 +1,15 @@
 import {
   endOfDay,
   endOfWeek,
-  startOfDay,
   startOfWeek,
   startOfMonth,
   startOfYear,
-  subDays,
   subYears,
   format,
   parseISO,
 } from "date-fns";
 
-export type ActivityTimeframe = "Today" | "Yesterday" | "This Week";
+export type ActivityTimeframe = "This Week" | "This Month" | "This Year";
 
 export type ActivityCategoryFilter = "All" | "Income" | "Expense";
 
@@ -20,23 +18,22 @@ export function getActivityDateRange(timeframe: ActivityTimeframe): {
   to: string;
 } {
   const now = new Date();
+  const to = endOfDay(now).toISOString();
   switch (timeframe) {
-    case "Today":
-      return {
-        from: startOfDay(now).toISOString(),
-        to: endOfDay(now).toISOString(),
-      };
-    case "Yesterday": {
-      const day = subDays(now, 1);
-      return {
-        from: startOfDay(day).toISOString(),
-        to: endOfDay(day).toISOString(),
-      };
-    }
     case "This Week":
       return {
         from: startOfWeek(now, { weekStartsOn: 1 }).toISOString(),
         to: endOfWeek(now, { weekStartsOn: 1 }).toISOString(),
+      };
+    case "This Month":
+      return {
+        from: startOfMonth(now).toISOString(),
+        to,
+      };
+    case "This Year":
+      return {
+        from: startOfYear(now).toISOString(),
+        to,
       };
   }
 }

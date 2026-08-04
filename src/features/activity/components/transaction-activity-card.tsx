@@ -1,6 +1,9 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Clock, Eye, Pencil, Trash2 } from "lucide-react";
+import { Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,8 +19,92 @@ type TransactionActivityCardProps = {
   iconWrapClassName: string;
   iconClassName?: string;
   borderClassName: string;
+  onEdit?: () => void;
   onDelete?: () => void;
 };
+
+type ActivityItemMoreMenuProps = {
+  onEdit?: () => void;
+  onDelete?: () => void;
+};
+
+function ActivityItemMoreMenu({ onEdit, onDelete }: ActivityItemMoreMenuProps) {
+  const [open, setOpen] = useState(false);
+  const menuId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: MouseEvent) {
+      if (rootRef.current?.contains(event.target as Node)) return;
+      setOpen(false);
+    }
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [open]);
+
+  const hasActions = Boolean(onEdit || onDelete);
+  if (!hasActions) return null;
+
+  return (
+    <div ref={rootRef} className="relative shrink-0">
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-controls={open ? menuId : undefined}
+        aria-label="More options"
+        onClick={() => setOpen((value) => !value)}
+        className="size-9 rounded-full text-on-surface-variant hover:bg-surface-container-low"
+      >
+        <MoreVertical className="size-5" strokeWidth={1.75} />
+      </Button>
+      {open ? (
+        <div
+          id={menuId}
+          role="menu"
+          className="absolute top-full right-0 z-20 mt-1 min-w-40 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!onEdit}
+            onClick={() => {
+              setOpen(false);
+              onEdit?.();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Pencil className="size-4 shrink-0" strokeWidth={1.75} />
+            Edit
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!onDelete}
+            onClick={() => {
+              setOpen(false);
+              onDelete?.();
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-error transition-colors hover:bg-error-container/40 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash2 className="size-4 shrink-0" strokeWidth={1.75} />
+            Delete
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function TransactionActivityCard({
   title,
@@ -30,16 +117,25 @@ export function TransactionActivityCard({
   iconWrapClassName,
   iconClassName,
   borderClassName,
+  onEdit,
   onDelete,
 }: TransactionActivityCardProps) {
+  const hasActions = Boolean(onEdit || onDelete);
+
   return (
     <div
       className={cn(
-        "glass-card group flex min-w-0 flex-col justify-between gap-3 rounded-2xl p-4 transition-all duration-300 lg:flex-row lg:items-center lg:gap-5 lg:p-5",
+        "glass-card group relative flex min-w-0 flex-col justify-between gap-3 rounded-2xl p-4 transition-all duration-300 lg:flex-row lg:items-center lg:gap-5 lg:p-5",
         "border-l-4",
         borderClassName,
+        hasActions && "max-lg:pr-12",
       )}
     >
+      {hasActions ? (
+        <div className="absolute top-3 right-3 z-10 lg:hidden">
+          <ActivityItemMoreMenu onEdit={onEdit} onDelete={onDelete} />
+        </div>
+      ) : null}
       <div className="flex min-w-0 items-center gap-4">
         <div
           className={cn(
@@ -71,40 +167,19 @@ export function TransactionActivityCard({
         </div>
       </div>
       <div className="flex min-w-0 items-center justify-between gap-3 lg:justify-end lg:gap-6">
-        <div className="text-left lg:text-right">
-          <p className="text-[10px] font-medium tracking-widest text-on-surface-variant uppercase lg:text-label-sm">
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 lg:min-w-48 lg:flex-none">
+          <p className="shrink-0 text-[10px] font-medium tracking-widest text-on-surface-variant uppercase lg:text-label-sm">
             {amountLabel}
           </p>
-          <div className="font-headline text-lg font-bold text-on-surface lg:text-xl">{amount}</div>
+          <div className="font-headline text-right text-lg font-bold text-on-surface lg:text-xl">
+            {amount}
+          </div>
         </div>
-        <div className="flex shrink-0 items-center gap-1 opacity-100 transition-opacity xl:opacity-0 xl:group-hover:opacity-100">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9 rounded-full text-on-surface-variant hover:bg-surface-container-low"
-          >
-            <Eye className="size-5" strokeWidth={1.75} />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="size-9 rounded-full text-on-surface-variant hover:bg-surface-container-low"
-          >
-            <Pencil className="size-5" strokeWidth={1.75} />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            disabled={!onDelete}
-            onClick={onDelete}
-            className="size-9 rounded-full text-error hover:bg-error-container disabled:opacity-40"
-          >
-            <Trash2 className="size-5" strokeWidth={1.75} />
-          </Button>
-        </div>
+        {hasActions ? (
+          <div className="hidden shrink-0 lg:block">
+            <ActivityItemMoreMenu onEdit={onEdit} onDelete={onDelete} />
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -117,69 +192,6 @@ export function TimelineDateDivider({ label }: { label: string }) {
         {label}
       </span>
       <div className="h-px flex-1 bg-outline-variant" />
-    </div>
-  );
-}
-
-type TransactionActivityMobileRowProps = {
-  title: string;
-  time: string;
-  paymentLabel: string;
-  amount: ReactNode;
-  tipLabel?: string | null;
-  icon: LucideIcon;
-  iconWrapClassName: string;
-  isIncome: boolean;
-};
-
-export function TransactionActivityMobileRow({
-  title,
-  time,
-  paymentLabel,
-  amount,
-  tipLabel,
-  icon: Icon,
-  iconWrapClassName,
-  isIncome,
-}: TransactionActivityMobileRowProps) {
-  return (
-    <div className="squircle flex items-center gap-3 rounded-2xl bg-surface-container-low px-3 py-2.5 transition-colors hover:bg-surface-container">
-      <div
-        className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-full",
-          iconWrapClassName,
-        )}
-      >
-        <Icon className="size-5" strokeWidth={1.75} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-headline min-w-0 truncate text-sm font-semibold text-on-surface">
-            {title}
-          </h3>
-          <p
-            className={cn(
-              "shrink-0 font-headline text-sm font-semibold tabular-nums",
-              isIncome ? "text-primary" : "text-on-tertiary-container",
-            )}
-          >
-            {amount}
-          </p>
-        </div>
-        <div className="mt-0.5 flex items-center justify-between gap-2">
-          <span className="text-[11px] text-on-surface-variant">{time}</span>
-          <div className="flex flex-wrap items-center justify-end gap-1.5">
-            <span className="rounded-full bg-surface-container-highest px-2 py-px text-[10px] font-semibold text-on-surface">
-              {paymentLabel}
-            </span>
-            {tipLabel ? (
-              <span className="text-[10px] font-medium text-on-secondary-container">
-                {tipLabel}
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

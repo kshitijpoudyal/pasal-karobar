@@ -6,7 +6,7 @@ import type {
 export type { ActivityCategoryFilter, ActivityTimeframe };
 
 export const TIMEFRAMES = [
-  "Today",
-  "Yesterday",
   "This Week",
+  "This Month",
+  "This Year",
 ] as const satisfies readonly ActivityTimeframe[];

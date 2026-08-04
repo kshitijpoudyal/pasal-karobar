@@ -4,10 +4,10 @@ import { Scissors, ShoppingCart } from "lucide-react";
 import { format, isToday, isYesterday, parseISO } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 
+import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
 import {
   TimelineDateDivider,
   TransactionActivityCard,
-  TransactionActivityMobileRow,
 } from "@/features/activity/components/transaction-activity-card";
 import type { Transaction } from "@/types/database";
 import { formatNpr } from "@/utils/format";
@@ -57,6 +57,8 @@ export function TransactionTimeline({
   onDelete,
   isDeleting,
 }: TransactionTimelineProps) {
+  const { confirm } = useConfirmDrawer();
+
   return (
     <div className="flex flex-col gap-4">
       {grouped.map(([dayKey, transactions]) => (
@@ -72,36 +74,31 @@ export function TransactionTimeline({
               const time = format(parseISO(tx.transaction_date), "h:mm a");
               const paymentLabel = dbPaymentToLabel(tx.payment_method);
 
+              const deleteHandler =
+                isDeleting
+                  ? undefined
+                  : () => {
+                      const entryKind = isIncome ? "income entry" : "expense";
+                      void runConfirmedAction(
+                        confirm,
+                        {
+                          title: "Delete this entry?",
+                          description: `Remove "${title}" (${formatNpr(total)}) from your activity. This ${entryKind} will be permanently deleted.`,
+                          confirmLabel: "Delete",
+                          cancelLabel: "Keep",
+                          tone: "destructive",
+                        },
+                        () => onDelete(tx.id),
+                      );
+                    };
+
               return (
-                <div key={tx.id}>
-                  <div className="lg:hidden">
-                    <TransactionActivityMobileRow
-                      title={title}
-                      time={time}
-                      paymentLabel={paymentLabel}
-                      isIncome={isIncome}
-                      amount={
-                        isIncome
-                          ? formatNpr(total - tip)
-                          : `- ${formatNpr(total)}`
-                      }
-                      tipLabel={
-                        isIncome && tip > 0 ? `+ ${formatNpr(tip)} Tip` : null
-                      }
-                      icon={Icon}
-                      iconWrapClassName={
-                        isIncome
-                          ? "bg-primary-container text-on-primary-container"
-                          : "bg-tertiary-container text-on-tertiary-container"
-                      }
-                    />
-                  </div>
-                  <div className="hidden lg:block">
-                    <TransactionActivityCard
-                      title={title}
-                      time={time}
-                      paymentLabel={paymentLabel}
-                      paymentClassName={
+                <TransactionActivityCard
+                  key={tx.id}
+                  title={title}
+                  time={time}
+                  paymentLabel={paymentLabel}
+                  paymentClassName={
                     isIncome
                       ? "bg-secondary-container/50 text-on-secondary-container"
                       : "bg-surface-container-high text-tertiary"
@@ -134,16 +131,8 @@ export function TransactionTimeline({
                   borderClassName={
                     isIncome ? "border-l-secondary" : "border-l-tertiary"
                   }
-                      onDelete={
-                        isDeleting
-                          ? undefined
-                          : () => {
-                              void onDelete(tx.id);
-                            }
-                      }
-                    />
-                  </div>
-                </div>
+                  onDelete={deleteHandler}
+                />
               );
             })}
           </div>

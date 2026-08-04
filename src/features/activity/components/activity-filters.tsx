@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { formatNpr } from "@/utils/format";
@@ -48,13 +48,6 @@ export function ActivityFilters({
             {label}
           </button>
         ))}
-        <button
-          type="button"
-          className="flex cursor-pointer items-center gap-2 rounded-full border border-outline-variant bg-surface-container-lowest px-5 py-2.5 text-sm font-medium text-on-surface-variant transition-colors hover:bg-surface-container-low"
-        >
-          <CalendarDays className="size-[18px]" strokeWidth={1.75} />
-          <span>Custom</span>
-        </button>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <span className="text-label-sm mr-4 font-semibold tracking-widest text-on-surface-variant uppercase">

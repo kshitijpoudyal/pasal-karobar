@@ -5,8 +5,6 @@ import {
   ActivityFilters,
   DailyNetRevenueCard,
 } from "@/features/activity/components/activity-filters";
-import { ActivityFiltersMobile } from "@/features/activity/components/activity-filters-mobile";
-import { ActivitySummaryMobile } from "@/features/activity/components/activity-summary-mobile";
 import { TransactionTimeline } from "@/features/activity/components/transaction-timeline";
 import { useActivityPage } from "@/features/activity/hooks/use-activity-page";
 
@@ -29,12 +27,8 @@ export function ActivityMain() {
       </section>
 
       <section className="flex min-h-0 flex-1 flex-col gap-4 px-5 pt-2 pb-4 lg:hidden">
-        <ActivitySummaryMobile
-          netRevenue={activity.netRevenue}
-          transactionCount={activity.transactionCount}
-          averageTicket={activity.averageTicket}
-        />
-        <ActivityFiltersMobile
+        <DailyNetRevenueCard netRevenue={activity.netRevenue} />
+        <ActivityFilters
           timeframe={activity.timeframe}
           category={activity.category}
           onTimeframeChange={activity.setTimeframe}

@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutGrid, Plus, Receipt, Settings } from "lucide-react";
+import { useState } from "react";
+import { LayoutGrid, MoreHorizontal, Plus, Receipt, Settings } from "lucide-react";
 
+import { AppMobileMenuSheet } from "@/components/layout/app-mobile-menu-sheet";
 import { Button } from "@/components/ui/button";
 import { useRecordTransactionModal } from "@/features/transactions";
 import { cn } from "@/lib/utils";
@@ -51,10 +53,12 @@ function NavTab({
 export function AppMobileBottomNav() {
   const pathname = usePathname();
   const { openModal } = useRecordTransactionModal();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const settingsActive = pathname.startsWith(SETTINGS_ITEM.href);
 
   return (
+    <>
     <nav
       className="fixed right-0 bottom-0 left-0 z-50 rounded-t-[24px] border-t border-surface-container-high/80 bg-surface-container-lowest/90 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-4px_24px_rgba(30,58,95,0.08)] backdrop-blur-lg lg:hidden"
       aria-label="Main"
@@ -88,15 +92,34 @@ export function AppMobileBottomNav() {
           </Button>
         </div>
 
-        <div className="flex min-w-0 justify-end">
+        <div className="flex min-w-0 justify-end gap-1">
           <NavTab
             href={SETTINGS_ITEM.href}
             label={SETTINGS_ITEM.label}
             icon={SETTINGS_ITEM.icon}
             active={settingsActive}
           />
+          <button
+            type="button"
+            aria-label="More"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+            className={cn(
+              "flex min-w-0 flex-1 flex-col items-center justify-center rounded-[24px] px-2 py-2 transition-all active:scale-90",
+              menuOpen
+                ? "bg-primary-container text-on-primary-container"
+                : "text-on-surface-variant hover:bg-surface-container-high",
+            )}
+          >
+            <MoreHorizontal className="mb-1 size-6" strokeWidth={menuOpen ? 2.25 : 1.75} />
+            <span className="text-label-sm max-w-[4.5rem] truncate text-[10px] sm:max-w-none sm:text-[12px]">
+              More
+            </span>
+          </button>
         </div>
       </div>
     </nav>
+    <AppMobileMenuSheet open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </>
   );
 }

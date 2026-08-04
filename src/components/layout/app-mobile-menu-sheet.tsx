@@ -1,10 +1,9 @@
 "use client";
 
-import { LogOut, Plus, X } from "lucide-react";
+import { LogOut, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
-import { useRecordTransactionModal } from "@/features/transactions";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
 
@@ -14,16 +13,10 @@ type AppMobileMenuSheetProps = {
 };
 
 export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
-  const { openModal } = useRecordTransactionModal();
   const { signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
   if (!open) return null;
-
-  function handleNewEntry() {
-    onClose();
-    openModal();
-  }
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -46,14 +39,14 @@ export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Menu"
+        aria-label="More"
         className={cn(
           "absolute top-0 left-0 h-full w-[min(100%,20rem)] bg-surface-container-lowest shadow-natural-ink",
           "animate-[slideInLeft_0.25s_ease-out]",
         )}
       >
         <div className="flex items-center justify-between border-b border-surface-container-high px-5 py-4">
-          <span className="font-headline text-lg font-bold text-primary">Menu</span>
+          <span className="font-headline text-lg font-bold text-primary">More</span>
           <Button
             type="button"
             variant="ghost"
@@ -66,16 +59,6 @@ export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
           </Button>
         </div>
         <div className="flex flex-col gap-2 p-4">
-          <Button
-            type="button"
-            variant="primary"
-            size="cta"
-            className="w-full justify-start"
-            onClick={handleNewEntry}
-          >
-            <Plus className="size-5" strokeWidth={2.25} />
-            New Entry
-          </Button>
           <Button
             type="button"
             variant="ghost"

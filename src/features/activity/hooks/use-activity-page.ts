@@ -17,7 +17,7 @@ import {
 
 export function useActivityPage() {
   const { businessId } = useActiveBusiness();
-  const [timeframe, setTimeframe] = useState<ActivityTimeframe>("Today");
+  const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
 
   const filters = useMemo((): TransactionListFilters => {
@@ -59,18 +59,6 @@ export function useActivityPage() {
     }, 0);
   }, [transactionsQuery.data]);
 
-  const { transactionCount, averageTicket } = useMemo(() => {
-    const txs = transactionsQuery.data ?? [];
-    const incomeRows = txs.filter((tx) => tx.type === "INCOME");
-    const count = txs.length;
-    const avg =
-      incomeRows.length > 0
-        ? incomeRows.reduce((sum, tx) => sum + Number(tx.total), 0) /
-          incomeRows.length
-        : 0;
-    return { transactionCount: count, averageTicket: avg };
-  }, [transactionsQuery.data]);
-
   const groupedTransactions = useMemo(
     () => groupTransactionsByDay(transactionsQuery.data ?? []),
     [transactionsQuery.data],
@@ -104,8 +92,6 @@ export function useActivityPage() {
     category,
     setCategory,
     netRevenue,
-    transactionCount,
-    averageTicket,
     groupedTransactions,
     serviceNames,
     categoryNames,
