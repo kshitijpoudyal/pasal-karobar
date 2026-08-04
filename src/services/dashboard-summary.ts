@@ -1,4 +1,4 @@
-import type { DashboardPeriod } from "@/utils/date-ranges";
+import type { DashboardGranularity } from "@/utils/date-ranges";
 import {
   coalescePeakAnalysis,
   EMPTY_PEAK_ANALYSIS,
@@ -24,6 +24,14 @@ export type MonthDayHeatmap = {
   days: MonthHeatmapDay[];
 };
 
+export type PeriodComparison = {
+  priorFrom: string;
+  priorTo: string;
+  priorNet: number;
+  netDelta: number;
+  netDeltaPercent: number | null;
+};
+
 export type DashboardSummary = {
   revenue: number;
   expenses: number;
@@ -37,12 +45,15 @@ export type DashboardSummary = {
   trajectory: TrajectoryPoint[];
   peakAnalysis: PeakAnalysisInsights;
   monthDayHeatmap: MonthDayHeatmap | null;
+  periodComparison: PeriodComparison | null;
 };
 
 export type DashboardSummaryParams = {
   from?: string;
   to?: string;
-  period?: DashboardPeriod;
+  granularity?: DashboardGranularity;
+  /** @deprecated use granularity */
+  period?: never;
 };
 
 export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
@@ -58,6 +69,7 @@ export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
   trajectory: [],
   peakAnalysis: EMPTY_PEAK_ANALYSIS,
   monthDayHeatmap: null,
+  periodComparison: null,
 };
 
 /** Fills gaps from stale query cache after summary shape changes. */
@@ -71,6 +83,7 @@ export function normalizeDashboardSummary(
     trajectory: data.trajectory ?? [],
     peakAnalysis: coalescePeakAnalysis(data.peakAnalysis),
     monthDayHeatmap: data.monthDayHeatmap ?? null,
+    periodComparison: data.periodComparison ?? null,
   };
 }
 

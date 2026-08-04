@@ -1,0 +1,1 @@
+{"sessionId":"7ef731","location":"period-picker-dialog.tsx:DayWeekPickerBody","message":"day/week grid stats","data":{"mode":"week","viewMonth":"2026-08","futureInMonth":27,"inMonth":31,"totalCells":42},"timestamp":1785877101108,"hypothesisId":"H1-native-disabled-hides-future","runId":"post-fix"}

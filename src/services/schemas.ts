@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+import { SERVICE_ICON_IDS } from "@/constants/service-icons";
+
+export const serviceIconIdSchema = z.enum(SERVICE_ICON_IDS);
+
 export const businessTypeSchema = z.enum([
   "BARBER",
   "SALON",
@@ -32,7 +36,7 @@ export const createServiceSchema = z.object({
   business_id: z.string().uuid(),
   name: z.string().trim().min(1).max(200),
   default_price: z.coerce.number().nonnegative(),
-  icon: z.string().trim().max(64).nullable().optional(),
+  icon: serviceIconIdSchema.nullable().optional(),
   color: z.string().trim().max(32).nullable().optional(),
   display_order: z.coerce.number().int().nonnegative().optional(),
   is_active: z.boolean().optional(),

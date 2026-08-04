@@ -57,6 +57,7 @@ export class BusinessService {
             business_id: businessId,
             name: service.name,
             default_price: service.default_price,
+            icon: service.icon,
             display_order: service.display_order,
             is_active: true,
           }),

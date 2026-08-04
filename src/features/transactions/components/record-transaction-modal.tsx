@@ -12,13 +12,12 @@ import {
   Loader2,
   Package,
   QrCode,
-  Scissors,
   X,
   type LucideIcon,
   QUICK_CATEGORY_ICONS,
-  QUICK_SERVICE_ICONS,
 } from "@/features/transactions/components/record-transaction-modal-icons";
 
+import { getServiceIconComponent } from "@/constants/service-icons";
 import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
 import { cn } from "@/lib/utils";
 import type { UiPaymentMethod } from "@/utils/payment-method";
@@ -288,10 +287,8 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                   </p>
                 ) : (
                   <div className="-mx-6 flex gap-3 overflow-x-auto px-6 pb-2 hide-scrollbar sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-5 sm:overflow-visible sm:px-0 sm:pb-0">
-                    {catalogServices.map((service, index) => {
-                      const Icon =
-                        QUICK_SERVICE_ICONS[index % QUICK_SERVICE_ICONS.length] ??
-                        Scissors;
+                    {catalogServices.map((service) => {
+                      const Icon = getServiceIconComponent(service.icon);
                       const defaultPrice = Number(service.default_price);
                       const isActive = selectedServiceId === service.id;
                       return (

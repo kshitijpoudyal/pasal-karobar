@@ -2,17 +2,18 @@
 
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 import {
-  ArrowUp,
   Banknote,
   ShoppingBag,
-  TrendingUp,
+  TrendingUp as TrendingUpIcon,
   Users,
   Wallet,
 } from "@/features/dashboard/components/dashboard-stat-icons";
 import type { DashboardSummary } from "@/services/dashboard-summary";
 import { formatCompactNpr } from "@/utils/format";
+import { formatDashboardComparisonLabel, type DashboardGranularity } from "@/utils/date-ranges";
 import { cn } from "@/lib/utils";
 
 type KpiCardProps = {
@@ -20,7 +21,7 @@ type KpiCardProps = {
   iconClassName?: string;
   label: string;
   value: string;
-  footer: ReactNode;
+  footer: ReactNode | null;
 };
 
 function KpiCard({
@@ -48,63 +49,91 @@ function KpiCard({
   );
 }
 
-type KpiGridProps = {
+function NetProfitFooter({
+  summary,
+  granularity,
+}: {
   summary: DashboardSummary;
-};
+  granularity: DashboardGranularity;
+}) {
+  const comparison = summary.periodComparison;
+  const compareLabel = formatDashboardComparisonLabel(granularity);
+  const showComparison =
+    comparison &&
+    (comparison.priorNet !== 0 ||
+      comparison.netDelta !== 0 ||
+      summary.profit !== 0);
 
-export function KpiGrid({ summary }: KpiGridProps) {
-  const efficiency =
-    summary.revenue > 0
-      ? Math.round((summary.profit / summary.revenue) * 100)
-      : 0;
+  if (!showComparison || !comparison) return null;
+
+  const deltaPositive = comparison.netDelta >= 0;
+  const DeltaIcon = deltaPositive ? TrendingUp : TrendingDown;
 
   return (
-    <section className="grid grid-cols-2 gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:gap-6">
+    <div
+      className={cn(
+        "text-label-sm flex items-center gap-1 font-semibold",
+        deltaPositive ? "text-on-secondary-container" : "text-error",
+      )}
+    >
+      <DeltaIcon className="size-3.5" strokeWidth={2.25} />
+      {comparison.netDeltaPercent !== null ? (
+        <span>
+          {deltaPositive ? "+" : ""}
+          {Math.round(comparison.netDeltaPercent)}% {compareLabel}
+        </span>
+      ) : (
+        <span>
+          {deltaPositive ? "+" : ""}
+          {formatCompactNpr(comparison.netDelta)} {compareLabel}
+        </span>
+      )}
+    </div>
+  );
+}
+
+type KpiGridProps = {
+  summary: DashboardSummary;
+  granularity: DashboardGranularity;
+};
+
+export function KpiGrid({ summary, granularity }: KpiGridProps) {
+  return (
+    <section className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6">
+      <KpiCard
+        icon={TrendingUpIcon}
+        iconClassName="text-primary"
+        label="Net profit"
+        value={formatCompactNpr(summary.profit)}
+        footer={<NetProfitFooter summary={summary} granularity={granularity} />}
+      />
       <KpiCard
         icon={Banknote}
         iconClassName="text-primary"
-        label="Income"
+        label="Money in"
         value={formatCompactNpr(summary.revenue)}
-        footer={
-          <div className="text-label-sm flex items-center gap-1 font-bold text-on-secondary-container">
-            <ArrowUp className="size-3.5" strokeWidth={2.5} />
-            Live
-          </div>
-        }
+        footer={null}
       />
       <KpiCard
         icon={ShoppingBag}
         iconClassName="text-on-surface-variant"
-        label="Expense"
+        label="Money out"
         value={formatCompactNpr(summary.expenses)}
-        footer={
-          <div className="text-label-sm font-medium text-on-surface-variant uppercase">
-            Expenses
-          </div>
-        }
-      />
-      <KpiCard
-        icon={Wallet}
-        iconClassName="text-secondary"
-        label="Net Profit"
-        value={formatCompactNpr(summary.profit)}
-        footer={
-          <div className="text-label-sm font-bold text-on-secondary-container uppercase">
-            {efficiency}% Efficiency
-          </div>
-        }
+        footer={null}
       />
       <KpiCard
         icon={Users}
         iconClassName="text-on-surface-variant"
-        label="Customers Count"
+        label="Visits"
         value={String(summary.patronCount)}
-        footer={
-          <div className="text-label-sm flex items-center gap-1 font-bold text-on-secondary-container">
-            <TrendingUp className="size-3.5" strokeWidth={2.5} />
-            Income rows
-          </div>
-        }
+        footer={null}
+      />
+      <KpiCard
+        icon={Wallet}
+        iconClassName="text-secondary"
+        label="Avg ticket"
+        value={formatCompactNpr(summary.averageSale)}
+        footer={null}
       />
     </section>
   );

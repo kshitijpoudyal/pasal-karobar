@@ -23,11 +23,11 @@ VALUES (
 INSERT INTO services
 (id,business_id,name,default_price,icon,color,display_order,is_active)
 VALUES
-(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Haircut',500,'scissors','#4F46E5',1,true),
-(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Beard Trim',250,'scissors','#16A34A',2,true),
-(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Haircut + Beard',700,'user','#EA580C',3,true),
-(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Kids Haircut',350,'baby','#2563EB',4,true),
-(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Facial',1200,'sparkles','#9333EA',5,true);
+(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Haircut',500,'hair','#4F46E5',1,true),
+(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Beard Trim',250,'beard','#16A34A',2,true),
+(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Haircut + Beard',700,'combo','#EA580C',3,true),
+(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Kids Haircut',350,'kids','#2563EB',4,true),
+(gen_random_uuid(),'11111111-1111-1111-1111-111111111111','Facial',1200,'facial','#9333EA',5,true);
 
 -- Expense Categories
 INSERT INTO expense_categories

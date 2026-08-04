@@ -164,6 +164,12 @@
   -webkit-backdrop-filter: blur(16px);
 }
 
+.period-picker-glass {
+  background-color: rgb(227 226 230 / 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
 .service-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

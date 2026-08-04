@@ -175,16 +175,18 @@ export function CuratedInsightsPanel(props: CuratedInsightsPanelProps) {
 type InsightsSectionProps = {
   trajectory: TrajectoryPoint[];
   peakAnalysis?: PeakAnalysisInsights | null;
+  chartTitle?: string;
 };
 
 export function InsightsSection({
   trajectory,
   peakAnalysis,
+  chartTitle,
 }: InsightsSectionProps) {
   return (
     <section>
       <div className="grid grid-cols-12 gap-6 lg:gap-8">
-        <PerformanceTrajectoryCard points={trajectory} />
+        <PerformanceTrajectoryCard points={trajectory} title={chartTitle} />
         <CuratedInsightsPanel peakAnalysis={peakAnalysis} />
       </div>
     </section>

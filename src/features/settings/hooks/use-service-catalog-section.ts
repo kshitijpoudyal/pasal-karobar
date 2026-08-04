@@ -3,8 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { z } from "zod";
+import { z } from "zod";
 
+import { DEFAULT_SERVICE_ICON_ID, normalizeServiceIconId } from "@/constants/service-icons";
 import { toast } from "@/components/toast";
 import {
   useCreateServiceMutation,
@@ -13,12 +14,13 @@ import {
   useUpdateServiceMutation,
 } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
-import { createServiceSchema, updateServiceSchema } from "@/services/schemas";
+import { createServiceSchema, serviceIconIdSchema, updateServiceSchema } from "@/services/schemas";
 import type { ServiceRecord } from "@/types/database";
 
-const serviceFormSchema = createServiceSchema.pick({
-  name: true,
-  default_price: true,
+const serviceFormSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  default_price: z.coerce.number().nonnegative(),
+  icon: serviceIconIdSchema,
 });
 
 export type RegisterServiceFormValues = z.infer<typeof serviceFormSchema>;
@@ -41,12 +43,12 @@ export function useServiceCatalogSection(
 
   const registerForm = useForm<RegisterServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
-    defaultValues: { name: "", default_price: 0 },
+    defaultValues: { name: "", default_price: 0, icon: DEFAULT_SERVICE_ICON_ID },
   });
 
   const editForm = useForm<RegisterServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
-    defaultValues: { name: "", default_price: 0 },
+    defaultValues: { name: "", default_price: 0, icon: DEFAULT_SERVICE_ICON_ID },
   });
 
   async function submitRegister(values: RegisterServiceFormValues) {
@@ -56,7 +58,11 @@ export function useServiceCatalogSection(
       is_active: true,
     });
     await createMutation.mutateAsync(input);
-    registerForm.reset({ name: "", default_price: 0 });
+    registerForm.reset({
+      name: "",
+      default_price: 0,
+      icon: DEFAULT_SERVICE_ICON_ID,
+    });
     toast({
       title: "Service added",
       description: `"${values.name.trim()}" is now in your catalog.`,
@@ -70,6 +76,7 @@ export function useServiceCatalogSection(
       editForm.reset({
         name: service.name,
         default_price: Number(service.default_price),
+        icon: normalizeServiceIconId(service.icon),
       });
     },
     [editForm],
@@ -77,7 +84,11 @@ export function useServiceCatalogSection(
 
   const closeEdit = useCallback(() => {
     setEditingService(null);
-    editForm.reset({ name: "", default_price: 0 });
+    editForm.reset({
+      name: "",
+      default_price: 0,
+      icon: DEFAULT_SERVICE_ICON_ID,
+    });
   }, [editForm]);
 
   async function submitEdit(values: RegisterServiceFormValues) {
@@ -85,6 +96,7 @@ export function useServiceCatalogSection(
     const input = updateServiceSchema.parse({
       name: values.name,
       default_price: values.default_price,
+      icon: values.icon,
     });
     await updateMutation.mutateAsync({
       serviceId: editingService.id,

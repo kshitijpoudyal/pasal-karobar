@@ -1,19 +1,20 @@
 import type { TransactionService } from "@/services/transaction.service";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
 import type { Transaction } from "@/types/database";
-import type { DashboardPeriod } from "@/utils/date-ranges";
+import type { DashboardGranularity } from "@/utils/date-ranges";
+import {
+  resolvePriorDashboardRange,
+} from "@/utils/date-ranges";
 import {
   eachDayOfInterval,
   eachMonthOfInterval,
-  eachYearOfInterval,
   endOfDay,
-  endOfYear,
   format,
   getDaysInMonth,
   getHours,
   getISODay,
-  getYear,
   isSameMonth,
+  min,
   parseISO,
   startOfDay,
   startOfMonth,
@@ -50,6 +51,7 @@ import type {
   DashboardSummaryParams,
   MonthDayHeatmap,
   MonthHeatmapDay,
+  PeriodComparison,
   TrajectoryPoint,
 } from "@/services/dashboard-summary";
 
@@ -317,8 +319,28 @@ export function buildPeakAnalysisInsights(
   };
 }
 
+function aggregatePeriodMetrics(transactions: Transaction[]) {
+  let revenue = 0;
+  let expenses = 0;
+  let patronCount = 0;
+  for (const tx of transactions) {
+    if (tx.type === "INCOME") {
+      revenue += Number(tx.total);
+      patronCount += 1;
+    } else {
+      expenses += Number(tx.total);
+    }
+  }
+  return {
+    revenue,
+    expenses,
+    profit: revenue - expenses,
+    patronCount,
+  };
+}
+
 export function buildPerformanceTrajectory(
-  period: DashboardPeriod,
+  granularity: DashboardGranularity,
   fromIso: string,
   toIso: string,
   transactions: Transaction[],
@@ -326,7 +348,21 @@ export function buildPerformanceTrajectory(
   const from = startOfDay(parseISO(fromIso));
   const to = endOfDay(parseISO(toIso));
 
-  if (period === "DAILY") {
+  if (granularity === "day") {
+    const buckets: TrajectoryPoint[] = Array.from({ length: 24 }, (_, hour) => ({
+      label: format(new Date(2020, 0, 1, hour), "ha"),
+      income: 0,
+      expense: 0,
+    }));
+    for (const tx of transactions) {
+      const hour = getHours(parseISO(tx.transaction_date));
+      const bucket = buckets[hour];
+      if (bucket) addToBucket(bucket, tx);
+    }
+    return buckets;
+  }
+
+  if (granularity === "week") {
     const days = eachDayOfInterval({ start: from, end: to });
     return days.map((day) => {
       const key = format(day, "yyyy-MM-dd");
@@ -341,60 +377,34 @@ export function buildPerformanceTrajectory(
     });
   }
 
-  if (period === "WEEKLY") {
-    const monthStart = startOfMonth(from);
-    const daysInMonth = getDaysInMonth(monthStart);
-    const numWeeks = Math.ceil(daysInMonth / 7);
-    const buckets: TrajectoryPoint[] = Array.from({ length: numWeeks }, (_, i) => ({
-      label: `W${i + 1}`,
-      income: 0,
-      expense: 0,
-    }));
-
-    for (const tx of transactions) {
-      const d = parseISO(tx.transaction_date);
-      if (!isSameMonth(d, monthStart)) continue;
-      const weekIndex = Math.floor((d.getDate() - 1) / 7);
-      const bucket = buckets[weekIndex];
-      if (bucket) addToBucket(bucket, tx);
-    }
-
-    return buckets;
-  }
-
-  if (period === "MONTHLY") {
-    const yearStart = startOfYear(from);
-    const months = eachMonthOfInterval({ start: yearStart, end: to });
-    return months.map((month) => {
-      const monthStart = startOfMonth(month);
-      const monthEnd = endOfMonth(month);
-      const monthTx = transactions.filter((tx) => {
-        const d = parseISO(tx.transaction_date);
-        return d >= monthStart && d <= monthEnd;
-      });
+  if (granularity === "month") {
+    const days = eachDayOfInterval({ start: from, end: to });
+    return days.map((day) => {
+      const key = format(day, "yyyy-MM-dd");
+      const dayTx = transactions.filter(
+        (tx) => tx.transaction_date.slice(0, 10) === key,
+      );
       return {
-        label: format(month, "MMM"),
-        income: sumByType(monthTx, "INCOME"),
-        expense: sumByType(monthTx, "EXPENSE"),
+        label: format(day, "d"),
+        income: sumByType(dayTx, "INCOME"),
+        expense: sumByType(dayTx, "EXPENSE"),
       };
     });
   }
 
-  const years = eachYearOfInterval({ start: startOfYear(from), end: to });
-  return years.map((yearDate) => {
-    const year = getYear(yearDate);
-    const yearStart = startOfYear(yearDate);
-    const yearEnd = endOfDay(
-      year === getYear(to) ? to : endOfYear(yearDate),
-    );
-    const yearTx = transactions.filter((tx) => {
+  const yearStart = startOfYear(from);
+  const months = eachMonthOfInterval({ start: yearStart, end: to });
+  return months.map((month) => {
+    const monthStart = startOfMonth(month);
+    const monthEnd = endOfMonth(month);
+    const monthTx = transactions.filter((tx) => {
       const d = parseISO(tx.transaction_date);
-      return d >= yearStart && d <= yearEnd;
+      return d >= monthStart && d <= monthEnd;
     });
     return {
-      label: String(year),
-      income: sumByType(yearTx, "INCOME"),
-      expense: sumByType(yearTx, "EXPENSE"),
+      label: format(month, "MMM"),
+      income: sumByType(monthTx, "INCOME"),
+      expense: sumByType(monthTx, "EXPENSE"),
     };
   });
 }
@@ -413,13 +423,20 @@ export class DashboardService {
     const periodFromIso =
       params.from ?? startOfDay(now).toISOString();
     const periodToIso = params.to ?? endOfDay(now).toISOString();
+    const granularity: DashboardGranularity = params.granularity ?? "week";
     const heatmapAnchor = endOfDay(parseISO(periodToIso));
-    const monthStart = startOfMonth(heatmapAnchor);
-    const periodFrom = parseISO(periodFromIso);
-    const fetchFromIso =
-      periodFrom.getTime() < monthStart.getTime()
-        ? periodFromIso
-        : monthStart.toISOString();
+
+    const anchorForPrior = parseISO(periodToIso);
+    const priorRange = resolvePriorDashboardRange(
+      granularity,
+      anchorForPrior,
+      now,
+    );
+
+    const fetchFromIso = min([
+      parseISO(periodFromIso),
+      parseISO(priorRange.from),
+    ]).toISOString();
 
     const [transactions, services] = await Promise.all([
       this.transactionService.listByBusinessId(businessId, {
@@ -435,34 +452,46 @@ export class DashboardService {
       periodToIso,
     );
 
+    const priorTransactions = filterTransactionsInRange(
+      transactions,
+      priorRange.from,
+      priorRange.to,
+    );
+
     const serviceNames = new Map(services.map((s) => [s.id, s.name]));
 
-    let revenue = 0;
-    let expenses = 0;
-    let patronCount = 0;
+    const periodMetrics = aggregatePeriodMetrics(periodTransactions);
+    const revenue = periodMetrics.revenue;
+    const expenses = periodMetrics.expenses;
+    const patronCount = periodMetrics.patronCount;
     const serviceTotals = new Map<string, number>();
     const todayStart = startOfDay(now).toISOString();
 
     let dailyNetRevenue = 0;
 
     for (const tx of periodTransactions) {
-      if (tx.type === "INCOME") {
-        revenue += Number(tx.total);
-        patronCount += 1;
-        if (tx.service_id) {
-          const name = serviceNames.get(tx.service_id) ?? "Service";
-          serviceTotals.set(name, (serviceTotals.get(name) ?? 0) + Number(tx.total));
-        }
-        if (tx.transaction_date >= todayStart) {
-          dailyNetRevenue += Number(tx.total);
-        }
-      } else {
-        expenses += Number(tx.total);
-        if (tx.transaction_date >= todayStart) {
-          dailyNetRevenue -= Number(tx.total);
-        }
+      if (tx.type === "INCOME" && tx.service_id) {
+        const name = serviceNames.get(tx.service_id) ?? "Service";
+        serviceTotals.set(name, (serviceTotals.get(name) ?? 0) + Number(tx.total));
+      }
+      if (tx.transaction_date >= todayStart) {
+        dailyNetRevenue +=
+          tx.type === "INCOME" ? Number(tx.total) : -Number(tx.total);
       }
     }
+
+    const priorMetrics = aggregatePeriodMetrics(priorTransactions);
+    const netDelta = periodMetrics.profit - priorMetrics.profit;
+    const periodComparison: PeriodComparison = {
+      priorFrom: priorRange.from,
+      priorTo: priorRange.to,
+      priorNet: priorMetrics.profit,
+      netDelta,
+      netDeltaPercent:
+        priorMetrics.profit !== 0
+          ? (netDelta / Math.abs(priorMetrics.profit)) * 100
+          : null,
+    };
 
     const serviceRevenue = [...serviceTotals.entries()]
       .map(([name, total]) => ({ name, total }))
@@ -470,9 +499,8 @@ export class DashboardService {
 
     const top = serviceRevenue[0];
 
-    const period = params.period ?? "WEEKLY";
     const trajectory = buildPerformanceTrajectory(
-      period,
+      granularity,
       periodFromIso,
       periodToIso,
       periodTransactions,
@@ -482,12 +510,15 @@ export class DashboardService {
       periodTransactions,
       periodToIso,
     );
-    const monthDayHeatmap = buildMonthDayHeatmap(transactions, heatmapAnchor);
+    const monthDayHeatmap =
+      granularity === "month"
+        ? buildMonthDayHeatmap(transactions, heatmapAnchor)
+        : null;
 
     return {
       revenue,
       expenses,
-      profit: revenue - expenses,
+      profit: periodMetrics.profit,
       patronCount,
       averageSale: patronCount > 0 ? revenue / patronCount : 0,
       dailyNetRevenue,
@@ -497,6 +528,7 @@ export class DashboardService {
       trajectory,
       peakAnalysis,
       monthDayHeatmap,
+      periodComparison,
     };
   }
 }

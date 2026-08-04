@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useId } from "react";
 import type { UseFormReturn } from "react-hook-form";
 
+import { ServiceIconPicker } from "@/features/settings/components/service-icon-picker";
 import type { RegisterServiceFormValues } from "@/features/settings/hooks/use-service-catalog-section";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,7 @@ export function RegisterServiceModal({
   const priceFieldId = `${fieldIdPrefix}-service-price`;
   const {
     register,
+    control,
     formState: { errors },
   } = form;
 
@@ -102,6 +104,7 @@ export function RegisterServiceModal({
                 <p className="text-xs text-error">{errors.name.message}</p>
               ) : null}
             </div>
+            <ServiceIconPicker control={control} name="icon" />
             <div className="space-y-2">
               <label className={FIELD_LABEL} htmlFor={priceFieldId}>
                 Default Price

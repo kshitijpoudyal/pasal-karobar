@@ -1,19 +1,24 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Baby, Pencil, Scissors, Trash2, UserRound } from "lucide-react";
+import { Pencil, Scissors, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
 import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
+import { getServiceIconComponent, DEFAULT_SERVICE_ICON_ID } from "@/constants/service-icons";
 import { ServiceCatalogAddCard } from "@/features/settings/components/service-catalog-add-card";
 import { RegisterServiceModal } from "@/features/settings/components/register-service-modal";
 import { useServiceCatalogSection } from "@/features/settings/hooks/use-service-catalog-section";
 import { cn } from "@/lib/utils";
 import { formatNpr } from "@/utils/format";
 
-const ICON_CYCLE: LucideIcon[] = [Scissors, UserRound, Baby];
+const wrapClasses = [
+  "bg-primary-container text-on-primary-container",
+  "bg-secondary-container text-on-secondary-container",
+  "bg-tertiary-container text-on-tertiary-container",
+];
 
 type ServiceCatalogCardProps = {
   title: string;
@@ -89,12 +94,6 @@ function ServiceCatalogCard({
   );
 }
 
-const wrapClasses = [
-  "bg-primary-container text-on-primary-container",
-  "bg-secondary-container text-on-secondary-container",
-  "bg-tertiary-container text-on-tertiary-container",
-];
-
 export function ServiceCatalogSection() {
   const [registerOpen, setRegisterOpen] = useState(false);
   const { confirm } = useConfirmDrawer();
@@ -122,7 +121,11 @@ export function ServiceCatalogSection() {
 
   const closeRegister = () => {
     setRegisterOpen(false);
-    registerForm.reset({ name: "", default_price: 0 });
+    registerForm.reset({
+      name: "",
+      default_price: 0,
+      icon: DEFAULT_SERVICE_ICON_ID,
+    });
   };
 
   return (
@@ -167,7 +170,7 @@ export function ServiceCatalogSection() {
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {services.map((service, index) => {
-            const Icon = ICON_CYCLE[index % ICON_CYCLE.length] ?? Scissors;
+            const Icon = getServiceIconComponent(service.icon);
             const iconWrapClassName: string =
               wrapClasses[index % wrapClasses.length] ??
               "bg-primary-container text-on-primary-container";
