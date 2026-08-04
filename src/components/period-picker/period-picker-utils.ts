@@ -7,6 +7,7 @@ import {
   format,
   getYear,
   isAfter,
+  isBefore,
   isSameDay,
   isSameMonth,
   isWithinInterval,
@@ -78,6 +79,48 @@ export function isFutureMonth(year: number, monthIndex: number, now = new Date()
 
 export function isFutureYear(year: number, now = new Date()): boolean {
   return year > getYear(now);
+}
+
+export function isBeforeEarliestDay(
+  day: Date,
+  earliest: Date | null | undefined,
+): boolean {
+  if (!earliest) return false;
+  return isBefore(startOfDay(day), startOfDay(earliest));
+}
+
+export function isBeforeEarliestMonth(
+  year: number,
+  monthIndex: number,
+  earliest: Date | null | undefined,
+): boolean {
+  if (!earliest) return false;
+  const candidate = startOfMonth(new Date(year, monthIndex, 1));
+  return isBefore(candidate, startOfMonth(earliest));
+}
+
+export function isBeforeEarliestYear(
+  year: number,
+  earliest: Date | null | undefined,
+): boolean {
+  if (!earliest) return false;
+  return year < getYear(earliest);
+}
+
+export function isViewMonthBeforeEarliest(
+  viewMonth: Date,
+  earliest: Date | null | undefined,
+): boolean {
+  if (!earliest) return false;
+  return isBefore(startOfMonth(viewMonth), startOfMonth(earliest));
+}
+
+export function isYearPageBeforeEarliest(
+  pageStart: number,
+  earliest: Date | null | undefined,
+): boolean {
+  if (!earliest) return false;
+  return pageStart <= yearPageStartFor(getYear(earliest));
 }
 
 export function weekIntervalForAnchor(anchor: Date): { start: Date; end: Date } {

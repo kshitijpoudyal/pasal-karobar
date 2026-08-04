@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { parseISO, startOfDay } from "date-fns";
 
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
 import { QueryState } from "@/components/layout/query-state";
@@ -13,6 +14,7 @@ import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries"
 import { normalizeDashboardSummary } from "@/services/dashboard-summary";
 import { useActiveBusiness } from "@/providers/business-provider";
 import {
+  clampAnchorToDataBounds,
   clampAnchorToToday,
   resolveDashboardRange,
   type DashboardGranularity,
@@ -46,6 +48,15 @@ export function DashboardContent() {
     granularity,
   });
   const summary = normalizeDashboardSummary(summaryQuery.data);
+  const minSelectableDate = useMemo(() => {
+    const iso = summaryQuery.data?.earliestTransactionDate;
+    if (!iso) return null;
+    return startOfDay(parseISO(iso));
+  }, [summaryQuery.data?.earliestTransactionDate]);
+
+  const clampAnchor = (date: Date) =>
+    clampAnchorToDataBounds(date, minSelectableDate);
+
   const isEmptyPeriod =
     summary.patronCount === 0 &&
     summary.revenue === 0 &&
@@ -53,7 +64,7 @@ export function DashboardContent() {
 
   function handleGranularityChange(next: DashboardGranularity) {
     setGranularity(next);
-    setAnchorDate(clampAnchorToToday(new Date()));
+    setAnchorDate(clampAnchor(clampAnchorToToday(new Date())));
   }
 
   return (
@@ -61,8 +72,9 @@ export function DashboardContent() {
       <DashboardTimeNavigator
         granularity={granularity}
         anchorDate={anchorDate}
+        minSelectableDate={minSelectableDate}
         onGranularityChange={handleGranularityChange}
-        onAnchorChange={(date) => setAnchorDate(clampAnchorToToday(date))}
+        onAnchorChange={(date) => setAnchorDate(clampAnchor(date))}
       />
 
       <QueryState

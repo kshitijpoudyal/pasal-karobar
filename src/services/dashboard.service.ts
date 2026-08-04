@@ -359,7 +359,7 @@ export function buildPerformanceTrajectory(
       const bucket = buckets[hour];
       if (bucket) addToBucket(bucket, tx);
     }
-    return buckets;
+    return buckets.filter((bucket) => bucket.income > 0 || bucket.expense > 0);
   }
 
   if (granularity === "week") {
@@ -438,12 +438,13 @@ export class DashboardService {
       parseISO(priorRange.from),
     ]).toISOString();
 
-    const [transactions, services] = await Promise.all([
+    const [transactions, services, earliestTransactionDate] = await Promise.all([
       this.transactionService.listByBusinessId(businessId, {
         fromDate: fetchFromIso,
         toDate: periodToIso,
       }),
       this.serviceCatalogService.listByBusinessId(businessId),
+      this.transactionService.findEarliestTransactionDate(businessId),
     ]);
 
     const periodTransactions = filterTransactionsInRange(
@@ -529,6 +530,7 @@ export class DashboardService {
       peakAnalysis,
       monthDayHeatmap,
       periodComparison,
+      earliestTransactionDate,
     };
   }
 }

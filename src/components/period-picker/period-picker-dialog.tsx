@@ -13,9 +13,13 @@ import {
   format,
   getYear,
   isDayInSelectedWeek,
+  isBeforeEarliestDay,
+  isBeforeEarliestMonth,
+  isBeforeEarliestYear,
   isFutureDay,
   isFutureMonth,
   isFutureYear,
+  isYearPageBeforeEarliest,
   isSameDay,
   isSameMonth,
   startOfMonth,
@@ -27,7 +31,7 @@ import {
   YEARS_PER_PAGE,
 } from "@/components/period-picker/period-picker-utils";
 import { cn } from "@/lib/utils";
-import { clampAnchorToToday } from "@/utils/date-ranges";
+import { clampAnchorToDataBounds } from "@/utils/date-ranges";
 
 export type PeriodPickerDialogProps = {
   open: boolean;
@@ -37,6 +41,8 @@ export type PeriodPickerDialogProps = {
   onApply: (date: Date) => void;
   /** When set, popover opens below this element, left-aligned. */
   anchorRef?: RefObject<HTMLElement | null>;
+  /** First calendar day that may be selected (start of oldest transaction). */
+  minSelectableDate?: Date | null;
 };
 
 const PICKER_WIDTH_PX = 272;
@@ -85,12 +91,10 @@ function usePickerAnchorPosition(
 function PickerShell({
   children,
   onClose,
-  onApply,
   anchorRef,
 }: {
   children: React.ReactNode;
   onClose: () => void;
-  onApply: () => void;
   anchorRef?: RefObject<HTMLElement | null>;
 }) {
   const anchorPosition = usePickerAnchorPosition(true, anchorRef);
@@ -128,55 +132,32 @@ function PickerShell({
       >
         <div className="flex flex-col gap-4 rounded-[14px] bg-surface p-4">
           {children}
-          <PickerFooter onClose={onClose} onApply={onApply} />
         </div>
       </div>
     </div>
   );
 }
 
-function PickerFooter({
-  onClose,
-  onApply,
-}: {
-  onClose: () => void;
-  onApply: () => void;
-}) {
-  return (
-    <div className="mt-1 flex justify-end gap-2">
-      <button
-        type="button"
-        onClick={onClose}
-        className="rounded-lg bg-surface-container-highest px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-on-surface uppercase transition-colors hover:bg-surface-container-high"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        onClick={onApply}
-        className="rounded-lg bg-primary-container px-4 py-2 text-[11px] font-semibold tracking-[0.1em] text-on-primary uppercase transition-colors hover:bg-primary"
-      >
-        Apply
-      </button>
-    </div>
-  );
-}
-
 function DayWeekPickerBody({
   mode,
-  draft,
-  setDraft,
+  anchorDate,
   viewMonth,
   setViewMonth,
+  minSelectableDate,
+  onSelect,
 }: {
   mode: "day" | "week";
-  draft: Date;
-  setDraft: (date: Date) => void;
+  anchorDate: Date;
   viewMonth: Date;
   setViewMonth: (date: Date) => void;
+  minSelectableDate: Date | null;
+  onSelect: (date: Date) => void;
 }) {
   const today = startOfDay(new Date());
   const cells = calendarCellsForMonth(viewMonth);
+  const atEarliestMonth =
+    minSelectableDate &&
+    startOfMonth(viewMonth).getTime() <= startOfMonth(minSelectableDate).getTime();
 
   return (
     <>
@@ -184,8 +165,9 @@ function DayWeekPickerBody({
         <button
           type="button"
           aria-label="Previous month"
+          disabled={Boolean(atEarliestMonth)}
           onClick={() => setViewMonth(subMonths(viewMonth, 1))}
-          className="flex size-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+          className="flex size-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container disabled:opacity-30"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
         </button>
@@ -217,11 +199,13 @@ function DayWeekPickerBody({
           {cells.map((day) => {
             const inMonth = isSameMonth(day, viewMonth);
             const future = isFutureDay(day, today);
+            const beforeData = isBeforeEarliestDay(day, minSelectableDate);
             const isToday = isSameDay(day, today);
-            const isSelected = isSameDay(day, draft);
-            const inWeek = isDayInSelectedWeek(day, draft, mode);
-            const notSelectable = !inMonth || future;
+            const isSelected = isSameDay(day, anchorDate);
+            const inWeek = isDayInSelectedWeek(day, anchorDate, mode);
+            const notSelectable = !inMonth || future || beforeData;
             const futureInMonth = inMonth && future;
+            const beforeDataInMonth = inMonth && beforeData;
 
             return (
               <button
@@ -231,7 +215,7 @@ function DayWeekPickerBody({
                 tabIndex={notSelectable ? -1 : 0}
                 onClick={() => {
                   if (notSelectable) return;
-                  setDraft(startOfDay(day));
+                  onSelect(startOfDay(day));
                 }}
                 className={cn(
                   "flex h-8 w-full items-center justify-center rounded-full text-sm transition-colors",
@@ -239,22 +223,26 @@ function DayWeekPickerBody({
                     "pointer-events-none text-outline-variant",
                   inMonth &&
                     !future &&
+                    !beforeData &&
                     "text-on-surface hover:bg-surface-container",
-                  futureInMonth &&
+                  (futureInMonth || beforeDataInMonth) &&
                     "pointer-events-none cursor-not-allowed text-on-surface-variant",
                   isToday &&
                     inMonth &&
                     !isSelected &&
+                    !beforeData &&
                     "bg-surface-container-low font-semibold text-primary ring-1 ring-inset ring-outline-variant/30",
                   mode === "week" &&
                     inWeek &&
                     inMonth &&
                     !isSelected &&
                     !future &&
+                    !beforeData &&
                     "bg-surface-container-low/80",
                   isSelected &&
                     inMonth &&
                     !future &&
+                    !beforeData &&
                     "bg-primary-container font-semibold text-on-primary shadow-sm hover:bg-primary",
                 )}
               >
@@ -269,19 +257,23 @@ function DayWeekPickerBody({
 }
 
 function MonthPickerBody({
-  draft,
-  setDraft,
+  anchorDate,
   viewYear,
   setViewYear,
+  minSelectableDate,
+  onSelect,
 }: {
-  draft: Date;
-  setDraft: (date: Date) => void;
+  anchorDate: Date;
   viewYear: number;
   setViewYear: (year: number) => void;
+  minSelectableDate: Date | null;
+  onSelect: (date: Date) => void;
 }) {
   const now = new Date();
-  const draftMonth = draft.getMonth();
-  const draftYear = getYear(draft);
+  const draftMonth = anchorDate.getMonth();
+  const draftYear = getYear(anchorDate);
+  const atEarliestYear =
+    minSelectableDate && viewYear <= getYear(minSelectableDate);
 
   return (
     <>
@@ -289,8 +281,9 @@ function MonthPickerBody({
         <button
           type="button"
           aria-label="Previous year"
+          disabled={Boolean(atEarliestYear)}
           onClick={() => setViewYear(viewYear - 1)}
-          className="rounded-full p-0.5 text-on-surface-variant transition-colors hover:text-primary"
+          className="rounded-full p-0.5 text-on-surface-variant transition-colors hover:text-primary disabled:opacity-30"
         >
           <ChevronLeft className="size-5" strokeWidth={1.75} />
         </button>
@@ -311,14 +304,21 @@ function MonthPickerBody({
       <div className="grid grid-cols-3 gap-x-2 gap-y-3">
         {MONTH_LABELS.map((label, monthIndex) => {
           const selected = draftYear === viewYear && draftMonth === monthIndex;
-          const disabled = isFutureMonth(viewYear, monthIndex, now);
+          const disabled =
+            isFutureMonth(viewYear, monthIndex, now) ||
+            isBeforeEarliestMonth(viewYear, monthIndex, minSelectableDate);
           return (
             <button
               key={label}
               type="button"
               disabled={disabled}
               onClick={() =>
-                setDraft(clampAnchorToToday(new Date(viewYear, monthIndex, 1, 12)))
+                onSelect(
+                  clampAnchorToDataBounds(
+                    new Date(viewYear, monthIndex, 1, 12),
+                    minSelectableDate,
+                  ),
+                )
               }
               className={cn(
                 "rounded-lg py-1.5 text-center text-sm transition-colors",
@@ -338,18 +338,20 @@ function MonthPickerBody({
 }
 
 function YearPickerBody({
-  draft,
-  setDraft,
+  anchorDate,
   pageStart,
   setPageStart,
+  minSelectableDate,
+  onSelect,
 }: {
-  draft: Date;
-  setDraft: (date: Date) => void;
+  anchorDate: Date;
   pageStart: number;
   setPageStart: (start: number) => void;
+  minSelectableDate: Date | null;
+  onSelect: (date: Date) => void;
 }) {
   const now = new Date();
-  const draftYear = getYear(draft);
+  const draftYear = getYear(anchorDate);
   const years = yearsOnPage(pageStart);
   const pageEnd = pageStart + YEARS_PER_PAGE - 1;
 
@@ -359,8 +361,9 @@ function YearPickerBody({
         <button
           type="button"
           aria-label="Previous years"
+          disabled={isYearPageBeforeEarliest(pageStart, minSelectableDate)}
           onClick={() => setPageStart(pageStart - YEARS_PER_PAGE)}
-          className="flex size-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container"
+          className="flex size-8 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container disabled:opacity-30"
         >
           <ChevronLeft className="size-4" strokeWidth={1.75} />
         </button>
@@ -381,14 +384,18 @@ function YearPickerBody({
       <div className="grid grid-cols-3 gap-x-2 gap-y-2">
         {years.map((year) => {
           const selected = draftYear === year;
-          const disabled = isFutureYear(year, now);
+          const disabled =
+            isFutureYear(year, now) ||
+            isBeforeEarliestYear(year, minSelectableDate);
           return (
             <button
               key={year}
               type="button"
               disabled={disabled}
               onClick={() =>
-                setDraft(clampAnchorToToday(new Date(year, 6, 1, 12)))
+                onSelect(
+                  clampAnchorToDataBounds(new Date(year, 6, 1, 12), minSelectableDate),
+                )
               }
               className={cn(
                 "flex h-9 w-full items-center justify-center rounded-lg text-sm transition-colors",
@@ -414,8 +421,8 @@ export function PeriodPickerDialog({
   onClose,
   onApply,
   anchorRef,
+  minSelectableDate = null,
 }: PeriodPickerDialogProps) {
-  const [draft, setDraft] = useState(anchorDate);
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(anchorDate));
   const [viewYear, setViewYear] = useState(() => getYear(anchorDate));
   const [yearPageStart, setYearPageStart] = useState(() =>
@@ -424,7 +431,6 @@ export function PeriodPickerDialog({
 
   useEffect(() => {
     if (!open) return;
-    setDraft(anchorDate);
     setViewMonth(startOfMonth(anchorDate));
     setViewYear(getYear(anchorDate));
     setYearPageStart(yearPageStartFor(getYear(anchorDate)));
@@ -441,8 +447,8 @@ export function PeriodPickerDialog({
 
   if (!open || typeof document === "undefined") return null;
 
-  function handleApply() {
-    onApply(clampAnchorToToday(draft));
+  function commitSelection(date: Date) {
+    onApply(clampAnchorToDataBounds(date, minSelectableDate));
     onClose();
   }
 
@@ -450,29 +456,32 @@ export function PeriodPickerDialog({
     mode === "day" || mode === "week" ? (
       <DayWeekPickerBody
         mode={mode}
-        draft={draft}
-        setDraft={setDraft}
+        anchorDate={anchorDate}
         viewMonth={viewMonth}
         setViewMonth={setViewMonth}
+        minSelectableDate={minSelectableDate}
+        onSelect={commitSelection}
       />
     ) : mode === "month" ? (
       <MonthPickerBody
-        draft={draft}
-        setDraft={setDraft}
+        anchorDate={anchorDate}
         viewYear={viewYear}
         setViewYear={setViewYear}
+        minSelectableDate={minSelectableDate}
+        onSelect={commitSelection}
       />
     ) : (
       <YearPickerBody
-        draft={draft}
-        setDraft={setDraft}
+        anchorDate={anchorDate}
         pageStart={yearPageStart}
         setPageStart={setYearPageStart}
+        minSelectableDate={minSelectableDate}
+        onSelect={commitSelection}
       />
     );
 
   return createPortal(
-    <PickerShell onClose={onClose} onApply={handleApply} anchorRef={anchorRef}>
+    <PickerShell onClose={onClose} anchorRef={anchorRef}>
       {body}
     </PickerShell>,
     document.body,

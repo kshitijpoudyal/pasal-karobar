@@ -46,6 +46,8 @@ export type DashboardSummary = {
   peakAnalysis: PeakAnalysisInsights;
   monthDayHeatmap: MonthDayHeatmap | null;
   periodComparison: PeriodComparison | null;
+  /** ISO timestamp of the oldest transaction, if any. */
+  earliestTransactionDate: string | null;
 };
 
 export type DashboardSummaryParams = {
@@ -70,6 +72,7 @@ export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
   peakAnalysis: EMPTY_PEAK_ANALYSIS,
   monthDayHeatmap: null,
   periodComparison: null,
+  earliestTransactionDate: null,
 };
 
 /** Fills gaps from stale query cache after summary shape changes. */
@@ -84,6 +87,7 @@ export function normalizeDashboardSummary(
     peakAnalysis: coalescePeakAnalysis(data.peakAnalysis),
     monthDayHeatmap: data.monthDayHeatmap ?? null,
     periodComparison: data.periodComparison ?? null,
+    earliestTransactionDate: data.earliestTransactionDate ?? null,
   };
 }
 

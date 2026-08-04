@@ -18,6 +18,12 @@ export class TransactionService {
     return this.transactionRepository.listByBusinessId(businessId, filters);
   }
 
+  async findEarliestTransactionDate(
+    businessId: string,
+  ): Promise<string | null> {
+    return this.transactionRepository.findEarliestTransactionDate(businessId);
+  }
+
   async getById(id: string): Promise<Transaction | null> {
     return this.transactionRepository.findById(id);
   }

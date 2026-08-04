@@ -52,6 +52,21 @@ export class TransactionRepository {
     return data ?? [];
   }
 
+  async findEarliestTransactionDate(
+    businessId: string,
+  ): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from("transactions")
+      .select("transaction_date")
+      .eq("business_id", businessId)
+      .order("transaction_date", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) mapRepositoryError(error);
+    return data?.transaction_date ?? null;
+  }
+
   async findById(id: string): Promise<Transaction | null> {
     const { data, error } = await this.supabase
       .from("transactions")

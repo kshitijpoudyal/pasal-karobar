@@ -7,7 +7,6 @@ import { PeriodPickerDialog } from "@/components/period-picker";
 import type { PeriodPickerMode } from "@/components/period-picker";
 import { cn } from "@/lib/utils";
 import {
-  clampAnchorToToday,
   formatDashboardScrubberLabel,
   isDashboardAtLatest,
   resolveDashboardRange,
@@ -27,6 +26,7 @@ type DashboardTimeNavigatorProps = {
   anchorDate: Date;
   onGranularityChange: (value: DashboardGranularity) => void;
   onAnchorChange: (date: Date) => void;
+  minSelectableDate?: Date | null;
 };
 
 export function DashboardTimeNavigator({
@@ -34,6 +34,7 @@ export function DashboardTimeNavigator({
   anchorDate,
   onGranularityChange,
   onAnchorChange,
+  minSelectableDate = null,
 }: DashboardTimeNavigatorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const periodTriggerRef = useRef<HTMLDivElement>(null);
@@ -120,8 +121,9 @@ export function DashboardTimeNavigator({
         mode={pickerMode}
         anchorDate={anchorDate}
         anchorRef={periodTriggerRef}
+        minSelectableDate={minSelectableDate}
         onClose={() => setPickerOpen(false)}
-        onApply={(date) => onAnchorChange(clampAnchorToToday(date))}
+        onApply={(date) => onAnchorChange(date)}
       />
     </>
   );

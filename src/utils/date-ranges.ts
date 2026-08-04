@@ -8,6 +8,7 @@ import {
   endOfYear,
   format,
   isAfter,
+  isBefore,
   parseISO,
   startOfDay,
   startOfMonth,
@@ -181,6 +182,20 @@ export function clampAnchorToToday(anchorDate: Date, now: Date = new Date()): Da
   const end = endOfDay(now);
   if (isAfter(anchorDate, end)) return startOfDay(now);
   return anchorDate;
+}
+
+/** Clamp to today and not before the first day with transaction data. */
+export function clampAnchorToDataBounds(
+  anchorDate: Date,
+  earliestData: Date | null,
+  now: Date = new Date(),
+): Date {
+  let date = clampAnchorToToday(anchorDate, now);
+  if (earliestData) {
+    const minDay = startOfDay(earliestData);
+    if (isBefore(date, minDay)) date = minDay;
+  }
+  return date;
 }
 
 /** @deprecated Use resolveDashboardRange with anchor = now */
