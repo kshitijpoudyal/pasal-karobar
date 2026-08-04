@@ -35,7 +35,7 @@ function chartTitleFor(granularity: DashboardGranularity): string {
 
 export function DashboardContent() {
   const { businessId } = useActiveBusiness();
-  const [granularity, setGranularity] = useState<DashboardGranularity>("week");
+  const [granularity, setGranularity] = useState<DashboardGranularity>("day");
   const [anchorDate, setAnchorDate] = useState(() => clampAnchorToToday(new Date()));
 
   const range = useMemo(
