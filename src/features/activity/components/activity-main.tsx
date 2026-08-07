@@ -7,13 +7,10 @@ import {
 } from "@/features/activity/components/activity-filters";
 import { ActivityHeaderChrome } from "@/features/activity/components/activity-header-chrome";
 import { TransactionTimeline } from "@/features/activity/components/transaction-timeline";
-import { useActivityHeaderCollapse } from "@/features/activity/hooks/use-activity-header-collapse";
 import { useActivityPage } from "@/features/activity/hooks/use-activity-page";
 
 export function ActivityMain() {
   const activity = useActivityPage();
-  const mobileScroll = useActivityHeaderCollapse();
-  const tabletScroll = useActivityHeaderCollapse();
 
   return (
     <>
@@ -32,32 +29,16 @@ export function ActivityMain() {
         <ActivityTimelineBody activity={activity} />
       </section>
 
-      <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden p-6 lg:flex xl:hidden">
-        <ActivityHeaderChrome
-          activity={activity}
-          collapsed={tabletScroll.collapsed}
-          layout="tablet"
-        />
-        <div
-          ref={tabletScroll.scrollRef}
-          onScroll={tabletScroll.onScroll}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
-        >
+      <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-6 overflow-hidden p-6 lg:flex xl:hidden">
+        <ActivityHeaderChrome activity={activity} layout="tablet" />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           <ActivityTimelineBody activity={activity} />
         </div>
       </section>
 
       <section className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-2 pb-4 lg:hidden">
-        <ActivityHeaderChrome
-          activity={activity}
-          collapsed={mobileScroll.collapsed}
-          layout="mobile"
-        />
-        <div
-          ref={mobileScroll.scrollRef}
-          onScroll={mobileScroll.onScroll}
-          className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain"
-        >
+        <ActivityHeaderChrome activity={activity} layout="mobile" />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           <ActivityTimelineBody activity={activity} />
         </div>
       </section>

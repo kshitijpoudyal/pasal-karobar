@@ -170,23 +170,6 @@
   -webkit-backdrop-filter: blur(12px);
 }
 
-.activity-header-collapse-shell {
-  transition-property: max-height, margin-bottom, opacity;
-  will-change: max-height, opacity;
-}
-
-.activity-header-collapse-inner {
-  transition-property: transform;
-  will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .activity-header-collapse-shell,
-  .activity-header-collapse-inner {
-    will-change: auto;
-  }
-}
-
 .service-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
