@@ -11,7 +11,6 @@ import {
 } from "@/features/activity/components/transaction-activity-card";
 import type { Transaction } from "@/types/database";
 import { formatNpr } from "@/utils/format";
-import { dbPaymentToLabel } from "@/utils/payment-method";
 
 type TransactionTimelineProps = {
   grouped: [string, Transaction[]][];
@@ -72,7 +71,6 @@ export function TransactionTimeline({
               const total = Number(tx.total);
               const title = titleForTransaction(tx, serviceNames, categoryNames);
               const time = format(parseISO(tx.transaction_date), "h:mm a");
-              const paymentLabel = dbPaymentToLabel(tx.payment_method);
 
               const deleteHandler =
                 isDeleting
@@ -97,12 +95,9 @@ export function TransactionTimeline({
                   key={tx.id}
                   title={title}
                   time={time}
-                  paymentLabel={paymentLabel}
-                  paymentClassName={
-                    isIncome
-                      ? "bg-secondary-container/50 text-on-secondary-container"
-                      : "bg-surface-container-high text-tertiary"
-                  }
+                  paymentMethod={tx.payment_method}
+                  isIncome={isIncome}
+                  mobileTotal={total}
                   amountLabel={isIncome ? "Amount / Tip" : "Expense"}
                   amount={
                     isIncome ? (

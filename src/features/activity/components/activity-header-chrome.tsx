@@ -40,6 +40,7 @@ export function ActivityHeaderChrome({
   }, [
     activity.timeframe,
     activity.category,
+    activity.paymentMethod,
     activity.netRevenue,
     layout,
   ]);
@@ -74,13 +75,15 @@ export function ActivityHeaderChrome({
         }}
       >
         {layout === "mobile" ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             <DailyNetRevenueCard netRevenue={activity.netRevenue} />
             <ActivityFilters
               timeframe={activity.timeframe}
               category={activity.category}
+              paymentMethod={activity.paymentMethod}
               onTimeframeChange={activity.setTimeframe}
               onCategoryChange={activity.setCategory}
+              onPaymentMethodChange={activity.setPaymentMethod}
             />
           </div>
         ) : (
@@ -88,8 +91,10 @@ export function ActivityHeaderChrome({
             <ActivityFilters
               timeframe={activity.timeframe}
               category={activity.category}
+              paymentMethod={activity.paymentMethod}
               onTimeframeChange={activity.setTimeframe}
               onCategoryChange={activity.setCategory}
+              onPaymentMethodChange={activity.setPaymentMethod}
             />
             <DailyNetRevenueCard netRevenue={activity.netRevenue} />
           </div>

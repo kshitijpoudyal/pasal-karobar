@@ -7,6 +7,11 @@ export function formatNpr(amount: number, currency = "NPR"): string {
   return `${prefix}${nprFormatter.format(amount)}`;
 }
 
+/** Numeric portion only (e.g. activity row amounts with separate currency glyph). */
+export function formatNprNumber(amount: number): string {
+  return nprFormatter.format(amount);
+}
+
 export function formatCompactNpr(amount: number, currency = "NPR"): string {
   if (amount >= 1000) {
     const compact = amount / 1000;

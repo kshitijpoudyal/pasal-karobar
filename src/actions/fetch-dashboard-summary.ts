@@ -1,5 +1,7 @@
 "use server";
 
+import { unstable_noStore as noStore } from "next/cache";
+
 import { getServerAppServices } from "@/services/server";
 import type {
   DashboardSummary,
@@ -13,6 +15,7 @@ export async function fetchDashboardSummary(
   if (!businessId) {
     throw new Error("businessId is required");
   }
+  noStore();
   const services = await getServerAppServices();
   return services.dashboard.getSummary(businessId, params);
 }

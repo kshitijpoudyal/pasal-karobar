@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   TrendingUp as TrendingUpIcon,
   Users,
-  Wallet,
 } from "@/features/dashboard/components/dashboard-stat-icons";
 import type { DashboardSummary } from "@/services/dashboard-summary";
 import { formatCompactNpr } from "@/utils/format";
@@ -99,7 +98,7 @@ type KpiGridProps = {
 
 export function KpiGrid({ summary, granularity }: KpiGridProps) {
   return (
-    <section className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5 xl:gap-6">
+    <section className="grid grid-cols-2 gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:gap-6">
       <KpiCard
         icon={TrendingUpIcon}
         iconClassName="text-primary"
@@ -126,13 +125,6 @@ export function KpiGrid({ summary, granularity }: KpiGridProps) {
         iconClassName="text-on-surface-variant"
         label="Visits"
         value={String(summary.patronCount)}
-        footer={null}
-      />
-      <KpiCard
-        icon={Wallet}
-        iconClassName="text-secondary"
-        label="Avg ticket"
-        value={formatCompactNpr(summary.averageSale)}
         footer={null}
       />
     </section>

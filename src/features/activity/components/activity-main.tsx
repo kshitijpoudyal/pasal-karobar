@@ -22,8 +22,10 @@ export function ActivityMain() {
           <ActivityFilters
             timeframe={activity.timeframe}
             category={activity.category}
+            paymentMethod={activity.paymentMethod}
             onTimeframeChange={activity.setTimeframe}
             onCategoryChange={activity.setCategory}
+            onPaymentMethodChange={activity.setPaymentMethod}
           />
           <DailyNetRevenueCard netRevenue={activity.netRevenue} />
         </div>
@@ -45,7 +47,7 @@ export function ActivityMain() {
         </div>
       </section>
 
-      <section className="flex min-h-0 flex-1 flex-col overflow-hidden px-5 pt-2 pb-4 lg:hidden">
+      <section className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-2 pb-4 lg:hidden">
         <ActivityHeaderChrome
           activity={activity}
           collapsed={mobileScroll.collapsed}
@@ -74,7 +76,11 @@ function ActivityTimelineBody({
       error={activity.error}
       isEmpty={!activity.isLoading && activity.groupedTransactions.length === 0}
       emptyTitle="No transactions in this period"
-      emptyDescription="Record income or expenses to see activity here."
+      emptyDescription={
+        activity.hasSecondaryFilters
+          ? "Nothing matches your filters. Try clearing filters or a wider timeframe."
+          : "Record income or expenses to see activity here."
+      }
       onRetry={activity.refetch}
     >
       <TransactionTimeline

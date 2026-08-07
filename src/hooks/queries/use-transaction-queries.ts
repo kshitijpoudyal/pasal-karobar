@@ -8,6 +8,12 @@ import {
 } from "@tanstack/react-query";
 
 import { queryKeys } from "@/constants/query-keys";
+import {
+  removeTransactionFromListCaches,
+  restoreTransactionListSnapshots,
+  snapshotTransactionLists,
+  syncAfterTransactionChange,
+} from "@/hooks/queries/transaction-query-cache";
 import type { TransactionListFilters } from "@/repository";
 import { getClientAppServices } from "@/services/client";
 import type {
@@ -89,12 +95,7 @@ export function useCreateTransactionMutation(businessId: string) {
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions.all,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.all,
-      });
+      await syncAfterTransactionChange(queryClient);
     },
   });
 }
@@ -109,12 +110,7 @@ export function useUpdateTransactionMutation(
     mutationFn: (input: UpdateTransactionInput) =>
       getClientAppServices().transaction.update(transactionId, input),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions.all,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.all,
-      });
+      await syncAfterTransactionChange(queryClient);
     },
   });
 }
@@ -127,27 +123,17 @@ export function useDeleteTransactionMutation(businessId: string) {
       getClientAppServices().transaction.delete(transactionId),
     onMutate: async (transactionId) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
-      const listKey = queryKeys.transactions.list(businessId);
-      const previous = queryClient.getQueryData<Transaction[]>(listKey);
-
-      queryClient.setQueryData<Transaction[]>(listKey, (current) =>
-        current?.filter((tx) => tx.id !== transactionId),
-      );
-
-      return { previous, listKey };
+      const snapshots = snapshotTransactionLists(queryClient, businessId);
+      removeTransactionFromListCaches(queryClient, businessId, transactionId);
+      return { snapshots };
     },
     onError: (_error, _id, context) => {
-      if (context?.listKey && context.previous) {
-        queryClient.setQueryData(context.listKey, context.previous);
+      if (context?.snapshots) {
+        restoreTransactionListSnapshots(queryClient, context.snapshots);
       }
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.transactions.all,
-      });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.all,
-      });
+      await syncAfterTransactionChange(queryClient);
     },
   });
 }

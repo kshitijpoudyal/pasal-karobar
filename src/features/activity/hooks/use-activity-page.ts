@@ -14,11 +14,19 @@ import {
   type ActivityCategoryFilter,
   type ActivityTimeframe,
 } from "@/utils/date-ranges";
+import {
+  hasActivitySecondaryFilters,
+  type ActivityPaymentFilter,
+} from "@/features/activity/constants";
 
 export function useActivityPage() {
   const { businessId } = useActiveBusiness();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
+  const [paymentMethod, setPaymentMethod] =
+    useState<ActivityPaymentFilter>("All");
+
+  const hasSecondaryFilters = hasActivitySecondaryFilters(category, paymentMethod);
 
   const filters = useMemo((): TransactionListFilters => {
     const { from, to } = getActivityDateRange(timeframe);
@@ -26,10 +34,13 @@ export function useActivityPage() {
       fromDate: from,
       toDate: to,
     };
+    if (paymentMethod !== "All") {
+      base.paymentMethod = paymentMethod;
+    }
     if (category === "Income") return { ...base, type: "INCOME" };
     if (category === "Expense") return { ...base, type: "EXPENSE" };
     return base;
-  }, [timeframe, category]);
+  }, [timeframe, category, paymentMethod]);
 
   const transactionsQuery = useTransactionsQuery(businessId, filters);
   const servicesQuery = useServiceCatalogQuery(businessId);
@@ -91,6 +102,9 @@ export function useActivityPage() {
     setTimeframe,
     category,
     setCategory,
+    paymentMethod,
+    setPaymentMethod,
+    hasSecondaryFilters,
     netRevenue,
     groupedTransactions,
     serviceNames,
