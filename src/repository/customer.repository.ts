@@ -81,4 +81,13 @@ export class CustomerRepository {
     if (error) mapRepositoryError(error);
     return data;
   }
+
+  async delete(id: string): Promise<void> {
+    const { error } = await this.supabase
+      .from("customers")
+      .delete()
+      .eq("id", id);
+
+    if (error) mapRepositoryError(error);
+  }
 }

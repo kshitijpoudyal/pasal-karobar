@@ -106,7 +106,7 @@ export function useCustomersPage() {
       const bTime = b.lastVisitAt ? Date.parse(b.lastVisitAt) : 0;
       return bTime - aTime;
     });
-    return rows;
+    return rows.filter((row) => row.visitCount > 0);
   }, [allIncomeQuery.data, customersQuery.data]);
 
   const filteredDirectory = useMemo(() => {

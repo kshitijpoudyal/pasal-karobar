@@ -109,4 +109,15 @@ export class TransactionRepository {
 
     if (error) mapRepositoryError(error);
   }
+
+  async countIncomeByCustomerId(customerId: string): Promise<number> {
+    const { count, error } = await this.supabase
+      .from("transactions")
+      .select("*", { count: "exact", head: true })
+      .eq("customer_id", customerId)
+      .eq("type", "INCOME");
+
+    if (error) mapRepositoryError(error);
+    return count ?? 0;
+  }
 }

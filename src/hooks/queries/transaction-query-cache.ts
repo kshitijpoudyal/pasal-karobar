@@ -56,6 +56,9 @@ export async function syncAfterTransactionChange(
   await queryClient.invalidateQueries({
     queryKey: queryKeys.transactions.all,
   });
+  await queryClient.invalidateQueries({
+    queryKey: queryKeys.customers.all,
+  });
   await queryClient.refetchQueries({
     queryKey: queryKeys.dashboard.all,
     type: "all",

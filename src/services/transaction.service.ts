@@ -80,6 +80,16 @@ export class TransactionService {
   }
 
   async delete(id: string): Promise<void> {
+    const existing = await this.transactionRepository.findById(id);
     await this.transactionRepository.delete(id);
+
+    const customerId = existing?.customer_id;
+    if (!customerId) return;
+
+    const remaining =
+      await this.transactionRepository.countIncomeByCustomerId(customerId);
+    if (remaining === 0) {
+      await this.customerService.delete(customerId);
+    }
   }
 }

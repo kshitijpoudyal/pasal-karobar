@@ -31,6 +31,10 @@ export class CustomerService {
     return this.customerRepository.update(id, payload);
   }
 
+  async delete(id: string): Promise<void> {
+    await this.customerRepository.delete(id);
+  }
+
   /**
    * Resolve optional phone to a customer id for income. Returns null when empty.
    * Throws when phone is present but invalid.
