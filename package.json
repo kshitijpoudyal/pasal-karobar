@@ -13,6 +13,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "seed:daily": "node --env-file=.env.local scripts/seed-daily-transactions.mjs"
   },
   "dependencies": {
@@ -51,6 +52,7 @@
     "serwist": "^9.5.12",
     "supabase": "^2.110.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }

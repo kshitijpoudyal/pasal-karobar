@@ -7,6 +7,7 @@ import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
+import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
 import { groupTransactionsByDay } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
 import type { Transaction } from "@/types/database";
@@ -60,6 +61,7 @@ function transactionMatchesSearch(
 
 export function useActivityPage() {
   const { businessId } = useActiveBusiness();
+  const timeZone = useBusinessTimeZone();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
   const [paymentMethod, setPaymentMethod] =
@@ -70,7 +72,7 @@ export function useActivityPage() {
   const hasActiveSearch = searchQuery.trim().length > 0;
 
   const filters = useMemo((): TransactionListFilters => {
-    const { from, to } = getActivityDateRange(timeframe);
+    const { from, to } = getActivityDateRange(timeframe, timeZone);
     const base: TransactionListFilters = {
       fromDate: from,
       toDate: to,
@@ -81,7 +83,7 @@ export function useActivityPage() {
     if (category === "Income") return { ...base, type: "INCOME" };
     if (category === "Expense") return { ...base, type: "EXPENSE" };
     return base;
-  }, [timeframe, category, paymentMethod]);
+  }, [timeframe, category, paymentMethod, timeZone]);
 
   const transactionsQuery = useTransactionsQuery(businessId, filters);
   const servicesQuery = useServiceCatalogQuery(businessId);
@@ -126,8 +128,8 @@ export function useActivityPage() {
   }, [visibleTransactions]);
 
   const groupedTransactions = useMemo(
-    () => groupTransactionsByDay(visibleTransactions),
-    [visibleTransactions],
+    () => groupTransactionsByDay(visibleTransactions, timeZone),
+    [visibleTransactions, timeZone],
   );
 
   const isLoading =
@@ -173,5 +175,6 @@ export function useActivityPage() {
     deleteTransaction,
     isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error,
+    timeZone,
   };
 }

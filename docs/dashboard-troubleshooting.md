@@ -40,6 +40,12 @@ Installed PWAs may serve an older bundle. Open the site in a normal browser tab 
 
 In `npm run dev`, open Devtools (bottom-left). Find queries keyed `["dashboard","summary", …]`. **Invalidate** them after a test add/delete to confirm refetch behavior.
 
+## 7. Times look wrong (Activity vs Dashboard)
+
+All shop-facing times use **`businesses.timezone`** (see [timezone.md](./timezone.md)), not your laptop or phone local time. The caption **“Times shown in …”** on Activity and Dashboard reflects that zone.
+
+Supabase stores UTC; convert mentally or in SQL with `AT TIME ZONE` when spot-checking.
+
 ## Success check
 
 1. Hard reload once.

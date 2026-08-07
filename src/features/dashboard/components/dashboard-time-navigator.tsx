@@ -24,6 +24,7 @@ const GRANULARITIES: { id: DashboardGranularity; label: string }[] = [
 type DashboardTimeNavigatorProps = {
   granularity: DashboardGranularity;
   anchorDate: Date;
+  timeZone: string;
   onGranularityChange: (value: DashboardGranularity) => void;
   onAnchorChange: (date: Date) => void;
   minSelectableDate?: Date | null;
@@ -34,6 +35,7 @@ type DashboardTimeNavigatorProps = {
 export function DashboardTimeNavigator({
   granularity,
   anchorDate,
+  timeZone,
   onGranularityChange,
   onAnchorChange,
   minSelectableDate = null,
@@ -42,13 +44,13 @@ export function DashboardTimeNavigator({
 }: DashboardTimeNavigatorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const periodTriggerRef = useRef<HTMLDivElement>(null);
-  const range = resolveDashboardRange(granularity, anchorDate);
+  const range = resolveDashboardRange(granularity, anchorDate, new Date(), timeZone);
   const scrubberLabel = formatDashboardScrubberLabel(
     granularity,
     anchorDate,
     range,
   );
-  const atLatest = isDashboardAtLatest(granularity, anchorDate);
+  const atLatest = isDashboardAtLatest(granularity, anchorDate, new Date(), timeZone);
 
   function step(direction: -1 | 1) {
     onAnchorChange(stepDashboardAnchor(granularity, anchorDate, direction));

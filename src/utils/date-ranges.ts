@@ -20,33 +20,28 @@ import {
   subYears,
 } from "date-fns";
 
+import {
+  DEFAULT_BUSINESS_TIMEZONE,
+  businessTodayDateKey,
+  endOfZonedDay,
+  getActivityDateRangeInTimeZone,
+  startOfZonedDay,
+  zonedPeriodBounds,
+} from "@/utils/business-datetime";
+
 export type ActivityTimeframe = "This Week" | "This Month" | "This Year";
 
 export type ActivityCategoryFilter = "All" | "Income" | "Expense";
 
-export function getActivityDateRange(timeframe: ActivityTimeframe): {
+export function getActivityDateRange(
+  timeframe: ActivityTimeframe,
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
+  now: Date = new Date(),
+): {
   from: string;
   to: string;
 } {
-  const now = new Date();
-  const to = endOfDay(now).toISOString();
-  switch (timeframe) {
-    case "This Week":
-      return {
-        from: startOfWeek(now, { weekStartsOn: 1 }).toISOString(),
-        to: endOfWeek(now, { weekStartsOn: 1 }).toISOString(),
-      };
-    case "This Month":
-      return {
-        from: startOfMonth(now).toISOString(),
-        to,
-      };
-    case "This Year":
-      return {
-        from: startOfYear(now).toISOString(),
-        to,
-      };
-  }
+  return getActivityDateRangeInTimeZone(timeframe, timeZone, now);
 }
 
 export type DashboardGranularity = "day" | "week" | "month" | "year";
@@ -60,44 +55,16 @@ export function resolveDashboardRange(
   granularity: DashboardGranularity,
   anchorDate: Date,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): { from: string; to: string } {
-  const todayEnd = endOfDay(now);
-  let from: Date;
-  let to: Date;
-
-  switch (granularity) {
-    case "day":
-      from = startOfDay(anchorDate);
-      to = endOfDay(anchorDate);
-      break;
-    case "week":
-      from = startOfWeek(anchorDate, WEEK_OPTS);
-      to = endOfWeek(anchorDate, WEEK_OPTS);
-      break;
-    case "month":
-      from = startOfMonth(anchorDate);
-      to = endOfMonth(anchorDate);
-      break;
-    case "year":
-      from = startOfYear(anchorDate);
-      to = endOfYear(anchorDate);
-      break;
-  }
-
-  if (isAfter(to, todayEnd)) {
-    to = todayEnd;
-  }
-  if (isAfter(from, todayEnd)) {
-    from = startOfDay(todayEnd);
-  }
-
-  return { from: from.toISOString(), to: to.toISOString() };
+  return zonedPeriodBounds(granularity, anchorDate, timeZone, now);
 }
 
 export function resolvePriorDashboardRange(
   granularity: DashboardGranularity,
   anchorDate: Date,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): { from: string; to: string } {
   let priorAnchor: Date;
   switch (granularity) {
@@ -114,7 +81,7 @@ export function resolvePriorDashboardRange(
       priorAnchor = subYears(anchorDate, 1);
       break;
   }
-  return resolveDashboardRange(granularity, priorAnchor, now);
+  return resolveDashboardRange(granularity, priorAnchor, now, timeZone);
 }
 
 export function stepDashboardAnchor(
@@ -138,9 +105,25 @@ export function isDashboardAtLatest(
   granularity: DashboardGranularity,
   anchorDate: Date,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): boolean {
-  const { to } = resolveDashboardRange(granularity, anchorDate, now);
-  return endOfDay(parseISO(to)).getTime() >= endOfDay(now).getTime();
+  const { to } = resolveDashboardRange(granularity, anchorDate, now, timeZone);
+  const todayKey = businessTodayDateKey(timeZone, now);
+  const todayEnd = endOfZonedDay(todayKey, timeZone);
+  return parseISO(to).getTime() >= todayEnd.getTime();
+}
+
+export function clampAnchorToToday(
+  anchorDate: Date,
+  now: Date = new Date(),
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
+): Date {
+  const todayKey = businessTodayDateKey(timeZone, now);
+  const todayEnd = endOfZonedDay(todayKey, timeZone);
+  if (isAfter(anchorDate, todayEnd)) {
+    return startOfZonedDay(todayKey, timeZone);
+  }
+  return anchorDate;
 }
 
 export function formatDashboardScrubberLabel(
@@ -178,21 +161,18 @@ export function formatDashboardComparisonLabel(
   }
 }
 
-export function clampAnchorToToday(anchorDate: Date, now: Date = new Date()): Date {
-  const end = endOfDay(now);
-  if (isAfter(anchorDate, end)) return startOfDay(now);
-  return anchorDate;
-}
-
-/** Clamp to today and not before the first day with transaction data. */
 export function clampAnchorToDataBounds(
   anchorDate: Date,
   earliestData: Date | null,
   now: Date = new Date(),
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): Date {
-  let date = clampAnchorToToday(anchorDate, now);
+  let date = clampAnchorToToday(anchorDate, now, timeZone);
   if (earliestData) {
-    const minDay = startOfDay(earliestData);
+    const minDay = startOfZonedDay(
+      businessTodayDateKey(timeZone, earliestData),
+      timeZone,
+    );
     if (isBefore(date, minDay)) date = minDay;
   }
   return date;

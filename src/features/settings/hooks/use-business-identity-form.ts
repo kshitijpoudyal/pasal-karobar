@@ -10,12 +10,14 @@ import {
   useUpdateBusinessMutation,
 } from "@/hooks/queries/use-business-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
+import { DEFAULT_BUSINESS_TIMEZONE } from "@/constants/business-timezones";
 import { businessTypeSchema, updateBusinessSchema } from "@/services/schemas";
 
 const businessIdentityFormSchema = updateBusinessSchema.extend({
   name: z.string().trim().min(1, "Business name is required").max(200),
   business_type: businessTypeSchema,
   currency: z.string().trim().length(3, "Use a 3-letter currency code"),
+  timezone: z.string().trim().min(1, "Select a timezone"),
 });
 
 export type BusinessIdentityFormValues = z.infer<
@@ -33,6 +35,7 @@ export function useBusinessIdentityForm() {
       name: "",
       business_type: "BARBER",
       currency: "NPR",
+      timezone: DEFAULT_BUSINESS_TIMEZONE,
     },
   });
 
@@ -43,6 +46,7 @@ export function useBusinessIdentityForm() {
       name: business.name,
       business_type: business.business_type,
       currency: business.currency,
+      timezone: business.timezone?.trim() || DEFAULT_BUSINESS_TIMEZONE,
     });
   }, [businessQuery.data, form]);
 

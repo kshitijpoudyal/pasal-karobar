@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryState } from "@/components/layout/query-state";
+import { BusinessTimeZoneCaption } from "@/components/business-timezone-caption";
 import {
   ActivityFilters,
   DailyNetRevenueCard,
@@ -16,7 +17,8 @@ export function ActivityMain() {
     <>
       <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-8 overflow-hidden p-6 xl:flex xl:gap-10 xl:p-12">
         <div className="grid shrink-0 grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-10">
-          <ActivityFilters
+          <div className="flex flex-col gap-2 xl:col-span-8">
+            <ActivityFilters
             timeframe={activity.timeframe}
             category={activity.category}
             paymentMethod={activity.paymentMethod}
@@ -26,6 +28,8 @@ export function ActivityMain() {
             onPaymentMethodChange={activity.setPaymentMethod}
             onSearchQueryChange={activity.setSearchQuery}
           />
+            <BusinessTimeZoneCaption className="hidden text-sm text-on-surface-variant xl:block" />
+          </div>
           <DailyNetRevenueCard netRevenue={activity.netRevenue} />
         </div>
         <ActivityTimelineBody activity={activity} />
@@ -72,6 +76,7 @@ function ActivityTimelineBody({
         categoryNames={activity.categoryNames}
         onDelete={activity.deleteTransaction}
         isDeleting={activity.isDeleting}
+        timeZone={activity.timeZone}
       />
     </QueryState>
   );

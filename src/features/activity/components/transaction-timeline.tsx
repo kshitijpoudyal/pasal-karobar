@@ -1,7 +1,6 @@
 "use client";
 
 import { Scissors, ShoppingCart } from "lucide-react";
-import { format, isToday, isYesterday, parseISO } from "date-fns";
 import type { LucideIcon } from "lucide-react";
 
 import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
@@ -10,6 +9,11 @@ import {
   TransactionActivityCard,
 } from "@/features/activity/components/transaction-activity-card";
 import type { Transaction } from "@/types/database";
+import {
+  formatDayLabelForDateKey,
+  formatTimeInBusinessZone,
+  logTimezoneFormatMismatch,
+} from "@/utils/business-datetime";
 import { formatNpr } from "@/utils/format";
 
 type TransactionTimelineProps = {
@@ -18,14 +22,8 @@ type TransactionTimelineProps = {
   categoryNames: Map<string, string>;
   onDelete: (transactionId: string) => Promise<void>;
   isDeleting: boolean;
+  timeZone: string;
 };
-
-function formatDayLabel(dateKey: string): string {
-  const date = parseISO(`${dateKey}T12:00:00`);
-  if (isToday(date)) return `Today, ${format(date, "do MMM")}`;
-  if (isYesterday(date)) return `Yesterday, ${format(date, "do MMM")}`;
-  return format(date, "EEEE, do MMM");
-}
 
 function titleForTransaction(
   tx: Transaction,
@@ -55,6 +53,7 @@ export function TransactionTimeline({
   categoryNames,
   onDelete,
   isDeleting,
+  timeZone,
 }: TransactionTimelineProps) {
   const { confirm } = useConfirmDrawer();
 
@@ -62,7 +61,9 @@ export function TransactionTimeline({
     <div className="flex flex-col gap-4">
       {grouped.map(([dayKey, transactions]) => (
         <div key={dayKey}>
-          <TimelineDateDivider label={formatDayLabel(dayKey)} />
+          <TimelineDateDivider
+            label={formatDayLabelForDateKey(dayKey, timeZone)}
+          />
           <div className="mb-2 flex flex-col gap-2 lg:mb-4 lg:gap-3">
             {transactions.map((tx) => {
               const isIncome = tx.type === "INCOME";
@@ -70,7 +71,15 @@ export function TransactionTimeline({
               const tip = Number(tx.tip);
               const total = Number(tx.total);
               const title = titleForTransaction(tx, serviceNames, categoryNames);
-              const time = format(parseISO(tx.transaction_date), "h:mm a");
+              logTimezoneFormatMismatch(
+                tx.transaction_date,
+                timeZone,
+                "activity-timeline",
+              );
+              const time = formatTimeInBusinessZone(
+                tx.transaction_date,
+                timeZone,
+              );
 
               const deleteHandler =
                 isDeleting

@@ -1,5 +1,6 @@
 "use client";
 
+import { BusinessTimeZoneCaption } from "@/components/business-timezone-caption";
 import {
   ActivityFilters,
   DailyNetRevenueCard,
@@ -29,6 +30,7 @@ export function ActivityHeaderChrome({
           onPaymentMethodChange={activity.setPaymentMethod}
           onSearchQueryChange={activity.setSearchQuery}
         />
+        <BusinessTimeZoneCaption />
       </div>
     );
   }
@@ -46,6 +48,7 @@ export function ActivityHeaderChrome({
         onSearchQueryChange={activity.setSearchQuery}
       />
       <DailyNetRevenueCard netRevenue={activity.netRevenue} />
+      <BusinessTimeZoneCaption />
     </div>
   );
 }

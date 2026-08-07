@@ -1,12 +1,12 @@
 import type { Transaction } from "@/types/database";
+import {
+  DEFAULT_BUSINESS_TIMEZONE,
+  groupTransactionsByDayInTimeZone,
+} from "@/utils/business-datetime";
 
-export function groupTransactionsByDay(transactions: Transaction[]) {
-  const groups = new Map<string, Transaction[]>();
-  for (const tx of transactions) {
-    const key = tx.transaction_date.slice(0, 10);
-    const list = groups.get(key) ?? [];
-    list.push(tx);
-    groups.set(key, list);
-  }
-  return [...groups.entries()].sort(([a], [b]) => b.localeCompare(a));
+export function groupTransactionsByDay(
+  transactions: Transaction[],
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
+): [string, Transaction[]][] {
+  return groupTransactionsByDayInTimeZone(transactions, timeZone);
 }

@@ -22,17 +22,19 @@ export function createServices(repositories: Repositories): AppServices {
   const transaction = new TransactionService(repositories.transaction);
   const serviceCatalog = new ServiceCatalogService(repositories.serviceCatalog);
 
+  const business = new BusinessService(
+    repositories.business,
+    serviceCatalog,
+    new ExpenseCategoryService(repositories.expenseCategory),
+  );
+
   return {
-    business: new BusinessService(
-      repositories.business,
-      serviceCatalog,
-      new ExpenseCategoryService(repositories.expenseCategory),
-    ),
+    business,
     serviceCatalog,
     expenseCategory: new ExpenseCategoryService(repositories.expenseCategory),
     transaction,
     businessSetting: new BusinessSettingService(repositories.businessSetting),
-    dashboard: new DashboardService(transaction, serviceCatalog),
+    dashboard: new DashboardService(transaction, serviceCatalog, business),
   };
 }
 

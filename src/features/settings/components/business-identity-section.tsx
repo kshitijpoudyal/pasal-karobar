@@ -4,6 +4,10 @@ import { Store } from "lucide-react";
 
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
+import {
+  DEFAULT_BUSINESS_TIMEZONE,
+  timezoneOptionsIncludingCurrent,
+} from "@/constants/business-timezones";
 import { useBusinessIdentityForm } from "@/features/settings/hooks/use-business-identity-form";
 import { cn } from "@/lib/utils";
 
@@ -35,8 +39,12 @@ export function BusinessIdentitySection() {
 
   const {
     register,
+    watch,
     formState: { errors },
   } = form;
+
+  const timezoneValue = watch("timezone") || DEFAULT_BUSINESS_TIMEZONE;
+  const timezoneOptions = timezoneOptionsIncludingCurrent(timezoneValue);
 
   return (
     <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
@@ -96,7 +104,30 @@ export function BusinessIdentitySection() {
                 <p className="text-xs text-error">{errors.currency.message}</p>
               ) : null}
             </div>
-            <div className="flex flex-col items-end justify-end gap-2">
+            <div className="space-y-3 md:col-span-2">
+              <label className={labelClassName} htmlFor="timezone">
+                Timezone
+              </label>
+              <select
+                id="timezone"
+                className={fieldClassName}
+                {...register("timezone")}
+              >
+                {timezoneOptions.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <p className="px-1 text-xs text-on-surface-variant">
+                Activity and dashboard times use this zone. Stored transactions
+                stay in UTC.
+              </p>
+              {errors.timezone ? (
+                <p className="text-xs text-error">{errors.timezone.message}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-col items-end justify-end gap-2 md:col-span-2 lg:col-span-1 lg:col-start-2">
               <Button
                 type="submit"
                 variant={isSaveSuccess ? "secondary" : "primary"}

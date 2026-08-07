@@ -5,6 +5,7 @@ import { parseISO, startOfDay } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
+import { BusinessTimeZoneCaption } from "@/components/business-timezone-caption";
 import { QueryState } from "@/components/layout/query-state";
 import { DashboardBottomSection } from "@/features/dashboard/components/dashboard-bottom-section";
 import { DashboardTimeNavigator } from "@/features/dashboard/components/dashboard-time-navigator";
@@ -15,6 +16,7 @@ import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries"
 import { refreshBusinessStats } from "@/hooks/queries/transaction-query-cache";
 import { normalizeDashboardSummary } from "@/services/dashboard-summary";
 import { useActiveBusiness } from "@/providers/business-provider";
+import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
 import {
   clampAnchorToDataBounds,
   clampAnchorToToday,
@@ -38,12 +40,15 @@ function chartTitleFor(granularity: DashboardGranularity): string {
 export function DashboardContent() {
   const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
+  const timeZone = useBusinessTimeZone();
   const [granularity, setGranularity] = useState<DashboardGranularity>("day");
-  const [anchorDate, setAnchorDate] = useState(() => clampAnchorToToday(new Date()));
+  const [anchorDate, setAnchorDate] = useState(() =>
+    clampAnchorToToday(new Date(), new Date(), timeZone),
+  );
 
   const range = useMemo(
-    () => resolveDashboardRange(granularity, anchorDate),
-    [granularity, anchorDate],
+    () => resolveDashboardRange(granularity, anchorDate, new Date(), timeZone),
+    [granularity, anchorDate, timeZone],
   );
 
   const summaryQuery = useDashboardSummaryQuery(businessId, {
@@ -58,7 +63,7 @@ export function DashboardContent() {
   }, [summaryQuery.data?.earliestTransactionDate]);
 
   const clampAnchor = (date: Date) =>
-    clampAnchorToDataBounds(date, minSelectableDate);
+    clampAnchorToDataBounds(date, minSelectableDate, new Date(), timeZone);
 
   const isEmptyPeriod =
     summary.patronCount === 0 &&
@@ -67,7 +72,7 @@ export function DashboardContent() {
 
   function handleGranularityChange(next: DashboardGranularity) {
     setGranularity(next);
-    setAnchorDate(clampAnchor(clampAnchorToToday(new Date())));
+    setAnchorDate(clampAnchor(clampAnchorToToday(new Date(), new Date(), timeZone)));
   }
 
   async function handleRefreshStats() {
@@ -81,11 +86,14 @@ export function DashboardContent() {
         granularity={granularity}
         anchorDate={anchorDate}
         minSelectableDate={minSelectableDate}
+        timeZone={timeZone}
         onGranularityChange={handleGranularityChange}
         onAnchorChange={(date) => setAnchorDate(clampAnchor(date))}
         onRefreshStats={() => void handleRefreshStats()}
         isRefreshingStats={summaryQuery.isFetching}
       />
+
+      <BusinessTimeZoneCaption className="px-1" />
 
       <QueryState
         isLoading={summaryQuery.isLoading}

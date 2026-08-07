@@ -39,6 +39,8 @@ getServerAppServices() → service → repository → Supabase
 
 Dashboard summaries use `refetchOnMount: "always"` and `refetchOnWindowFocus: true`. After transaction edits, `syncAfterTransactionChange` / `refreshBusinessStats` in `transaction-query-cache.ts` invalidates lists and refetches dashboard queries. See [dashboard-troubleshooting.md](./dashboard-troubleshooting.md) if KPIs look stale.
 
+Transaction timestamps are stored in UTC and displayed in the business timezone — see [timezone.md](./timezone.md).
+
 Feature-level hooks (UI orchestration, filters, forms) live under `src/features/*/hooks/` and call the query modules above — they must not import Supabase or repositories directly.
 
 ## Client / UI state

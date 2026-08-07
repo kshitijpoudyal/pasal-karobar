@@ -1,3 +1,4 @@
+import type { BusinessService } from "@/services/business.service";
 import type { TransactionService } from "@/services/transaction.service";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
 import type { Transaction } from "@/types/database";
@@ -6,14 +7,23 @@ import {
   resolvePriorDashboardRange,
 } from "@/utils/date-ranges";
 import {
+  businessTodayDateKey,
+  dateKeyInTimeZone,
+  DEFAULT_BUSINESS_TIMEZONE,
+  hourInTimeZone,
+  isoDayInTimeZone,
+  logTimezoneFormatMismatch,
+  parseDateKey,
+  resolveBusinessTimeZone,
+  startOfZonedDay,
+  zonedPeriodBounds,
+} from "@/utils/business-datetime";
+import {
   eachDayOfInterval,
   eachMonthOfInterval,
   endOfDay,
   format,
   getDaysInMonth,
-  getHours,
-  getISODay,
-  isSameMonth,
   min,
   parseISO,
   startOfDay,
@@ -82,18 +92,22 @@ function filterTransactionsInRange(
 export function buildMonthDayHeatmap(
   transactions: Transaction[],
   referenceDate: Date,
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): MonthDayHeatmap {
-  const anchor = endOfDay(referenceDate);
-  const monthStart = startOfMonth(anchor);
-  const monthEnd = endOfMonth(anchor);
+  const refKey = dateKeyInTimeZone(referenceDate.toISOString(), timeZone);
+  const { year, month } = parseDateKey(refKey);
+  const monthStartKey = `${year}-${String(month).padStart(2, "0")}-01`;
+  const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const monthEndKey = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+  const monthStart = startOfZonedDay(monthStartKey, timeZone);
+  const monthEnd = startOfZonedDay(monthEndKey, timeZone);
   const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const byDate = new Map<string, { visitCount: number; revenue: number }>();
   for (const tx of transactions) {
     if (tx.type !== "INCOME") continue;
-    const key = tx.transaction_date.slice(0, 10);
-    const d = parseISO(key);
-    if (d < monthStart || d > monthEnd) continue;
+    const key = dateKeyInTimeZone(tx.transaction_date, timeZone);
+    if (key < monthStartKey || key > monthEndKey) continue;
     const bucket = byDate.get(key) ?? { visitCount: 0, revenue: 0 };
     bucket.visitCount += 1;
     bucket.revenue += Number(tx.total);
@@ -101,7 +115,7 @@ export function buildMonthDayHeatmap(
   }
 
   const days: MonthHeatmapDay[] = [];
-  const leadingPad = getISODay(monthStart) - 1;
+  const leadingPad = isoDayInTimeZone(monthStart.toISOString(), timeZone) - 1;
   for (let i = 0; i < leadingPad; i += 1) {
     days.push({
       dateKey: "",
@@ -202,6 +216,7 @@ function findBestHourWindow(hourCounts: number[]): {
 export function buildPeakAnalysisInsights(
   transactions: Transaction[],
   periodToIso: string,
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): PeakAnalysisInsights {
   const empty: PeakAnalysisInsights = {
     busiestDayOfWeek: null,
@@ -220,7 +235,7 @@ export function buildPeakAnalysisInsights(
     { visits: number; revenue: number; sampleDate: string }
   >();
   for (const tx of incomeTx) {
-    const isoDay = getISODay(parseISO(tx.transaction_date));
+    const isoDay = isoDayInTimeZone(tx.transaction_date, timeZone);
     const bucket = byWeekday.get(isoDay) ?? {
       visits: 0,
       revenue: 0,
@@ -245,15 +260,20 @@ export function buildPeakAnalysisInsights(
   }
 
   const busiestDayOfWeek: BusiestDayOfWeekInsight = {
-    dayLabel: format(parseISO(peakSampleDate), "EEEE"),
+    dayLabel: new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      weekday: "long",
+    }).format(parseISO(peakSampleDate)),
     visitCount: peakWeekdayVisits,
     revenue: peakWeekdayRevenue,
     periodVisitCount,
   };
 
-  // Busiest week of month (calendar month of period end)
-  const monthAnchor = startOfMonth(endOfDay(parseISO(periodToIso)));
-  const daysInMonth = getDaysInMonth(monthAnchor);
+  // Busiest week of month (calendar month of period end in business TZ)
+  const periodMonthKey = dateKeyInTimeZone(periodToIso, timeZone).slice(0, 7);
+  const { year: monthYear, month: monthNum } = parseDateKey(`${periodMonthKey}-01`);
+  const monthAnchor = startOfZonedDay(`${periodMonthKey}-01`, timeZone);
+  const daysInMonth = new Date(Date.UTC(monthYear, monthNum, 0)).getUTCDate();
   const numWeeks = Math.ceil(daysInMonth / 7);
   const weekStats = Array.from({ length: numWeeks }, () => ({
     visits: 0,
@@ -261,9 +281,10 @@ export function buildPeakAnalysisInsights(
   }));
 
   for (const tx of incomeTx) {
-    const d = parseISO(tx.transaction_date);
-    if (!isSameMonth(d, monthAnchor)) continue;
-    const weekIndex = Math.floor((d.getDate() - 1) / 7);
+    const txKey = dateKeyInTimeZone(tx.transaction_date, timeZone);
+    if (!txKey.startsWith(periodMonthKey)) continue;
+    const dayOfMonth = Number.parseInt(txKey.slice(8, 10), 10);
+    const weekIndex = Math.floor((dayOfMonth - 1) / 7);
     const bucket = weekStats[weekIndex];
     if (!bucket) continue;
     bucket.visits += 1;
@@ -298,7 +319,7 @@ export function buildPeakAnalysisInsights(
   // Busiest hour range (period-wide)
   const hourCounts = new Array<number>(24).fill(0);
   for (const tx of incomeTx) {
-    const hour = getHours(parseISO(tx.transaction_date));
+    const hour = hourInTimeZone(tx.transaction_date, timeZone);
     hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
   }
   const hourWindow = findBestHourWindow(hourCounts);
@@ -344,6 +365,7 @@ export function buildPerformanceTrajectory(
   fromIso: string,
   toIso: string,
   transactions: Transaction[],
+  timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
 ): TrajectoryPoint[] {
   const from = startOfDay(parseISO(fromIso));
   const to = endOfDay(parseISO(toIso));
@@ -355,7 +377,7 @@ export function buildPerformanceTrajectory(
       expense: 0,
     }));
     for (const tx of transactions) {
-      const hour = getHours(parseISO(tx.transaction_date));
+      const hour = hourInTimeZone(tx.transaction_date, timeZone);
       const bucket = buckets[hour];
       if (bucket) addToBucket(bucket, tx);
     }
@@ -367,7 +389,7 @@ export function buildPerformanceTrajectory(
     return days.map((day) => {
       const key = format(day, "yyyy-MM-dd");
       const dayTx = transactions.filter(
-        (tx) => tx.transaction_date.slice(0, 10) === key,
+        (tx) => dateKeyInTimeZone(tx.transaction_date, timeZone) === key,
       );
       return {
         label: format(day, "EEE"),
@@ -382,7 +404,7 @@ export function buildPerformanceTrajectory(
     return days.map((day) => {
       const key = format(day, "yyyy-MM-dd");
       const dayTx = transactions.filter(
-        (tx) => tx.transaction_date.slice(0, 10) === key,
+        (tx) => dateKeyInTimeZone(tx.transaction_date, timeZone) === key,
       );
       return {
         label: format(day, "d"),
@@ -413,16 +435,20 @@ export class DashboardService {
   constructor(
     private readonly transactionService: TransactionService,
     private readonly serviceCatalogService: ServiceCatalogService,
+    private readonly businessService: BusinessService,
   ) {}
 
   async getSummary(
     businessId: string,
     params: DashboardSummaryParams = {},
   ): Promise<DashboardSummary> {
+    const business = await this.businessService.getById(businessId);
+    const timeZone = resolveBusinessTimeZone(business?.timezone);
+
     const now = new Date();
-    const periodFromIso =
-      params.from ?? startOfDay(now).toISOString();
-    const periodToIso = params.to ?? endOfDay(now).toISOString();
+    const defaultDay = zonedPeriodBounds("day", now, timeZone, now);
+    const periodFromIso = params.from ?? defaultDay.from;
+    const periodToIso = params.to ?? defaultDay.to;
     const granularity: DashboardGranularity = params.granularity ?? "week";
     const heatmapAnchor = endOfDay(parseISO(periodToIso));
 
@@ -431,6 +457,7 @@ export class DashboardService {
       granularity,
       anchorForPrior,
       now,
+      timeZone,
     );
 
     const fetchFromIso = min([
@@ -453,6 +480,14 @@ export class DashboardService {
       periodToIso,
     );
 
+    if (periodTransactions[0]) {
+      logTimezoneFormatMismatch(
+        periodTransactions[0].transaction_date,
+        timeZone,
+        "dashboard-getSummary",
+      );
+    }
+
     const priorTransactions = filterTransactionsInRange(
       transactions,
       priorRange.from,
@@ -466,7 +501,10 @@ export class DashboardService {
     const expenses = periodMetrics.expenses;
     const patronCount = periodMetrics.patronCount;
     const serviceTotals = new Map<string, number>();
-    const todayStart = startOfDay(now).toISOString();
+    const todayStart = startOfZonedDay(
+      businessTodayDateKey(timeZone, now),
+      timeZone,
+    ).toISOString();
 
     let dailyNetRevenue = 0;
 
@@ -505,15 +543,17 @@ export class DashboardService {
       periodFromIso,
       periodToIso,
       periodTransactions,
+      timeZone,
     );
 
     const peakAnalysis = buildPeakAnalysisInsights(
       periodTransactions,
       periodToIso,
+      timeZone,
     );
     const monthDayHeatmap =
       granularity === "month"
-        ? buildMonthDayHeatmap(transactions, heatmapAnchor)
+        ? buildMonthDayHeatmap(transactions, heatmapAnchor, timeZone)
         : null;
 
     return {
