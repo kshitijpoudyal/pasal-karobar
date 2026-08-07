@@ -309,7 +309,7 @@ function MonthPickerBody({
             isBeforeEarliestMonth(viewYear, monthIndex, minSelectableDate);
           return (
             <button
-              key={label}
+              key={monthIndex}
               type="button"
               disabled={disabled}
               onClick={() =>

@@ -372,6 +372,7 @@ export function buildPerformanceTrajectory(
 
   if (granularity === "day") {
     const buckets: TrajectoryPoint[] = Array.from({ length: 24 }, (_, hour) => ({
+      id: `hour-${hour}`,
       label: format(new Date(2020, 0, 1, hour), "ha"),
       income: 0,
       expense: 0,
@@ -392,6 +393,7 @@ export function buildPerformanceTrajectory(
         (tx) => dateKeyInTimeZone(tx.transaction_date, timeZone) === key,
       );
       return {
+        id: key,
         label: format(day, "EEE"),
         income: sumByType(dayTx, "INCOME"),
         expense: sumByType(dayTx, "EXPENSE"),
@@ -407,6 +409,7 @@ export function buildPerformanceTrajectory(
         (tx) => dateKeyInTimeZone(tx.transaction_date, timeZone) === key,
       );
       return {
+        id: key,
         label: format(day, "d"),
         income: sumByType(dayTx, "INCOME"),
         expense: sumByType(dayTx, "EXPENSE"),
@@ -424,6 +427,7 @@ export function buildPerformanceTrajectory(
       return d >= monthStart && d <= monthEnd;
     });
     return {
+      id: format(month, "yyyy-MM"),
       label: format(month, "MMM"),
       income: sumByType(monthTx, "INCOME"),
       expense: sumByType(monthTx, "EXPENSE"),

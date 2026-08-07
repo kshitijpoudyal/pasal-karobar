@@ -52,10 +52,16 @@ export function useServiceCatalogSection(
   });
 
   async function submitRegister(values: RegisterServiceFormValues) {
+    const existing = catalogQuery.data ?? [];
+    const maxOrder = existing.reduce(
+      (max, service) => Math.max(max, service.display_order),
+      0,
+    );
     const input = createServiceSchema.parse({
       ...values,
       business_id: businessId,
       is_active: true,
+      display_order: maxOrder + 1,
     });
     await createMutation.mutateAsync(input);
     registerForm.reset({
@@ -137,8 +143,54 @@ export function useServiceCatalogSection(
       ? deleteMutation.variables
       : null;
 
+  const orderedActiveServices = (catalogQuery.data ?? [])
+    .filter((service) => service.is_active)
+    .sort(
+      (a, b) =>
+        a.display_order - b.display_order ||
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+
+  const moveService = useCallback(
+    async (serviceId: string, direction: "up" | "down") => {
+      const list = (catalogQuery.data ?? [])
+        .filter((service) => service.is_active)
+        .sort(
+          (a, b) =>
+            a.display_order - b.display_order ||
+            a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+        );
+
+      const index = list.findIndex((service) => service.id === serviceId);
+      if (index < 0) return;
+
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= list.length) return;
+
+      const reordered = [...list];
+      const [item] = reordered.splice(index, 1);
+      if (!item) return;
+      reordered.splice(targetIndex, 0, item);
+
+      await Promise.all(
+        reordered.map((service, orderIndex) =>
+          updateMutation.mutateAsync({
+            serviceId: service.id,
+            input: { display_order: orderIndex + 1 },
+          }),
+        ),
+      );
+
+      toast({
+        title: "Order updated",
+        description: "New entry form will show services in this order.",
+      });
+    },
+    [catalogQuery.data, updateMutation],
+  );
+
   return {
-    services: (catalogQuery.data ?? []).filter((service) => service.is_active),
+    services: orderedActiveServices,
     isLoading: catalogQuery.isLoading,
     error: catalogQuery.error ?? createMutation.error ?? updateMutation.error,
     deleteError,
@@ -155,5 +207,7 @@ export function useServiceCatalogSection(
     isUpdating: updateMutation.isPending,
     removeService,
     removingServiceId,
+    moveService,
+    isReordering: updateMutation.isPending,
   };
 }

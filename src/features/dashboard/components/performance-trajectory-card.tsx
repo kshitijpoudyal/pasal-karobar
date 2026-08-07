@@ -62,11 +62,11 @@ export function PerformanceTrajectoryCard({
             {safePoints.map((point) => {
               const incomeHeight = (point.income / maxValue) * 100;
               const expenseHeight = (point.expense / maxValue) * 100;
-              const isPeak = peak?.label === point.label && point.income > 0;
+              const isPeak = peak?.id === point.id && point.income > 0;
 
               return (
                 <div
-                  key={point.label}
+                  key={point.id}
                   className="flex h-full flex-1 items-end justify-center gap-1"
                 >
                   <div className="relative flex h-full w-1/2 max-w-8 flex-col justify-end">
@@ -101,7 +101,7 @@ export function PerformanceTrajectoryCard({
           </div>
           <div className="text-label-sm absolute bottom-0 flex w-full justify-between gap-1 border-t border-surface-container-high pt-6 font-bold text-on-surface-variant uppercase">
             {safePoints.map((point) => (
-              <span key={point.label} className="flex-1 truncate text-center text-[10px] sm:text-xs">
+              <span key={point.id} className="flex-1 truncate text-center text-[10px] sm:text-xs">
                 {point.label}
               </span>
             ))}

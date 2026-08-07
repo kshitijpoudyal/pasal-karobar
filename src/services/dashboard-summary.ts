@@ -6,6 +6,8 @@ import {
 } from "@/services/peak-analysis";
 
 export type TrajectoryPoint = {
+  /** Stable key for React lists (unique within a trajectory). */
+  id: string;
   label: string;
   income: number;
   expense: number;
@@ -83,7 +85,12 @@ export function normalizeDashboardSummary(
   return {
     ...EMPTY_DASHBOARD_SUMMARY,
     ...data,
-    trajectory: data.trajectory ?? [],
+    trajectory: (data.trajectory ?? []).map((point, index) => ({
+      id: point.id ?? `${point.label}-${index}`,
+      label: point.label,
+      income: point.income,
+      expense: point.expense,
+    })),
     peakAnalysis: coalescePeakAnalysis(data.peakAnalysis),
     monthDayHeatmap: data.monthDayHeatmap ?? null,
     periodComparison: data.periodComparison ?? null,

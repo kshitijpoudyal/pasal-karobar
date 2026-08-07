@@ -200,8 +200,13 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
     }
   }
 
-  const catalogServices =
-    servicesQuery.data?.filter((s) => s.is_active !== false) ?? [];
+  const catalogServices = (
+    servicesQuery.data?.filter((s) => s.is_active !== false) ?? []
+  ).sort(
+    (a, b) =>
+      a.display_order - b.display_order ||
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+  );
 
   const quickCategories = (categoriesQuery.data ?? [])
     .filter((c) => c.is_active)

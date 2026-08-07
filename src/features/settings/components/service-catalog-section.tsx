@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { Pencil, Scissors, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Scissors, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { QueryState } from "@/components/layout/query-state";
@@ -29,6 +29,11 @@ type ServiceCatalogCardProps = {
   iconWrapClassName: string;
   onEdit: () => void;
   onDelete: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  isReordering?: boolean;
   isRemoving: boolean;
 };
 
@@ -41,6 +46,11 @@ function ServiceCatalogCard({
   iconWrapClassName,
   onEdit,
   onDelete,
+  onMoveUp,
+  onMoveDown,
+  canMoveUp = false,
+  canMoveDown = false,
+  isReordering = false,
   isRemoving,
 }: ServiceCatalogCardProps) {
   return (
@@ -55,6 +65,32 @@ function ServiceCatalogCard({
           <Icon className="size-8" strokeWidth={1.75} />
         </div>
         <div className="flex gap-2">
+          {onMoveUp || onMoveDown ? (
+            <div className="flex flex-col gap-0.5">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={!canMoveUp || isReordering || isRemoving}
+                onClick={onMoveUp}
+                className="squircle size-9 text-on-surface-variant hover:bg-surface-container-highest"
+                aria-label={`Move ${title} earlier in list`}
+              >
+                <ChevronUp className="size-5" strokeWidth={1.75} />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={!canMoveDown || isReordering || isRemoving}
+                onClick={onMoveDown}
+                className="squircle size-9 text-on-surface-variant hover:bg-surface-container-highest"
+                aria-label={`Move ${title} later in list`}
+              >
+                <ChevronDown className="size-5" strokeWidth={1.75} />
+              </Button>
+            </div>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
@@ -115,6 +151,8 @@ export function ServiceCatalogSection() {
     openEdit,
     removeService,
     removingServiceId,
+    moveService,
+    isReordering,
   } = useServiceCatalogSection({
     onServiceCreated: () => setRegisterOpen(false),
   });
@@ -137,6 +175,10 @@ export function ServiceCatalogSection() {
           </div>
           <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
         </div>
+        <p className="text-sm text-on-surface-variant">
+          Use the arrows on each card to set order in the new entry form (first
+          service appears first).
+        </p>
 
         {deleteError ? (
           <div
@@ -190,6 +232,11 @@ export function ServiceCatalogSection() {
                 icon={Icon}
                 iconWrapClassName={iconWrapClassName}
                 onEdit={() => openEdit(service)}
+                onMoveUp={() => void moveService(service.id, "up")}
+                onMoveDown={() => void moveService(service.id, "down")}
+                canMoveUp={index > 0}
+                canMoveDown={index < services.length - 1}
+                isReordering={isReordering}
                 onDelete={() => {
                   void runConfirmedAction(
                     confirm,
