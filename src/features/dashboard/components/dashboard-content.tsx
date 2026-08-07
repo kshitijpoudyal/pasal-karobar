@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { parseISO, startOfDay } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
 import { QueryState } from "@/components/layout/query-state";
@@ -11,6 +12,7 @@ import { InsightsSection } from "@/features/dashboard/components/insights-sectio
 import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
 import { MonthDayHeatmapCard } from "@/features/dashboard/components/month-day-heatmap-card";
 import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
+import { refreshBusinessStats } from "@/hooks/queries/transaction-query-cache";
 import { normalizeDashboardSummary } from "@/services/dashboard-summary";
 import { useActiveBusiness } from "@/providers/business-provider";
 import {
@@ -34,6 +36,7 @@ function chartTitleFor(granularity: DashboardGranularity): string {
 }
 
 export function DashboardContent() {
+  const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
   const [granularity, setGranularity] = useState<DashboardGranularity>("day");
   const [anchorDate, setAnchorDate] = useState(() => clampAnchorToToday(new Date()));
@@ -67,6 +70,11 @@ export function DashboardContent() {
     setAnchorDate(clampAnchor(clampAnchorToToday(new Date())));
   }
 
+  async function handleRefreshStats() {
+    await refreshBusinessStats(queryClient);
+    await summaryQuery.refetch();
+  }
+
   return (
     <div className="space-y-6 px-5 py-6 lg:space-y-8 lg:p-12">
       <DashboardTimeNavigator
@@ -75,6 +83,8 @@ export function DashboardContent() {
         minSelectableDate={minSelectableDate}
         onGranularityChange={handleGranularityChange}
         onAnchorChange={(date) => setAnchorDate(clampAnchor(date))}
+        onRefreshStats={() => void handleRefreshStats()}
+        isRefreshingStats={summaryQuery.isFetching}
       />
 
       <QueryState

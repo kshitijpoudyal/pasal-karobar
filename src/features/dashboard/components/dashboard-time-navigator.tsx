@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { PeriodPickerDialog } from "@/components/period-picker";
@@ -27,6 +27,8 @@ type DashboardTimeNavigatorProps = {
   onGranularityChange: (value: DashboardGranularity) => void;
   onAnchorChange: (date: Date) => void;
   minSelectableDate?: Date | null;
+  onRefreshStats?: () => void;
+  isRefreshingStats?: boolean;
 };
 
 export function DashboardTimeNavigator({
@@ -35,6 +37,8 @@ export function DashboardTimeNavigator({
   onGranularityChange,
   onAnchorChange,
   minSelectableDate = null,
+  onRefreshStats,
+  isRefreshingStats = false,
 }: DashboardTimeNavigatorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const periodTriggerRef = useRef<HTMLDivElement>(null);
@@ -82,10 +86,25 @@ export function DashboardTimeNavigator({
           })}
         </div>
 
-        <div
-          ref={periodTriggerRef}
-          className="inline-flex w-fit items-center self-start rounded-full border border-outline-variant bg-surface-container-lowest p-1.5 lg:ml-auto lg:shrink-0"
-        >
+        <div className="flex items-center gap-2 self-start lg:ml-auto lg:shrink-0">
+          {onRefreshStats ? (
+            <button
+              type="button"
+              aria-label="Refresh stats"
+              disabled={isRefreshingStats}
+              onClick={onRefreshStats}
+              className="flex size-10 shrink-0 items-center justify-center rounded-full border border-outline-variant bg-surface-container-lowest text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:opacity-50"
+            >
+              <RefreshCw
+                className={cn("size-4", isRefreshingStats && "animate-spin")}
+                strokeWidth={1.75}
+              />
+            </button>
+          ) : null}
+          <div
+            ref={periodTriggerRef}
+            className="inline-flex w-fit items-center rounded-full border border-outline-variant bg-surface-container-lowest p-1.5"
+          >
           <button
             type="button"
             aria-label="Previous period"
@@ -113,6 +132,7 @@ export function DashboardTimeNavigator({
           >
             <ChevronRight className="size-4" strokeWidth={1.75} />
           </button>
+          </div>
         </div>
       </div>
 

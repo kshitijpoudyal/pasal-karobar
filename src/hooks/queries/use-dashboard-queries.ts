@@ -27,6 +27,8 @@ export function useDashboardSummaryQuery(
     },
     select: (data) => normalizeDashboardSummary(data),
     enabled: isSupabaseConfigured() && Boolean(businessId),
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     ...options,
   });
 }

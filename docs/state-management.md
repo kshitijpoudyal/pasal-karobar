@@ -37,6 +37,8 @@ getServerAppServices() → service → repository → Supabase
 | `use-business-setting-queries`      | Business settings   |
 | `use-dashboard-queries`               | Dashboard summary   |
 
+Dashboard summaries use `refetchOnMount: "always"` and `refetchOnWindowFocus: true`. After transaction edits, `syncAfterTransactionChange` / `refreshBusinessStats` in `transaction-query-cache.ts` invalidates lists and refetches dashboard queries. See [dashboard-troubleshooting.md](./dashboard-troubleshooting.md) if KPIs look stale.
+
 Feature-level hooks (UI orchestration, filters, forms) live under `src/features/*/hooks/` and call the query modules above — they must not import Supabase or repositories directly.
 
 ## Client / UI state
