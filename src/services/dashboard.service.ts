@@ -157,7 +157,8 @@ export function buildMonthDayHeatmap(
 const PEAK_WINDOW_HOURS = 5;
 
 function formatHourLabel(hour: number): string {
-  return `${String(hour).padStart(2, "0")}:00`;
+  const h = hour >= 24 ? 0 : Math.max(0, hour);
+  return format(new Date(2020, 0, 1, h, 0), "h:mm a");
 }
 
 function weekRangeLabel(monthStart: Date, weekIndex: number): string {

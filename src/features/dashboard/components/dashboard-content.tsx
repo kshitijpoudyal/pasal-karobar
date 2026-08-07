@@ -5,7 +5,6 @@ import { parseISO, startOfDay } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
-import { BusinessTimeZoneCaption } from "@/components/business-timezone-caption";
 import { QueryState } from "@/components/layout/query-state";
 import { DashboardBottomSection } from "@/features/dashboard/components/dashboard-bottom-section";
 import { DashboardTimeNavigator } from "@/features/dashboard/components/dashboard-time-navigator";
@@ -92,8 +91,6 @@ export function DashboardContent() {
         onRefreshStats={() => void handleRefreshStats()}
         isRefreshingStats={summaryQuery.isFetching}
       />
-
-      <BusinessTimeZoneCaption className="px-1" />
 
       <QueryState
         isLoading={summaryQuery.isLoading}

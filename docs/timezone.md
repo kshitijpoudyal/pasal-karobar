@@ -15,14 +15,12 @@
 - [`src/utils/date-ranges.ts`](../src/utils/date-ranges.ts) — dashboard scrubber ranges; pass `timeZone` (defaults to Kathmandu if omitted).
 - [`src/services/dashboard.service.ts`](../src/services/dashboard.service.ts) — loads business timezone on the server for summaries, charts, and peak analysis.
 
-Activity and Dashboard show **“Times shown in …”** via [`BusinessTimeZoneCaption`](../src/components/business-timezone-caption.tsx).
-
 ## Debugging mismatches
 
-1. Compare Supabase `transaction_date` (UTC) with the caption timezone on Activity/Dashboard.
+1. Compare Supabase `transaction_date` (UTC) with your business timezone in Settings.
 2. In development, watch the console for `[business-datetime] local vs business hour mismatch` when your laptop timezone differs from the shop (set `NEXT_PUBLIC_DEBUG_TZ=0` to silence).
 3. Run unit tests: `npm test` (`src/utils/business-datetime.test.ts`).
 
 ## Changing timezone
 
-Update `businesses.timezone` under **Settings → Business Identity** (default Kathmandu, Nepal). All screens pick up the value after save and refetch.
+Update timezone under **Settings → Business Identity** (default Kathmandu, Nepal). All screens pick up the value after save and refetch.
