@@ -2,10 +2,7 @@
 
 import { TrendingUp } from "lucide-react";
 
-import {
-  ActivityCategorySegment,
-  ActivityPaymentIconStrip,
-} from "@/features/activity/components/activity-secondary-filters";
+import { ActivitySearchBar } from "@/features/activity/components/activity-search-bar";
 import { cn } from "@/lib/utils";
 import { formatNpr, formatNprNumber } from "@/utils/format";
 import {
@@ -21,18 +18,22 @@ type ActivityFiltersProps = {
   timeframe: ActivityTimeframe;
   category: ActivityCategoryFilter;
   paymentMethod: ActivityPaymentFilter;
+  searchQuery: string;
   onTimeframeChange: (value: ActivityTimeframe) => void;
   onCategoryChange: (value: ActivityCategoryFilter) => void;
   onPaymentMethodChange: (value: ActivityPaymentFilter) => void;
+  onSearchQueryChange: (value: string) => void;
 };
 
 export function ActivityFilters({
   timeframe,
   category,
   paymentMethod,
+  searchQuery,
   onTimeframeChange,
   onCategoryChange,
   onPaymentMethodChange,
+  onSearchQueryChange,
 }: ActivityFiltersProps) {
   return (
     <div className="col-span-12 flex min-w-0 flex-col gap-3 xl:col-span-8">
@@ -54,26 +55,14 @@ export function ActivityFilters({
         ))}
       </div>
 
-      <div className="squircle flex flex-col gap-3 border border-outline-variant/60 bg-surface-container-lowest/80 p-3 shadow-sm lg:p-4">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:items-center sm:gap-3">
-          <span className="text-label-sm font-semibold tracking-widest text-on-surface-variant uppercase">
-            Type
-          </span>
-          <ActivityCategorySegment
-            category={category}
-            onCategoryChange={onCategoryChange}
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:items-center sm:gap-3">
-          <span className="text-label-sm font-semibold tracking-widest text-on-surface-variant uppercase">
-            Pay
-          </span>
-          <ActivityPaymentIconStrip
-            paymentMethod={paymentMethod}
-            onPaymentMethodChange={onPaymentMethodChange}
-          />
-        </div>
-      </div>
+      <ActivitySearchBar
+        searchQuery={searchQuery}
+        onSearchQueryChange={onSearchQueryChange}
+        category={category}
+        paymentMethod={paymentMethod}
+        onCategoryChange={onCategoryChange}
+        onPaymentMethodChange={onPaymentMethodChange}
+      />
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-quer
 import { useActiveBusiness } from "@/providers/business-provider";
 import { groupTransactionsByDay } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
+import type { Transaction } from "@/types/database";
+import { dbPaymentToLabel } from "@/utils/payment-method";
 import {
   getActivityDateRange,
   type ActivityCategoryFilter,
@@ -19,14 +21,53 @@ import {
   type ActivityPaymentFilter,
 } from "@/features/activity/constants";
 
+function titleForSearch(
+  tx: Transaction,
+  serviceNames: Map<string, string>,
+  categoryNames: Map<string, string>,
+): string {
+  if (tx.type === "INCOME") {
+    const name = tx.service_id ? serviceNames.get(tx.service_id) : undefined;
+    return name ?? tx.note ?? "Income";
+  }
+  const cat = tx.expense_category_id
+    ? categoryNames.get(tx.expense_category_id)
+    : undefined;
+  return tx.note ?? cat ?? "Expense";
+}
+
+function transactionMatchesSearch(
+  tx: Transaction,
+  query: string,
+  serviceNames: Map<string, string>,
+  categoryNames: Map<string, string>,
+): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+
+  const title = titleForSearch(tx, serviceNames, categoryNames).toLowerCase();
+  const note = tx.note?.toLowerCase() ?? "";
+  const payment = dbPaymentToLabel(tx.payment_method).toLowerCase();
+  const amount = String(tx.total);
+
+  return (
+    title.includes(q) ||
+    note.includes(q) ||
+    payment.includes(q) ||
+    amount.includes(q)
+  );
+}
+
 export function useActivityPage() {
   const { businessId } = useActiveBusiness();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
   const [paymentMethod, setPaymentMethod] =
     useState<ActivityPaymentFilter>("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const hasSecondaryFilters = hasActivitySecondaryFilters(category, paymentMethod);
+  const hasActiveSearch = searchQuery.trim().length > 0;
 
   const filters = useMemo((): TransactionListFilters => {
     const { from, to } = getActivityDateRange(timeframe);
@@ -63,16 +104,30 @@ export function useActivityPage() {
     return map;
   }, [categoriesQuery.data]);
 
+  const visibleTransactions = useMemo(() => {
+    const list = transactionsQuery.data ?? [];
+    if (!hasActiveSearch) return list;
+    return list.filter((tx) =>
+      transactionMatchesSearch(tx, searchQuery, serviceNames, categoryNames),
+    );
+  }, [
+    transactionsQuery.data,
+    searchQuery,
+    hasActiveSearch,
+    serviceNames,
+    categoryNames,
+  ]);
+
   const netRevenue = useMemo(() => {
-    return (transactionsQuery.data ?? []).reduce((sum, tx) => {
+    return visibleTransactions.reduce((sum, tx) => {
       const amount = Number(tx.total);
       return sum + (tx.type === "INCOME" ? amount : -amount);
     }, 0);
-  }, [transactionsQuery.data]);
+  }, [visibleTransactions]);
 
   const groupedTransactions = useMemo(
-    () => groupTransactionsByDay(transactionsQuery.data ?? []),
-    [transactionsQuery.data],
+    () => groupTransactionsByDay(visibleTransactions),
+    [visibleTransactions],
   );
 
   const isLoading =
@@ -104,7 +159,10 @@ export function useActivityPage() {
     setCategory,
     paymentMethod,
     setPaymentMethod,
+    searchQuery,
+    setSearchQuery,
     hasSecondaryFilters,
+    hasActiveSearch,
     netRevenue,
     groupedTransactions,
     serviceNames,

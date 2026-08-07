@@ -23,9 +23,11 @@ export function ActivityHeaderChrome({
           timeframe={activity.timeframe}
           category={activity.category}
           paymentMethod={activity.paymentMethod}
+          searchQuery={activity.searchQuery}
           onTimeframeChange={activity.setTimeframe}
           onCategoryChange={activity.setCategory}
           onPaymentMethodChange={activity.setPaymentMethod}
+          onSearchQueryChange={activity.setSearchQuery}
         />
       </div>
     );
@@ -37,9 +39,11 @@ export function ActivityHeaderChrome({
         timeframe={activity.timeframe}
         category={activity.category}
         paymentMethod={activity.paymentMethod}
+        searchQuery={activity.searchQuery}
         onTimeframeChange={activity.setTimeframe}
         onCategoryChange={activity.setCategory}
         onPaymentMethodChange={activity.setPaymentMethod}
+        onSearchQueryChange={activity.setSearchQuery}
       />
       <DailyNetRevenueCard netRevenue={activity.netRevenue} />
     </div>

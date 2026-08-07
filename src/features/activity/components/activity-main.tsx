@@ -20,9 +20,11 @@ export function ActivityMain() {
             timeframe={activity.timeframe}
             category={activity.category}
             paymentMethod={activity.paymentMethod}
+            searchQuery={activity.searchQuery}
             onTimeframeChange={activity.setTimeframe}
             onCategoryChange={activity.setCategory}
             onPaymentMethodChange={activity.setPaymentMethod}
+            onSearchQueryChange={activity.setSearchQuery}
           />
           <DailyNetRevenueCard netRevenue={activity.netRevenue} />
         </div>
@@ -58,8 +60,8 @@ function ActivityTimelineBody({
       isEmpty={!activity.isLoading && activity.groupedTransactions.length === 0}
       emptyTitle="No transactions in this period"
       emptyDescription={
-        activity.hasSecondaryFilters
-          ? "Nothing matches your filters. Try clearing filters or a wider timeframe."
+        activity.hasSecondaryFilters || activity.hasActiveSearch
+          ? "Nothing matches your search or filters. Try clearing them or a wider timeframe."
           : "Record income or expenses to see activity here."
       }
       onRetry={activity.refetch}
