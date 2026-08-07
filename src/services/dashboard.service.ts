@@ -23,7 +23,6 @@ import {
   eachMonthOfInterval,
   endOfDay,
   format,
-  getDaysInMonth,
   min,
   parseISO,
   startOfDay,
@@ -154,29 +153,58 @@ export function buildMonthDayHeatmap(
   };
 }
 
-const PEAK_WINDOW_HOURS = 5;
+function findBusiestContiguousHourRange(hourCounts: number[]): {
+  start: number;
+  endExclusive: number;
+  visits: number;
+} {
+  let bestSum = 0;
+  let bestStart = 0;
+  let bestEndExclusive = 0;
 
-function formatHourLabel(hour: number): string {
-  const h = hour >= 24 ? 0 : Math.max(0, hour);
-  return format(new Date(2020, 0, 1, h, 0), "h:mm a");
-}
+  let runSum = 0;
+  let runStart = 0;
 
-function weekRangeLabel(monthStart: Date, weekIndex: number): string {
-  const daysInMonth = getDaysInMonth(monthStart);
-  const startDay = weekIndex * 7 + 1;
-  const endDay = Math.min(startDay + 6, daysInMonth);
-  const start = new Date(
-    monthStart.getFullYear(),
-    monthStart.getMonth(),
-    startDay,
-  );
-  const end = new Date(
-    monthStart.getFullYear(),
-    monthStart.getMonth(),
-    endDay,
-  );
-  if (startDay === endDay) return format(start, "MMM d");
-  return `${format(start, "MMM d")} – ${format(end, "MMM d")}`;
+  for (let h = 0; h < 24; h += 1) {
+    const count = hourCounts[h] ?? 0;
+    if (count === 0) {
+      runSum = 0;
+      runStart = h + 1;
+      continue;
+    }
+    if (runSum === 0) runStart = h;
+    runSum += count;
+    if (
+      runSum > bestSum ||
+      (runSum === bestSum && h + 1 - runStart < bestEndExclusive - bestStart)
+    ) {
+      bestSum = runSum;
+      bestStart = runStart;
+      bestEndExclusive = h + 1;
+    }
+  }
+
+  if (bestSum > 0) {
+    return { start: bestStart, endExclusive: bestEndExclusive, visits: bestSum };
+  }
+
+  let peakHour = 0;
+  let peakCount = 0;
+  for (let h = 0; h < 24; h += 1) {
+    const count = hourCounts[h] ?? 0;
+    if (count > peakCount) {
+      peakCount = count;
+      peakHour = h;
+    }
+  }
+  if (peakCount === 0) {
+    return { start: 0, endExclusive: 0, visits: 0 };
+  }
+  return {
+    start: peakHour,
+    endExclusive: peakHour + 1,
+    visits: peakCount,
+  };
 }
 
 function findBestHourWindow(hourCounts: number[]): {
@@ -184,34 +212,70 @@ function findBestHourWindow(hourCounts: number[]): {
   end: number;
   visits: number;
 } {
-  let bestStart = 0;
-  let bestSum = -1;
-  const windowSize = Math.min(PEAK_WINDOW_HOURS, 24);
-  for (let start = 0; start <= 24 - windowSize; start += 1) {
-    let sum = 0;
-    for (let h = start; h < start + windowSize; h += 1) {
-      sum += hourCounts[h] ?? 0;
-    }
-    if (sum > bestSum) {
-      bestSum = sum;
-      bestStart = start;
-    }
-  }
-  const effectiveWindow = bestSum > 0 ? windowSize : 1;
-  if (bestSum <= 0) {
-    for (let h = 0; h < 24; h += 1) {
-      const count = hourCounts[h] ?? 0;
-      if (count > bestSum) {
-        bestSum = count;
-        bestStart = h;
-      }
-    }
-  }
+  const range = findBusiestContiguousHourRange(hourCounts);
   return {
-    start: bestStart,
-    end: Math.min(bestStart + effectiveWindow, 24),
-    visits: Math.max(bestSum, 0),
+    start: range.start,
+    end: range.endExclusive,
+    visits: range.visits,
   };
+}
+
+function formatHourLabel(hour: number): string {
+  const h = hour >= 24 ? 0 : Math.max(0, hour);
+  return format(new Date(2020, 0, 1, h, 0), "h:mm a");
+}
+
+function formatHourEndLabel(hour: number): string {
+  const h = hour >= 24 ? 0 : Math.max(0, hour);
+  return format(new Date(2020, 0, 1, h, 59), "h:mm a");
+}
+
+const ISO_WEEKDAY_LABELS = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+] as const;
+
+function weekdayLabelFromIsoDay(isoDay: number): string {
+  return ISO_WEEKDAY_LABELS[isoDay - 1] ?? "Monday";
+}
+
+function formatMonthYearFromMonthKey(
+  periodMonthKey: string,
+  timeZone: string,
+): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "long",
+    year: "numeric",
+  }).format(startOfZonedDay(`${periodMonthKey}-01`, timeZone));
+}
+
+function formatDateKeyShort(dateKey: string, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    month: "short",
+    day: "numeric",
+  }).format(startOfZonedDay(dateKey, timeZone));
+}
+
+function weekRangeLabelForMonthWeek(
+  periodMonthKey: string,
+  weekIndex: number,
+  timeZone: string,
+): string {
+  const { year, month } = parseDateKey(`${periodMonthKey}-01`);
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const startDay = weekIndex * 7 + 1;
+  const endDay = Math.min(startDay + 6, daysInMonth);
+  const startKey = `${periodMonthKey}-${String(startDay).padStart(2, "0")}`;
+  const endKey = `${periodMonthKey}-${String(endDay).padStart(2, "0")}`;
+  if (startDay === endDay) return formatDateKeyShort(startKey, timeZone);
+  return `${formatDateKeyShort(startKey, timeZone)} – ${formatDateKeyShort(endKey, timeZone)}`;
 }
 
 export function buildPeakAnalysisInsights(
@@ -233,14 +297,13 @@ export function buildPeakAnalysisInsights(
   // Busiest day of week (by visit count in period)
   const byWeekday = new Map<
     number,
-    { visits: number; revenue: number; sampleDate: string }
+    { visits: number; revenue: number }
   >();
   for (const tx of incomeTx) {
     const isoDay = isoDayInTimeZone(tx.transaction_date, timeZone);
     const bucket = byWeekday.get(isoDay) ?? {
       visits: 0,
       revenue: 0,
-      sampleDate: tx.transaction_date,
     };
     bucket.visits += 1;
     bucket.revenue += Number(tx.total);
@@ -248,23 +311,20 @@ export function buildPeakAnalysisInsights(
   }
   let peakWeekdayVisits = 0;
   let peakWeekdayRevenue = 0;
-  let peakSampleDate = incomeTx[0]!.transaction_date;
-  for (const [, stats] of byWeekday) {
+  let peakIsoDay = isoDayInTimeZone(incomeTx[0]!.transaction_date, timeZone);
+  for (const [isoDay, stats] of byWeekday) {
     if (
       stats.visits > peakWeekdayVisits ||
       (stats.visits === peakWeekdayVisits && stats.revenue > peakWeekdayRevenue)
     ) {
       peakWeekdayVisits = stats.visits;
       peakWeekdayRevenue = stats.revenue;
-      peakSampleDate = stats.sampleDate;
+      peakIsoDay = isoDay;
     }
   }
 
   const busiestDayOfWeek: BusiestDayOfWeekInsight = {
-    dayLabel: new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      weekday: "long",
-    }).format(parseISO(peakSampleDate)),
+    dayLabel: weekdayLabelFromIsoDay(peakIsoDay),
     visitCount: peakWeekdayVisits,
     revenue: peakWeekdayRevenue,
     periodVisitCount,
@@ -273,7 +333,6 @@ export function buildPeakAnalysisInsights(
   // Busiest week of month (calendar month of period end in business TZ)
   const periodMonthKey = dateKeyInTimeZone(periodToIso, timeZone).slice(0, 7);
   const { year: monthYear, month: monthNum } = parseDateKey(`${periodMonthKey}-01`);
-  const monthAnchor = startOfZonedDay(`${periodMonthKey}-01`, timeZone);
   const daysInMonth = new Date(Date.UTC(monthYear, monthNum, 0)).getUTCDate();
   const numWeeks = Math.ceil(daysInMonth / 7);
   const weekStats = Array.from({ length: numWeeks }, () => ({
@@ -310,8 +369,12 @@ export function buildPeakAnalysisInsights(
     peakWeekVisits > 0
       ? {
           weekLabel: `W${peakWeekIndex + 1}`,
-          rangeLabel: weekRangeLabel(monthAnchor, peakWeekIndex),
-          monthLabel: format(monthAnchor, "MMMM yyyy"),
+          rangeLabel: weekRangeLabelForMonthWeek(
+            periodMonthKey,
+            peakWeekIndex,
+            timeZone,
+          ),
+          monthLabel: formatMonthYearFromMonthKey(periodMonthKey, timeZone),
           visitCount: peakWeekVisits,
           revenue: peakWeekRevenue,
         }
@@ -324,11 +387,12 @@ export function buildPeakAnalysisInsights(
     hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
   }
   const hourWindow = findBestHourWindow(hourCounts);
+  const lastHourInWindow = Math.min(Math.max(0, hourWindow.end - 1), 23);
   const busiestHourRange: BusiestHourRangeInsight | null =
     hourWindow.visits > 0
       ? {
           windowStart: formatHourLabel(hourWindow.start),
-          windowEnd: formatHourLabel(hourWindow.end),
+          windowEnd: formatHourEndLabel(lastHourInWindow),
           visitCount: hourWindow.visits,
           periodVisitCount,
         }
