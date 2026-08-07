@@ -21,6 +21,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
     subtotal: number;
     tip: number;
     payment: UiPaymentMethod;
+    customerPhone?: string;
   }) {
     const tip = input.tip || 0;
     const payload = createTransactionSchema.parse({
@@ -32,6 +33,9 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       total: input.subtotal + tip,
       payment_method: uiPaymentToDb(input.payment),
       transaction_date: new Date().toISOString(),
+      ...(input.customerPhone?.trim()
+        ? { customer_phone: input.customerPhone.trim() }
+        : {}),
     } satisfies CreateTransactionInput);
     await createMutation.mutateAsync(payload);
     toast({

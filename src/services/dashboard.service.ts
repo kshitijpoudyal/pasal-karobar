@@ -1,4 +1,6 @@
 import type { BusinessService } from "@/services/business.service";
+import type { CustomerService } from "@/services/customer.service";
+import { computeCustomerPeriodInsights } from "@/services/customer-analytics.service";
 import type { TransactionService } from "@/services/transaction.service";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
 import type { Transaction } from "@/types/database";
@@ -505,6 +507,7 @@ export class DashboardService {
     private readonly transactionService: TransactionService,
     private readonly serviceCatalogService: ServiceCatalogService,
     private readonly businessService: BusinessService,
+    private readonly customerService: CustomerService,
   ) {}
 
   async getSummary(
@@ -625,6 +628,22 @@ export class DashboardService {
         ? buildMonthDayHeatmap(transactions, heatmapAnchor, timeZone)
         : null;
 
+    const incomeInPeriod = periodTransactions.filter((tx) => tx.type === "INCOME");
+    const customerIds = [
+      ...new Set(
+        incomeInPeriod
+          .map((tx) => tx.customer_id)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ];
+    const customersById = await this.customerService.mapByIds(customerIds);
+    const customerInsights = computeCustomerPeriodInsights(
+      incomeInPeriod,
+      customersById,
+      periodFromIso,
+      periodToIso,
+    );
+
     return {
       revenue,
       expenses,
@@ -640,6 +659,7 @@ export class DashboardService {
       monthDayHeatmap,
       periodComparison,
       earliestTransactionDate,
+      customerInsights,
     };
   }
 }

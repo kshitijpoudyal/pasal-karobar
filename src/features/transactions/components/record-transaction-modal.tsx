@@ -95,6 +95,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDesc, setExpenseDesc] = useState("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string | null>(null);
+  const [customerPhone, setCustomerPhone] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -115,6 +116,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
     setExpenseAmount("");
     setExpenseDesc("");
     setExpenseCategoryId(null);
+    setCustomerPhone("");
     setFormError(null);
   }, []);
 
@@ -175,6 +177,7 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
           subtotal,
           tip: tipValue,
           payment,
+          customerPhone,
         });
         return;
       }
@@ -341,6 +344,22 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                   value={tip}
                   onChange={setTip}
                   placeholder="0"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="record-income-phone" className={FIELD_LABEL}>
+                  Customer phone (optional)
+                </label>
+                <input
+                  id="record-income-phone"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="9841234567"
+                  value={customerPhone}
+                  onChange={(event) => setCustomerPhone(event.target.value)}
+                  className="font-body mt-3 w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-4 py-3 text-base text-on-surface outline-none focus:border-primary"
                 />
               </div>
 

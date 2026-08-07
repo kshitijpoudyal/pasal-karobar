@@ -36,3 +36,9 @@ export {
 } from "@/hooks/queries/use-transaction-queries";
 
 export { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
+
+export {
+  useCustomerQuery,
+  useCustomersQuery,
+  useUpdateCustomerMutation,
+} from "@/hooks/queries/use-customer-queries";

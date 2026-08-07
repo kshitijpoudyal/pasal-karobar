@@ -21,6 +21,7 @@ type TransactionTimelineProps = {
   grouped: [string, Transaction[]][];
   serviceNames: Map<string, string>;
   categoryNames: Map<string, string>;
+  customerLabels: Map<string, string>;
   onDelete: (transactionId: string) => Promise<void>;
   isDeleting: boolean;
   timeZone: string;
@@ -52,6 +53,7 @@ export function TransactionTimeline({
   grouped,
   serviceNames,
   categoryNames,
+  customerLabels,
   onDelete,
   isDeleting,
   timeZone,
@@ -77,6 +79,10 @@ export function TransactionTimeline({
               const tip = Number(tx.tip);
               const total = Number(tx.total);
               const title = titleForTransaction(tx, serviceNames, categoryNames);
+              const customerLabel =
+                isIncome && tx.customer_id
+                  ? customerLabels.get(tx.customer_id)
+                  : undefined;
               logTimezoneFormatMismatch(
                 tx.transaction_date,
                 timeZone,
@@ -109,6 +115,7 @@ export function TransactionTimeline({
                 <TransactionActivityCard
                   key={tx.id}
                   title={title}
+                  customerLabel={customerLabel}
                   time={time}
                   paymentMethod={tx.payment_method}
                   isIncome={isIncome}

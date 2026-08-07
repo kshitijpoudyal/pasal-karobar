@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { useDeleteTransactionMutation } from "@/hooks/queries/use-transaction-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
+import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
@@ -21,6 +22,7 @@ import {
   hasActivitySecondaryFilters,
   type ActivityPaymentFilter,
 } from "@/features/activity/constants";
+import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 
 function titleForSearch(
   tx: Transaction,
@@ -86,6 +88,7 @@ export function useActivityPage() {
   }, [timeframe, category, paymentMethod, timeZone]);
 
   const transactionsQuery = useTransactionsQuery(businessId, filters);
+  const customersQuery = useCustomersQuery(businessId);
   const servicesQuery = useServiceCatalogQuery(businessId);
   const categoriesQuery = useExpenseCategoriesQuery(businessId);
   const deleteMutation = useDeleteTransactionMutation(businessId);
@@ -105,6 +108,17 @@ export function useActivityPage() {
     }
     return map;
   }, [categoriesQuery.data]);
+
+  const customerLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const customer of customersQuery.data ?? []) {
+      map.set(
+        customer.id,
+        customer.name ?? formatNepalPhoneDisplay(customer.phone_normalized),
+      );
+    }
+    return map;
+  }, [customersQuery.data]);
 
   const visibleTransactions = useMemo(() => {
     const list = transactionsQuery.data ?? [];
@@ -134,17 +148,20 @@ export function useActivityPage() {
 
   const isLoading =
     transactionsQuery.isLoading ||
+    customersQuery.isLoading ||
     servicesQuery.isLoading ||
     categoriesQuery.isLoading;
 
   const error =
     transactionsQuery.error ??
+    customersQuery.error ??
     servicesQuery.error ??
     categoriesQuery.error ??
     null;
 
   function refetch() {
     void transactionsQuery.refetch();
+    void customersQuery.refetch();
     void servicesQuery.refetch();
     void categoriesQuery.refetch();
   }
@@ -169,6 +186,7 @@ export function useActivityPage() {
     groupedTransactions,
     serviceNames,
     categoryNames,
+    customerLabels,
     isLoading,
     error,
     refetch,

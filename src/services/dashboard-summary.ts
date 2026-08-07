@@ -4,6 +4,12 @@ import {
   EMPTY_PEAK_ANALYSIS,
   type PeakAnalysisInsights,
 } from "@/services/peak-analysis";
+import {
+  EMPTY_CUSTOMER_PERIOD_INSIGHTS,
+  type CustomerPeriodInsights,
+} from "@/services/customer-analytics.service";
+
+export type { CustomerPeriodInsights } from "@/services/customer-analytics.service";
 
 export type TrajectoryPoint = {
   /** Stable key for React lists (unique within a trajectory). */
@@ -50,6 +56,7 @@ export type DashboardSummary = {
   periodComparison: PeriodComparison | null;
   /** ISO timestamp of the oldest transaction, if any. */
   earliestTransactionDate: string | null;
+  customerInsights: CustomerPeriodInsights;
 };
 
 export type DashboardSummaryParams = {
@@ -75,6 +82,7 @@ export const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
   monthDayHeatmap: null,
   periodComparison: null,
   earliestTransactionDate: null,
+  customerInsights: EMPTY_CUSTOMER_PERIOD_INSIGHTS,
 };
 
 /** Fills gaps from stale query cache after summary shape changes. */
@@ -95,6 +103,10 @@ export function normalizeDashboardSummary(
     monthDayHeatmap: data.monthDayHeatmap ?? null,
     periodComparison: data.periodComparison ?? null,
     earliestTransactionDate: data.earliestTransactionDate ?? null,
+    customerInsights: {
+      ...EMPTY_CUSTOMER_PERIOD_INSIGHTS,
+      ...data.customerInsights,
+    },
   };
 }
 

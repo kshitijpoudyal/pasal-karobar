@@ -12,6 +12,7 @@ import { formatNprNumber } from "@/utils/format";
 
 type TransactionActivityCardProps = {
   title: string;
+  customerLabel?: string;
   time: string;
   paymentMethod: PaymentMethod;
   amountLabel: string;
@@ -118,6 +119,7 @@ function ActivityItemMoreMenu({
 
 export function TransactionActivityCard({
   title,
+  customerLabel,
   time,
   paymentMethod,
   amountLabel,
@@ -155,6 +157,11 @@ export function TransactionActivityCard({
             <h3 className="truncate text-body-md font-medium text-on-surface">
               {title}
             </h3>
+            {customerLabel ? (
+              <p className="truncate text-[11px] text-on-surface-variant">
+                {customerLabel}
+              </p>
+            ) : null}
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
               <span className="text-[10px] text-on-surface-variant">{time}</span>
               <PaymentMethodIcon method={paymentMethod} />
@@ -202,6 +209,11 @@ export function TransactionActivityCard({
             <h4 className="font-headline truncate text-base font-bold text-primary lg:text-lg">
               {title}
             </h4>
+            {customerLabel ? (
+              <p className="truncate text-xs text-on-surface-variant">
+                {customerLabel}
+              </p>
+            ) : null}
             <div className="mt-1 flex flex-wrap items-center gap-2 text-on-surface-variant lg:gap-3">
               <span className="flex items-center gap-1 text-xs lg:text-sm">
                 <Clock className="size-3.5" strokeWidth={1.75} />

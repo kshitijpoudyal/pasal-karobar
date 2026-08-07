@@ -12,6 +12,7 @@ import {
   Receipt,
   Scissors,
   Settings,
+  Users,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ import { useAuth } from "@/providers/auth-provider";
 const APP_LEFT_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
   { href: "/activity", label: "Activity", icon: Receipt },
+  { href: "/customers", label: "Customers", icon: Users },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 

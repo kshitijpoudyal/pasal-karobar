@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { CustomerRepository } from "@/repository/customer.repository";
 import { BusinessRepository } from "@/repository/business.repository";
 import { BusinessSettingRepository } from "@/repository/business-setting.repository";
 import { ExpenseCategoryRepository } from "@/repository/expense-category.repository";
@@ -13,6 +14,7 @@ export type Repositories = {
   expenseCategory: ExpenseCategoryRepository;
   transaction: TransactionRepository;
   businessSetting: BusinessSettingRepository;
+  customer: CustomerRepository;
 };
 
 export function createRepositories(
@@ -24,6 +26,7 @@ export function createRepositories(
     expenseCategory: new ExpenseCategoryRepository(supabase),
     transaction: new TransactionRepository(supabase),
     businessSetting: new BusinessSettingRepository(supabase),
+    customer: new CustomerRepository(supabase),
   };
 }
 

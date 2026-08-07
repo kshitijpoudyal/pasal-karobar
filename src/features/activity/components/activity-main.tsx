@@ -70,6 +70,7 @@ function ActivityTimelineBody({
         grouped={activity.groupedTransactions}
         serviceNames={activity.serviceNames}
         categoryNames={activity.categoryNames}
+        customerLabels={activity.customerLabels}
         onDelete={activity.deleteTransaction}
         isDeleting={activity.isDeleting}
         timeZone={activity.timeZone}

@@ -14,6 +14,7 @@ import {
   snapshotTransactionLists,
   syncAfterTransactionChange,
 } from "@/hooks/queries/transaction-query-cache";
+import { syncAfterCustomerLinkedTransaction } from "@/hooks/queries/use-customer-queries";
 import type { TransactionListFilters } from "@/repository";
 import { getClientAppServices } from "@/services/client";
 import type {
@@ -73,6 +74,7 @@ export function useCreateTransactionMutation(businessId: string) {
         service_id: input.type === "INCOME" ? input.service_id : null,
         expense_category_id:
           input.type === "EXPENSE" ? input.expense_category_id : null,
+        customer_id: null,
         subtotal: input.subtotal,
         tip: input.type === "INCOME" ? (input.tip ?? 0) : 0,
         total: input.total,
@@ -95,7 +97,7 @@ export function useCreateTransactionMutation(businessId: string) {
       }
     },
     onSettled: async () => {
-      await syncAfterTransactionChange(queryClient);
+      await syncAfterCustomerLinkedTransaction(queryClient, businessId);
     },
   });
 }

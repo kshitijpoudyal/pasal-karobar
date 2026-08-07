@@ -101,12 +101,34 @@ export type ExpenseCategoryUpdate = Partial<
   >
 >;
 
+export type Customer = {
+  id: string;
+  business_id: string;
+  phone: string;
+  phone_normalized: string;
+  name: string | null;
+  first_visit_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerInsert = Pick<
+  Customer,
+  "business_id" | "phone" | "phone_normalized"
+> &
+  Partial<Pick<Customer, "name" | "first_visit_at">>;
+
+export type CustomerUpdate = Partial<
+  Pick<Customer, "phone" | "phone_normalized" | "name" | "first_visit_at">
+>;
+
 export type Transaction = {
   id: string;
   business_id: string;
   type: TransactionType;
   service_id: string | null;
   expense_category_id: string | null;
+  customer_id: string | null;
   subtotal: number;
   tip: number;
   total: number;
@@ -121,6 +143,7 @@ export type IncomeTransactionInsert = {
   business_id: string;
   type: "INCOME";
   service_id: string;
+  customer_id?: string | null;
   subtotal: number;
   tip?: number;
   total: number;
@@ -145,6 +168,7 @@ export type TransactionRowInsert = {
   type: TransactionType;
   service_id?: string | null;
   expense_category_id?: string | null;
+  customer_id?: string | null;
   subtotal: number;
   tip?: number;
   total: number;
@@ -162,6 +186,7 @@ export type TransactionUpdate = Partial<
     Transaction,
     | "service_id"
     | "expense_category_id"
+    | "customer_id"
     | "subtotal"
     | "tip"
     | "total"
@@ -207,6 +232,12 @@ export type Database = {
         Row: ExpenseCategory;
         Insert: ExpenseCategoryInsert & { id?: string };
         Update: ExpenseCategoryUpdate;
+        Relationships: [];
+      };
+      customers: {
+        Row: Customer;
+        Insert: CustomerInsert & { id?: string };
+        Update: CustomerUpdate;
         Relationships: [];
       };
       transactions: {

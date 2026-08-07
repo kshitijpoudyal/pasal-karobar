@@ -44,4 +44,11 @@ export const queryKeys = {
     summary: (businessId: string) =>
       [...queryKeys.dashboard.all, "summary", businessId] as const,
   },
+  customers: {
+    all: ["customers"] as const,
+    list: (businessId: string) =>
+      [...queryKeys.customers.all, "list", businessId] as const,
+    detail: (id: string) =>
+      [...queryKeys.customers.all, "detail", id] as const,
+  },
 } as const;

@@ -10,6 +10,7 @@ import { DashboardBottomSection } from "@/features/dashboard/components/dashboar
 import { DashboardTimeNavigator } from "@/features/dashboard/components/dashboard-time-navigator";
 import { InsightsSection } from "@/features/dashboard/components/insights-section";
 import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
+import { CustomerInsightsCard } from "@/features/dashboard/components/customer-insights-card";
 import { MonthDayHeatmapCard } from "@/features/dashboard/components/month-day-heatmap-card";
 import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
 import { refreshBusinessStats } from "@/hooks/queries/transaction-query-cache";
@@ -98,6 +99,8 @@ export function DashboardContent() {
         onRetry={() => summaryQuery.refetch()}
       >
         <KpiGrid summary={summary} granularity={granularity} />
+
+        <CustomerInsightsCard insights={summary.customerInsights} />
 
         {isEmptyPeriod ? <DashboardEmptyHint /> : null}
 

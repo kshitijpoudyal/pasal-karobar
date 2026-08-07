@@ -24,6 +24,7 @@
 Business
 ├── Services
 ├── Expense Categories
+├── Customers
 ├── Transactions
 └── Business Settings
 ```
@@ -100,6 +101,25 @@ Primary key: `(business_id, setting_key)`.
 
 ---
 
+## `customers`
+
+| Column             | Notes |
+| ------------------ | ----- |
+| id                 |       |
+| business_id        |       |
+| phone              | Display formatting (as entered) |
+| phone_normalized   | Dedup key; unique per business (10-digit Nepal mobile) |
+| name               | Optional profile label |
+| first_visit_at     | First linked income; used for new vs returning analytics |
+| created_at         |       |
+| updated_at         |       |
+
+Unique: `(business_id, phone_normalized)`.
+
+Phone normalization (app): strip spaces/dashes; accept `98xxxxxxxx`, `977…`, `+977…`; store **`phone_normalized`** as 10 digits (e.g. `9841234567`).
+
+---
+
 ## `transactions`
 
 | Column               | Notes |
@@ -109,6 +129,7 @@ Primary key: `(business_id, setting_key)`.
 | type                 |       |
 | service_id           |       |
 | expense_category_id  |       |
+| customer_id          | Optional; income only (links to `customers`) |
 | subtotal             |       |
 | tip                  |       |
 | total                |       |
@@ -169,6 +190,7 @@ SQL migrations live in `supabase/migrations/`.
 | `20260730194500_create_business_for_owner.sql` | Onboarding RPC (avoids business INSERT 403) |
 | `20260807150000_business_profile_to_settings.sql` | Profile fields → `business_settings`; slim `business` |
 | `20260807153000_seed_default_catalog_on_create.sql` | Default services/categories on create; `seed_default_business_catalog` RPC |
+| `20260808120000_customers.sql` | `customers` table; `transactions.customer_id`; RLS |
 
 Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supabase dashboard.
 
@@ -184,7 +206,9 @@ Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supaba
    (or `supabase/sql/business_profile_to_settings.sql` — same script for SQL Editor).
 5. Paste and run `supabase/migrations/20260807153000_seed_default_catalog_on_create.sql`
    (or `supabase/sql/seed_default_catalog_on_create.sql`).
-6. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+6. Paste and run `supabase/migrations/20260808120000_customers.sql`
+   (or `supabase/sql/customers.sql` when present).
+7. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
 
 ### Daily mock transactions (dev / demo)
 
@@ -302,7 +326,6 @@ SELECT has_function_privilege(
 
 # Future Tables
 
-- customers
 - appointments
 - employees
 - inventory

@@ -65,6 +65,7 @@ Record Transaction → Save → Return to Dashboard
 
 - Dashboard
 - Activity
+- Customers
 - Settings
 - Floating Action Button — Record Transaction
 

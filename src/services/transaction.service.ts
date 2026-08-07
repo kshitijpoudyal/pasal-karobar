@@ -1,3 +1,4 @@
+import type { CustomerService } from "@/services/customer.service";
 import type { TransactionRepository } from "@/repository/transaction.repository";
 import type { TransactionListFilters } from "@/repository/transaction.repository";
 import {
@@ -9,7 +10,10 @@ import {
 import type { Transaction, TransactionRowInsert } from "@/types/database";
 
 export class TransactionService {
-  constructor(private readonly transactionRepository: TransactionRepository) {}
+  constructor(
+    private readonly transactionRepository: TransactionRepository,
+    private readonly customerService: CustomerService,
+  ) {}
 
   async listByBusinessId(
     businessId: string,
@@ -32,11 +36,18 @@ export class TransactionService {
     const payload = createTransactionSchema.parse(input);
 
     if (payload.type === "INCOME") {
+      const customerId = await this.customerService.resolveCustomerForIncome(
+        payload.business_id,
+        payload.customer_phone,
+        payload.transaction_date,
+      );
+
       const row: TransactionRowInsert = {
         business_id: payload.business_id,
         type: "INCOME",
         service_id: payload.service_id,
         expense_category_id: null,
+        customer_id: customerId,
         subtotal: payload.subtotal,
         tip: payload.tip ?? 0,
         total: payload.total,
@@ -52,6 +63,7 @@ export class TransactionService {
       type: "EXPENSE",
       service_id: null,
       expense_category_id: payload.expense_category_id,
+      customer_id: null,
       subtotal: payload.subtotal,
       tip: 0,
       total: payload.total,

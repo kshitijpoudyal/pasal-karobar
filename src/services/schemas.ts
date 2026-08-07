@@ -59,6 +59,10 @@ export const updateExpenseCategorySchema = createExpenseCategorySchema
   .omit({ business_id: true })
   .partial();
 
+export const updateCustomerSchema = z.object({
+  name: z.string().trim().max(200).nullable().optional(),
+});
+
 const transactionBaseSchema = z.object({
   business_id: z.string().uuid(),
   payment_method: paymentMethodSchema,
@@ -69,6 +73,7 @@ const transactionBaseSchema = z.object({
 export const createIncomeTransactionSchema = transactionBaseSchema.extend({
   type: z.literal("INCOME"),
   service_id: z.string().uuid(),
+  customer_phone: z.string().trim().max(32).optional(),
   subtotal: z.coerce.number().nonnegative(),
   tip: z.coerce.number().nonnegative().default(0),
   total: z.coerce.number().nonnegative(),
@@ -117,6 +122,7 @@ export type CreateExpenseCategoryInput = z.infer<
 export type UpdateExpenseCategoryInput = z.infer<
   typeof updateExpenseCategorySchema
 >;
+export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type UpsertBusinessSettingInput = z.infer<
