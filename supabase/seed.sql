@@ -10,14 +10,29 @@ TRUNCATE TABLE
 RESTART IDENTITY CASCADE;
 
 -- Business
-INSERT INTO business (id,name,business_type,currency,timezone)
+INSERT INTO business (id, name)
 VALUES (
-'11111111-1111-1111-1111-111111111111',
-'Classic Gents Salon',
-'BARBER'::business_type,
-'NPR',
-'Asia/Kathmandu'
+  '11111111-1111-1111-1111-111111111111',
+  'Classic Gents Salon'
 );
+
+INSERT INTO business_settings (business_id, setting_key, setting_value)
+VALUES
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'business_type',
+    'BARBER'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'currency',
+    'NPR'
+  ),
+  (
+    '11111111-1111-1111-1111-111111111111',
+    'timezone',
+    'Asia/Kathmandu'
+  );
 
 -- Services
 INSERT INTO services

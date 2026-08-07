@@ -24,6 +24,7 @@ export function createServices(repositories: Repositories): AppServices {
 
   const business = new BusinessService(
     repositories.business,
+    repositories.businessSetting,
     serviceCatalog,
     new ExpenseCategoryService(repositories.expenseCategory),
   );

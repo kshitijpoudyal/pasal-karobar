@@ -1,4 +1,7 @@
 import type { BusinessType } from "@/types/database";
+import { DEFAULT_BUSINESS_TIMEZONE } from "@/utils/business-datetime";
+
+import { DEFAULT_BUSINESS_CURRENCY, DEFAULT_BUSINESS_TYPE } from "@/services/business-profile-settings";
 
 export const DEFAULT_SERVICES = [
   { name: "Haircut", default_price: 500, display_order: 1, icon: "hair" as const },
@@ -14,7 +17,7 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
 
 export const DEFAULT_BOOTSTRAP_BUSINESS = {
   name: "Royal Cuts Barber Shop",
-  business_type: "BARBER" as BusinessType,
-  currency: "NPR",
-  timezone: "Asia/Kathmandu",
+  business_type: DEFAULT_BUSINESS_TYPE satisfies BusinessType,
+  currency: DEFAULT_BUSINESS_CURRENCY,
+  timezone: DEFAULT_BUSINESS_TIMEZONE,
 } as const;

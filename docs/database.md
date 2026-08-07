@@ -38,11 +38,30 @@ Business
 | -------------- | ----- |
 | id             |       |
 | name           |       |
-| business_type  |       |
-| currency       |       |
-| timezone       |       |
 | created_at     |       |
 | updated_at     |       |
+
+Shop profile fields **`business_type`**, **`currency`**, and **`timezone`** live in [`business_settings`](#business_settings) (keys of the same name). The app hydrates them onto the `Business` type after load.
+
+---
+
+## `business_settings`
+
+| Column         | Notes |
+| -------------- | ----- |
+| business_id    |       |
+| setting_key    |       |
+| setting_value  |       |
+
+Primary key: `(business_id, setting_key)`.
+
+**Profile keys (MVP):**
+
+| setting_key      | Example value     |
+| ---------------- | ----------------- |
+| `business_type`  | `BARBER`          |
+| `currency`       | `NPR`             |
+| `timezone`       | `Asia/Kathmandu`  |
 
 ---
 
@@ -113,18 +132,6 @@ Business
 
 ---
 
-## `business_settings`
-
-| Column         | Notes |
-| -------------- | ----- |
-| business_id    |       |
-| setting_key    |       |
-| setting_value  |       |
-
-Primary key: `(business_id, setting_key)`.
-
----
-
 ## `business_members` (tenancy / RLS)
 
 Links Supabase Auth users to a business for row-level isolation. Not a product domain table; required for policies.
@@ -160,6 +167,8 @@ SQL migrations live in `supabase/migrations/`.
 | --------------------------------------- | ------------------ |
 | `20260330183000_initial_schema.sql`     | MVP schema + RLS   |
 | `20260730194500_create_business_for_owner.sql` | Onboarding RPC (avoids business INSERT 403) |
+| `20260807150000_business_profile_to_settings.sql` | Profile fields → `business_settings`; slim `business` |
+| `20260807153000_seed_default_catalog_on_create.sql` | Default services/categories on create; `seed_default_business_catalog` RPC |
 
 Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supabase dashboard.
 
@@ -171,7 +180,11 @@ Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supaba
 2. Paste and run the **full** contents of `supabase/migrations/20260330183000_initial_schema.sql`.
 3. Paste and run `supabase/migrations/20260730194500_create_business_for_owner.sql`.
    (Same SQL is copied at `supabase/sql/create_business_for_owner.sql` for convenience.)
-4. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+4. Paste and run `supabase/migrations/20260807150000_business_profile_to_settings.sql`
+   (or `supabase/sql/business_profile_to_settings.sql` — same script for SQL Editor).
+5. Paste and run `supabase/migrations/20260807153000_seed_default_catalog_on_create.sql`
+   (or `supabase/sql/seed_default_catalog_on_create.sql`).
+6. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
 
 ### Daily mock transactions (dev / demo)
 

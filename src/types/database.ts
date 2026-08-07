@@ -15,26 +15,33 @@ export type BusinessType =
   | "RESTAURANT"
   | "OTHER";
 
-export type Business = {
+export type BusinessRecord = {
   id: string;
   name: string;
-  business_type: BusinessType;
-  currency: string;
-  timezone: string;
   created_at: string;
   updated_at: string;
 };
 
-export type BusinessInsert = Pick<
-  Business,
-  "name" | "business_type" | "currency" | "timezone"
-> & {
-  name: string;
+/** Shop row plus profile fields loaded from `business_settings`. */
+export type Business = BusinessRecord & {
+  business_type: BusinessType;
+  currency: string;
+  timezone: string;
 };
 
-export type BusinessUpdate = Partial<
-  Pick<Business, "name" | "business_type" | "currency" | "timezone">
->;
+export type BusinessInsert = {
+  name: string;
+  business_type?: BusinessType;
+  currency?: string;
+  timezone?: string;
+};
+
+export type BusinessUpdate = Partial<{
+  name: string;
+  business_type: BusinessType;
+  currency: string;
+  timezone: string;
+}>;
 
 export type ServiceRecord = {
   id: string;
@@ -181,13 +188,13 @@ export type Database = {
   public: {
     Tables: {
       business: {
-        Row: Business;
-        Insert: Omit<Business, "id" | "created_at" | "updated_at"> & {
+        Row: BusinessRecord;
+        Insert: Pick<BusinessRecord, "name"> & {
           id?: string;
           created_at?: string;
           updated_at?: string;
         };
-        Update: BusinessUpdate;
+        Update: Partial<Pick<BusinessRecord, "name">>;
         Relationships: [];
       };
       services: {
@@ -237,7 +244,7 @@ export type Database = {
           p_currency?: string;
           p_timezone?: string;
         };
-        Returns: Business;
+        Returns: BusinessRecord;
       };
     };
     Enums: {

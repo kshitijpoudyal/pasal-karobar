@@ -2,16 +2,15 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isMissingRpcFunctionError, mapRepositoryError } from "@/repository/errors";
 import type {
-  Business,
+  BusinessRecord,
   BusinessInsert,
-  BusinessUpdate,
   Database,
 } from "@/types/database";
 
 export class BusinessRepository {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
-  async findById(id: string): Promise<Business | null> {
+  async findById(id: string): Promise<BusinessRecord | null> {
     const { data, error } = await this.supabase
       .from("business")
       .select("*")
@@ -22,14 +21,14 @@ export class BusinessRepository {
     return data;
   }
 
-  async listForCurrentUser(): Promise<Business[]> {
+  async listForCurrentUser(): Promise<BusinessRecord[]> {
     const { data, error } = await this.supabase.from("business").select("*");
 
     if (error) mapRepositoryError(error);
     return data ?? [];
   }
 
-  async create(payload: BusinessInsert): Promise<Business> {
+  async create(payload: BusinessInsert): Promise<BusinessRecord> {
     const rpc = await this.supabase.rpc("create_business_for_owner", {
       p_name: payload.name,
       p_business_type: payload.business_type,
@@ -44,7 +43,7 @@ export class BusinessRepository {
     if (isMissingRpcFunctionError(rpc.error, "create_business_for_owner")) {
       const { error: insertError } = await this.supabase
         .from("business")
-        .insert(payload);
+        .insert({ name: payload.name });
 
       if (insertError) mapRepositoryError(insertError);
 
@@ -66,10 +65,10 @@ export class BusinessRepository {
     throw new Error("Business was not created");
   }
 
-  async update(id: string, payload: BusinessUpdate): Promise<Business> {
+  async update(id: string, payload: { name: string }): Promise<BusinessRecord> {
     const { data, error } = await this.supabase
       .from("business")
-      .update(payload)
+      .update({ name: payload.name })
       .eq("id", id)
       .select("*")
       .single();

@@ -1,9 +1,8 @@
 import type { BusinessRepository } from "@/repository/business.repository";
+import type { BusinessSettingRepository } from "@/repository/business-setting.repository";
 import type { ExpenseCategoryService } from "@/services/expense-category.service";
-import {
-  DEFAULT_EXPENSE_CATEGORIES,
-  DEFAULT_SERVICES,
-} from "@/services/onboarding-defaults";
+import { applyNewBusinessOnboarding } from "@/services/business-onboarding";
+import { hydrateBusiness } from "@/services/business-profile-settings";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
 import {
   createBusinessSchema,
@@ -11,71 +10,74 @@ import {
   type CreateBusinessInput,
   type UpdateBusinessInput,
 } from "@/services/schemas";
-import type { Business } from "@/types/database";
+import type { Business, BusinessSetting } from "@/types/database";
+import { profilePatchToUpserts } from "@/services/business-profile-settings";
 
 export class BusinessService {
   constructor(
     private readonly businessRepository: BusinessRepository,
+    private readonly businessSettingRepository: BusinessSettingRepository,
     private readonly serviceCatalog: ServiceCatalogService,
     private readonly expenseCategory: ExpenseCategoryService,
   ) {}
 
   async getById(id: string): Promise<Business | null> {
-    return this.businessRepository.findById(id);
+    const record = await this.businessRepository.findById(id);
+    if (!record) return null;
+    const settings = await this.businessSettingRepository.listByBusinessId(id);
+    return hydrateBusiness(record, settings);
   }
 
   async listForCurrentUser(): Promise<Business[]> {
-    return this.businessRepository.listForCurrentUser();
+    const records = await this.businessRepository.listForCurrentUser();
+    if (records.length === 0) return [];
+    const settings = await this.businessSettingRepository.listByBusinessIds(
+      records.map((r) => r.id),
+    );
+    return records.map((record) =>
+      hydrateBusiness(record, settingsForBusiness(settings, record.id)),
+    );
   }
 
   async create(input: CreateBusinessInput): Promise<Business> {
     const payload = createBusinessSchema.parse(input);
-    const business = await this.businessRepository.create(payload);
-    await this.seedStarterCatalog(business.id);
-    return business;
+    const record = await this.businessRepository.create(payload);
+    await applyNewBusinessOnboarding(record.id, payload, {
+      businessSettingRepository: this.businessSettingRepository,
+      serviceCatalog: this.serviceCatalog,
+      expenseCategory: this.expenseCategory,
+    });
+    return (await this.getById(record.id))!;
   }
 
   async update(id: string, input: UpdateBusinessInput): Promise<Business> {
     const payload = updateBusinessSchema.parse(input);
-    return this.businessRepository.update(id, payload);
+    const { name, business_type, currency, timezone } = payload;
+
+    if (name !== undefined) {
+      await this.businessRepository.update(id, { name });
+    }
+
+    const upserts = profilePatchToUpserts(id, {
+      business_type,
+      currency,
+      timezone,
+    });
+    if (upserts.length > 0) {
+      await this.businessSettingRepository.upsertMany(upserts);
+    }
+
+    return (await this.getById(id))!;
   }
 
   async delete(id: string): Promise<void> {
     await this.businessRepository.delete(id);
   }
+}
 
-  private async seedStarterCatalog(businessId: string): Promise<void> {
-    const [existingServices, existingCategories] = await Promise.all([
-      this.serviceCatalog.listByBusinessId(businessId),
-      this.expenseCategory.listByBusinessId(businessId),
-    ]);
-
-    if (existingServices.length === 0) {
-      await Promise.all(
-        DEFAULT_SERVICES.map((service) =>
-          this.serviceCatalog.create({
-            business_id: businessId,
-            name: service.name,
-            default_price: service.default_price,
-            icon: service.icon,
-            display_order: service.display_order,
-            is_active: true,
-          }),
-        ),
-      );
-    }
-
-    if (existingCategories.length === 0) {
-      await Promise.all(
-        DEFAULT_EXPENSE_CATEGORIES.map((category) =>
-          this.expenseCategory.create({
-            business_id: businessId,
-            name: category.name,
-            display_order: category.display_order,
-            is_active: true,
-          }),
-        ),
-      );
-    }
-  }
+function settingsForBusiness(
+  settings: BusinessSetting[],
+  businessId: string,
+): BusinessSetting[] {
+  return settings.filter((s) => s.business_id === businessId);
 }
