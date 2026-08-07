@@ -18,6 +18,7 @@ import {
 } from "@/features/transactions/components/record-transaction-modal-icons";
 
 import { getServiceIconComponent } from "@/constants/service-icons";
+import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
 import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
 import { cn } from "@/lib/utils";
 import type { UiPaymentMethod } from "@/utils/payment-method";
@@ -25,6 +26,7 @@ import type { UiPaymentMethod } from "@/utils/payment-method";
 type RecordTransactionModalProps = {
   open: boolean;
   onClose: () => void;
+  initialCustomerPhone?: string | null;
 };
 
 type Tab = "income" | "expense";
@@ -84,7 +86,11 @@ const PAYMENT_OPTIONS: {
   },
 ];
 
-export function RecordTransactionModal({ open, onClose }: RecordTransactionModalProps) {
+export function RecordTransactionModal({
+  open,
+  onClose,
+  initialCustomerPhone,
+}: RecordTransactionModalProps) {
   const titleId = useId();
   const typeSelectId = useId();
   const [tab, setTab] = useState<Tab>("income");
@@ -132,9 +138,13 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
   useEffect(() => {
     if (open) {
       resetFormState();
+      if (initialCustomerPhone) {
+        setTab("income");
+        setCustomerPhone(initialCustomerPhone);
+      }
       void servicesQuery.refetch();
     }
-  }, [open, resetFormState, servicesQuery.refetch]);
+  }, [open, initialCustomerPhone, resetFormState, servicesQuery.refetch]);
 
   if (!open) return null;
 
@@ -330,13 +340,14 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                 )}
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
+              <div className="grid grid-cols-2 gap-3 sm:gap-5">
                 <AmountCard
                   label="Service Price"
                   id="record-income-price"
                   value={price}
                   onChange={setPrice}
                   placeholder="0.00"
+                  compact
                 />
                 <AmountCard
                   label="Tip (Optional)"
@@ -344,24 +355,16 @@ export function RecordTransactionModal({ open, onClose }: RecordTransactionModal
                   value={tip}
                   onChange={setTip}
                   placeholder="0"
+                  compact
                 />
               </div>
 
-              <div>
-                <label htmlFor="record-income-phone" className={FIELD_LABEL}>
-                  Customer phone (optional)
-                </label>
-                <input
-                  id="record-income-phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  placeholder="9841234567"
-                  value={customerPhone}
-                  onChange={(event) => setCustomerPhone(event.target.value)}
-                  className="font-body mt-3 w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-4 py-3 text-base text-on-surface outline-none focus:border-primary"
-                />
-              </div>
+              <CustomerPhoneAutocomplete
+                id="record-income-phone"
+                labelClassName={FIELD_LABEL}
+                value={customerPhone}
+                onChange={setCustomerPhone}
+              />
 
               <PaymentMethodField payment={payment} onSelect={setPayment} />
             </div>
@@ -472,19 +475,26 @@ function AmountCard({
   value,
   onChange,
   placeholder,
+  compact = false,
 }: {
   label: string;
   id: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  compact?: boolean;
 }) {
   return (
-    <div className="squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm">
-      <label className={FIELD_LABEL} htmlFor={id}>
+    <div
+      className={cn(
+        "squircle space-y-2 bg-surface-container-lowest shadow-sm sm:space-y-3",
+        compact ? "min-w-0 p-3 sm:p-5" : "p-5",
+      )}
+    >
+      <label className={cn(FIELD_LABEL, compact && "text-[10px] tracking-[0.1em]")} htmlFor={id}>
         {label}
       </label>
-      <div className="relative flex items-center">
+      <div className="relative flex min-w-0 items-center">
         <input
           id={id}
           type="number"
@@ -492,9 +502,17 @@ function AmountCard({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="record-entry-amount-input font-headline w-full border-none bg-transparent p-0 text-3xl font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0"
+          className={cn(
+            "record-entry-amount-input font-headline w-full min-w-0 border-none bg-transparent p-0 font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0",
+            compact ? "text-xl sm:text-3xl" : "text-3xl",
+          )}
         />
-        <span className="font-body ml-2 text-lg font-light text-on-surface-variant">
+        <span
+          className={cn(
+            "font-body ml-1 shrink-0 font-light text-on-surface-variant sm:ml-2",
+            compact ? "text-sm sm:text-lg" : "text-lg",
+          )}
+        >
           Rs.
         </span>
       </div>

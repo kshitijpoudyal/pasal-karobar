@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { parseISO, startOfDay } from "date-fns";
 
 import {
   aggregateCustomerDirectoryStats,
   computeCustomerPeriodInsights,
+  EMPTY_CUSTOMER_PERIOD_INSIGHTS,
   filterIncomeInInstantRange,
 } from "@/services/customer-analytics.service";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
@@ -13,12 +13,7 @@ import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
 import type { Customer } from "@/types/database";
-import {
-  clampAnchorToDataBounds,
-  clampAnchorToToday,
-  resolveDashboardRange,
-  type DashboardGranularity,
-} from "@/utils/date-ranges";
+import { zonedPeriodBounds } from "@/utils/business-datetime";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 
 export type CustomerDirectoryRow = {
@@ -32,38 +27,18 @@ export type CustomerDirectoryRow = {
 export function useCustomersPage() {
   const { businessId } = useActiveBusiness();
   const timeZone = useBusinessTimeZone();
-  const [granularity, setGranularity] = useState<DashboardGranularity>("week");
-  const [anchorDate, setAnchorDate] = useState(() =>
-    clampAnchorToToday(new Date(), new Date(), timeZone),
-  );
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
     null,
   );
   const [searchQuery, setSearchQuery] = useState("");
 
-  const range = useMemo(
-    () => resolveDashboardRange(granularity, anchorDate, new Date(), timeZone),
-    [granularity, anchorDate, timeZone],
-  );
-
   const customersQuery = useCustomersQuery(businessId);
-  const periodIncomeQuery = useTransactionsQuery(businessId, {
-    type: "INCOME",
-    fromDate: range.from,
-    toDate: range.to,
-  });
   const allIncomeQuery = useTransactionsQuery(businessId, { type: "INCOME" });
 
-  const earliestIso =
-    allIncomeQuery.data?.[allIncomeQuery.data.length - 1]?.transaction_date ??
-    null;
-  const minSelectableDate = useMemo(() => {
-    if (!earliestIso) return null;
-    return startOfDay(parseISO(earliestIso));
-  }, [earliestIso]);
-
-  const clampAnchor = (date: Date) =>
-    clampAnchorToDataBounds(date, minSelectableDate, new Date(), timeZone);
+  const statsWeekRange = useMemo(() => {
+    const now = new Date();
+    return zonedPeriodBounds("week", now, timeZone, now);
+  }, [timeZone]);
 
   const customersById = useMemo(() => {
     const map = new Map<string, Customer>();
@@ -75,17 +50,17 @@ export function useCustomersPage() {
 
   const periodInsights = useMemo(() => {
     const income = filterIncomeInInstantRange(
-      periodIncomeQuery.data ?? [],
-      range.from,
-      range.to,
+      allIncomeQuery.data ?? [],
+      statsWeekRange.from,
+      statsWeekRange.to,
     );
     return computeCustomerPeriodInsights(
       income,
       customersById,
-      range.from,
-      range.to,
+      statsWeekRange.from,
+      statsWeekRange.to,
     );
-  }, [periodIncomeQuery.data, customersById, range.from, range.to]);
+  }, [allIncomeQuery.data, customersById, statsWeekRange.from, statsWeekRange.to]);
 
   const directoryRows = useMemo(() => {
     const stats = aggregateCustomerDirectoryStats(allIncomeQuery.data ?? []);
@@ -133,15 +108,8 @@ export function useCustomersPage() {
   return {
     businessId,
     timeZone,
-    granularity,
-    setGranularity,
-    anchorDate,
-    setAnchorDate: (date: Date) => setAnchorDate(clampAnchor(date)),
-    minSelectableDate,
-    clampAnchorToToday: () =>
-      setAnchorDate(clampAnchor(clampAnchorToToday(new Date(), new Date(), timeZone))),
-    range,
     periodInsights,
+    statsPeriodLabel: "This week" as const,
     directoryRows: filteredDirectory,
     searchQuery,
     setSearchQuery,
@@ -149,21 +117,10 @@ export function useCustomersPage() {
     selectedCustomerId,
     setSelectedCustomerId,
     selectedCustomerVisits,
-    isLoading:
-      customersQuery.isLoading ||
-      periodIncomeQuery.isLoading ||
-      allIncomeQuery.isLoading,
-    error:
-      customersQuery.error ??
-      periodIncomeQuery.error ??
-      allIncomeQuery.error ??
-      null,
+    isLoading: customersQuery.isLoading || allIncomeQuery.isLoading,
+    error: customersQuery.error ?? allIncomeQuery.error ?? null,
     refetch: async () => {
-      await Promise.all([
-        customersQuery.refetch(),
-        periodIncomeQuery.refetch(),
-        allIncomeQuery.refetch(),
-      ]);
+      await Promise.all([customersQuery.refetch(), allIncomeQuery.refetch()]);
     },
   };
 }

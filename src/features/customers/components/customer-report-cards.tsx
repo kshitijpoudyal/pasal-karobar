@@ -1,19 +1,29 @@
-import type { CustomerPeriodInsights } from "@/services/customer-analytics.service";
+import {
+  EMPTY_CUSTOMER_PERIOD_INSIGHTS,
+  type CustomerPeriodInsights,
+} from "@/services/customer-analytics.service";
 
 type CustomerReportCardsProps = {
   insights: CustomerPeriodInsights;
+  periodLabel?: string;
 };
 
-export function CustomerReportCards({ insights }: CustomerReportCardsProps) {
+export function CustomerReportCards({
+  insights,
+  periodLabel = "This week",
+}: CustomerReportCardsProps) {
+  const stats = { ...EMPTY_CUSTOMER_PERIOD_INSIGHTS, ...insights };
   const cards = [
-    { label: "New customers", value: insights.newCustomers },
-    { label: "Returning", value: insights.returningCustomers },
-    { label: "Unique tracked", value: insights.uniqueTrackedCustomers },
-    { label: "Anonymous visits", value: insights.anonymousVisits },
+    { label: "New customers", value: stats.newCustomers },
+    { label: "Returning", value: stats.returningCustomers },
+    { label: "Unique tracked", value: stats.uniqueTrackedCustomers },
+    { label: "Anonymous visits", value: stats.anonymousVisits },
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+    <section className="space-y-3">
+      <p className="text-label-sm text-on-surface-variant">{periodLabel}</p>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
       {cards.map((card) => (
         <div
           key={card.label}
@@ -27,6 +37,7 @@ export function CustomerReportCards({ insights }: CustomerReportCardsProps) {
           </span>
         </div>
       ))}
+      </div>
     </section>
   );
 }

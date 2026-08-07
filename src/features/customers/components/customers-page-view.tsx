@@ -2,13 +2,21 @@
 
 import { AppShell } from "@/components/layout/app-shell";
 import { QueryState } from "@/components/layout/query-state";
-import { DashboardTimeNavigator } from "@/features/dashboard/components/dashboard-time-navigator";
-import { CustomerDirectory, CustomerProfilePanel } from "@/features/customers/components/customer-directory";
+import { CustomerDirectory } from "@/features/customers/components/customer-directory";
+import { CustomerProfileModal } from "@/features/customers/components/customer-profile-modal";
 import { CustomerReportCards } from "@/features/customers/components/customer-report-cards";
 import { useCustomersPage } from "@/features/customers/hooks/use-customers-page";
+import { useRecordTransactionModal } from "@/features/transactions";
+import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 
 export function CustomersPageView() {
   const page = useCustomersPage();
+  const { openModal } = useRecordTransactionModal();
+
+  function openRecordForPhone(phoneNormalized: string) {
+    page.setSelectedCustomerId(null);
+    openModal({ customerPhone: phoneNormalized });
+  }
 
   const selectedRow = page.selectedCustomerId
     ? (page.directoryRows.find((row) => row.customer.id === page.selectedCustomerId) ??
@@ -22,7 +30,9 @@ export function CustomersPageView() {
             ),
             lastVisitAt:
               page.selectedCustomerVisits[0]?.transaction_date ?? null,
-            displayPhone: page.selectedCustomer.phone_normalized,
+            displayPhone: formatNepalPhoneDisplay(
+              page.selectedCustomer.phone_normalized,
+            ),
           }
         : null))
     : null;
@@ -39,53 +49,40 @@ export function CustomersPageView() {
             Customers
           </h1>
           <p className="mt-1 text-sm text-on-surface-variant lg:mt-2">
-            Track repeat visits and see new vs returning customers for each period.
+            Everyone who has visited with a phone number on file.
           </p>
         </div>
-
-        <DashboardTimeNavigator
-          granularity={page.granularity}
-          anchorDate={page.anchorDate}
-          minSelectableDate={page.minSelectableDate}
-          timeZone={page.timeZone}
-          onGranularityChange={(next) => {
-            page.setGranularity(next);
-            page.clampAnchorToToday();
-          }}
-          onAnchorChange={page.setAnchorDate}
-        />
 
         <QueryState
           isLoading={page.isLoading}
           error={page.error}
           onRetry={() => void page.refetch()}
         >
-          <CustomerReportCards insights={page.periodInsights} />
+          <CustomerReportCards
+            insights={page.periodInsights}
+            periodLabel={page.statsPeriodLabel}
+          />
 
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
-            <div className="flex min-h-0 flex-col lg:col-span-5 xl:col-span-4">
-              <h2 className="mb-3 font-headline text-lg font-bold text-on-surface">
-                Directory
-              </h2>
-              <CustomerDirectory
-                rows={page.directoryRows}
-                searchQuery={page.searchQuery}
-                onSearchChange={page.setSearchQuery}
-                onSelect={page.setSelectedCustomerId}
-                selectedId={page.selectedCustomerId}
-              />
-            </div>
-            <div className="lg:col-span-7 xl:col-span-8">
-              <CustomerProfilePanel
-                businessId={page.businessId}
-                row={selectedRow}
-                visits={page.selectedCustomerVisits}
-                timeZone={page.timeZone}
-                onClose={() => page.setSelectedCustomerId(null)}
-              />
-            </div>
-          </div>
+          <CustomerDirectory
+            rows={page.directoryRows}
+            searchQuery={page.searchQuery}
+            onSearchChange={page.setSearchQuery}
+            onSelect={page.setSelectedCustomerId}
+            onRecordForPhone={openRecordForPhone}
+            selectedId={page.selectedCustomerId}
+            timeZone={page.timeZone}
+          />
         </QueryState>
+
+        <CustomerProfileModal
+          open={Boolean(page.selectedCustomerId && selectedRow)}
+          businessId={page.businessId}
+          row={selectedRow}
+          visits={page.selectedCustomerVisits}
+          timeZone={page.timeZone}
+          onClose={() => page.setSelectedCustomerId(null)}
+          onRecordForPhone={openRecordForPhone}
+        />
       </div>
     </AppShell>
   );

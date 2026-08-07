@@ -11,9 +11,13 @@ import {
 
 import { RecordTransactionModal } from "@/features/transactions/components/record-transaction-modal";
 
+export type OpenRecordTransactionOptions = {
+  customerPhone?: string;
+};
+
 type RecordTransactionModalContextValue = {
   open: boolean;
-  openModal: () => void;
+  openModal: (options?: OpenRecordTransactionOptions) => void;
   closeModal: () => void;
 };
 
@@ -22,9 +26,20 @@ const RecordTransactionModalContext =
 
 export function RecordTransactionModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [initialCustomerPhone, setInitialCustomerPhone] = useState<string | null>(
+    null,
+  );
 
-  const openModal = useCallback(() => setOpen(true), []);
-  const closeModal = useCallback(() => setOpen(false), []);
+  const openModal = useCallback((options?: OpenRecordTransactionOptions) => {
+    const phone = options?.customerPhone?.trim();
+    setInitialCustomerPhone(phone ? phone : null);
+    setOpen(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setOpen(false);
+    setInitialCustomerPhone(null);
+  }, []);
 
   const value = useMemo(
     () => ({ open, openModal, closeModal }),
@@ -34,7 +49,11 @@ export function RecordTransactionModalProvider({ children }: { children: ReactNo
   return (
     <RecordTransactionModalContext.Provider value={value}>
       {children}
-      <RecordTransactionModal open={open} onClose={closeModal} />
+      <RecordTransactionModal
+        open={open}
+        onClose={closeModal}
+        initialCustomerPhone={initialCustomerPhone}
+      />
     </RecordTransactionModalContext.Provider>
   );
 }

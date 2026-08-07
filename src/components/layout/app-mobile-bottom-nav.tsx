@@ -88,7 +88,7 @@ export function AppMobileBottomNav() {
           <Button
             type="button"
             aria-label="New Entry"
-            onClick={openModal}
+            onClick={() => openModal()}
             variant="primary"
             className="size-12 shrink-0 -translate-y-3 rounded-full shadow-[0_8px_24px_rgba(2,36,72,0.35)] sm:size-14"
           >

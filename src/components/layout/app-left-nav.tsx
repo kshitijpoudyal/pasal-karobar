@@ -144,7 +144,7 @@ export function AppLeftNav() {
           type="button"
           variant="primary"
           size="prominent"
-          onClick={openModal}
+          onClick={() => openModal()}
           aria-label={NEW_ENTRY_LABEL}
           title={NEW_ENTRY_LABEL}
           className={cn("w-full shadow-lg hover:shadow-xl", collapsed && "px-0")}

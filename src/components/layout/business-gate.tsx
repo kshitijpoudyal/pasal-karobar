@@ -70,7 +70,7 @@ export function DashboardEmptyHint() {
         Record income or expenses to populate the dashboard. Try a wider period
         filter if you expect older data.
       </p>
-      <Button type="button" variant="primary" size="cta" className="mt-6" onClick={openModal}>
+      <Button type="button" variant="primary" size="cta" className="mt-6" onClick={() => openModal()}>
         Record transaction
       </Button>
     </div>
