@@ -8,6 +8,7 @@ import {
   TimelineDateDivider,
   TransactionActivityCard,
 } from "@/features/activity/components/transaction-activity-card";
+import { cn } from "@/lib/utils";
 import type { Transaction } from "@/types/database";
 import {
   formatDayLabelForDateKey,
@@ -59,12 +60,17 @@ export function TransactionTimeline({
 
   return (
     <div className="flex flex-col gap-4">
-      {grouped.map(([dayKey, transactions]) => (
+      {grouped.map(([dayKey, transactions], groupIndex) => (
         <div key={dayKey}>
           <TimelineDateDivider
             label={formatDayLabelForDateKey(dayKey, timeZone)}
           />
-          <div className="mb-2 flex flex-col gap-2 lg:mb-4 lg:gap-3">
+          <div
+            className={cn(
+              "mb-2 flex flex-col gap-2 lg:mb-4 lg:gap-3",
+              groupIndex === 0 && "max-lg:pt-4",
+            )}
+          >
             {transactions.map((tx) => {
               const isIncome = tx.type === "INCOME";
               const Icon = iconForTransaction(tx);
