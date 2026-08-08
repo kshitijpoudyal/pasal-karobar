@@ -90,7 +90,10 @@ function CustomerListItem({
     ? `${formatDayLabelForDateKey(dateKeyInTimeZone(row.lastVisitAt, timeZone), timeZone)} · ${formatTimeInBusinessZone(row.lastVisitAt, timeZone)}`
     : "No visits";
 
-  const visitMeta = `${row.visitCount} visit${row.visitCount === 1 ? "" : "s"} · ${lastVisitLabel}`;
+  const visitMeta =
+    row.visitCount === 0
+      ? "No visits yet"
+      : `${row.visitCount} visit${row.visitCount === 1 ? "" : "s"} · ${lastVisitLabel}`;
 
   const iconWrap = "bg-secondary-container text-on-secondary-container";
 

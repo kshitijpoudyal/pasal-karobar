@@ -32,6 +32,7 @@ function matchCustomers(customers: Customer[], query: string): Customer[] {
 type CustomerPhoneAutocompleteProps = {
   id: string;
   labelClassName: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
 };
@@ -39,6 +40,7 @@ type CustomerPhoneAutocompleteProps = {
 export function CustomerPhoneAutocomplete({
   id,
   labelClassName,
+  label = "Customer phone (optional)",
   value,
   onChange,
 }: CustomerPhoneAutocompleteProps) {
@@ -78,7 +80,7 @@ export function CustomerPhoneAutocomplete({
   return (
     <div ref={rootRef} className="relative">
       <label htmlFor={id} className={labelClassName}>
-        Customer phone (optional)
+        {label}
       </label>
       <input
         id={id}

@@ -10,7 +10,7 @@ import {
 import { queryKeys } from "@/constants/query-keys";
 import { syncAfterTransactionChange } from "@/hooks/queries/transaction-query-cache";
 import { getClientAppServices } from "@/services/client";
-import type { UpdateCustomerInput } from "@/services/schemas";
+import type { CreateCustomerInput, UpdateCustomerInput } from "@/services/schemas";
 import type { Customer } from "@/types/database";
 import { isSupabaseConfigured } from "@/utils/env";
 
@@ -38,6 +38,20 @@ export function useCustomerQuery(
     queryFn: () => getClientAppServices().customer.getById(customerId),
     enabled: isSupabaseConfigured() && Boolean(customerId),
     ...options,
+  });
+}
+
+export function useCreateCustomerMutation(businessId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: CreateCustomerInput) =>
+      getClientAppServices().customer.create(businessId, input),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.customers.list(businessId),
+      });
+    },
   });
 }
 

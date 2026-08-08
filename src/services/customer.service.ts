@@ -1,10 +1,13 @@
 import type { CustomerRepository } from "@/repository/customer.repository";
 import {
+  createCustomerSchema,
   updateCustomerSchema,
+  type CreateCustomerInput,
   type UpdateCustomerInput,
 } from "@/services/schemas";
 import type { Customer } from "@/types/database";
 import {
+  parseNepalPhone,
   parseOptionalNepalPhone,
   type ParsedNepalPhone,
 } from "@/utils/phone-np";
@@ -33,6 +36,32 @@ export class CustomerService {
 
   async delete(id: string): Promise<void> {
     await this.customerRepository.delete(id);
+  }
+
+  async create(businessId: string, input: CreateCustomerInput): Promise<Customer> {
+    const payload = createCustomerSchema.parse(input);
+    const parsed = parseNepalPhone(payload.phone);
+    if (!parsed.ok) {
+      throw new CustomerPhoneError(parsed.reason);
+    }
+
+    const existing = await this.customerRepository.findByNormalizedPhone(
+      businessId,
+      parsed.normalized,
+    );
+    if (existing) {
+      throw new CustomerDuplicateError(
+        "A customer with this phone number already exists.",
+      );
+    }
+
+    return this.customerRepository.create({
+      business_id: businessId,
+      phone: parsed.display,
+      phone_normalized: parsed.normalized,
+      name: payload.name?.trim() ? payload.name.trim() : null,
+      first_visit_at: null,
+    });
   }
 
   /**
@@ -101,5 +130,12 @@ export class CustomerPhoneError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "CustomerPhoneError";
+  }
+}
+
+export class CustomerDuplicateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "CustomerDuplicateError";
   }
 }

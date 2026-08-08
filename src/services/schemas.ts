@@ -63,6 +63,11 @@ export const updateCustomerSchema = z.object({
   name: z.string().trim().max(200).nullable().optional(),
 });
 
+export const createCustomerSchema = z.object({
+  phone: z.string().trim().min(1).max(32),
+  name: z.string().trim().max(200).optional(),
+});
+
 const transactionBaseSchema = z.object({
   business_id: z.string().uuid(),
   payment_method: paymentMethodSchema,
@@ -123,6 +128,7 @@ export type UpdateExpenseCategoryInput = z.infer<
   typeof updateExpenseCategorySchema
 >;
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
+export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type UpsertBusinessSettingInput = z.infer<

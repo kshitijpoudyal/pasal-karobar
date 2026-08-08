@@ -79,9 +79,12 @@ export function useCustomersPage() {
     rows.sort((a, b) => {
       const aTime = a.lastVisitAt ? Date.parse(a.lastVisitAt) : 0;
       const bTime = b.lastVisitAt ? Date.parse(b.lastVisitAt) : 0;
-      return bTime - aTime;
+      if (aTime !== bTime) return bTime - aTime;
+      return (
+        Date.parse(b.customer.created_at) - Date.parse(a.customer.created_at)
+      );
     });
-    return rows.filter((row) => row.visitCount > 0);
+    return rows;
   }, [allIncomeQuery.data, customersQuery.data]);
 
   const filteredDirectory = useMemo(() => {

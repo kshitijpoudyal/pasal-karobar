@@ -1,7 +1,12 @@
 "use client";
 
+import { useState } from "react";
+import { Plus } from "lucide-react";
+
 import { AppShell } from "@/components/layout/app-shell";
 import { QueryState } from "@/components/layout/query-state";
+import { Button } from "@/components/ui/button";
+import { AddCustomerModal } from "@/features/customers/components/add-customer-modal";
 import { CustomerDirectory } from "@/features/customers/components/customer-directory";
 import { CustomerProfileModal } from "@/features/customers/components/customer-profile-modal";
 import { CustomerReportCards } from "@/features/customers/components/customer-report-cards";
@@ -12,6 +17,7 @@ import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 export function CustomersPageView() {
   const page = useCustomersPage();
   const { openModal } = useRecordTransactionModal();
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
 
   function openRecordForPhone(phoneNormalized: string) {
     page.setSelectedCustomerId(null);
@@ -44,13 +50,25 @@ export function CustomersPageView() {
       mainClassName="flex min-h-0 flex-col"
     >
       <div className="flex min-h-0 flex-1 flex-col gap-6 px-5 py-6 lg:gap-8 lg:p-12">
-        <div>
-          <h1 className="font-headline text-2xl font-bold text-primary lg:hidden">
-            Customers
-          </h1>
-          <p className="mt-1 text-sm text-on-surface-variant lg:mt-2">
-            Everyone who has visited with a phone number on file.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <h1 className="font-headline text-2xl font-bold text-primary lg:hidden">
+              Customers
+            </h1>
+            <p className="mt-1 text-sm text-on-surface-variant lg:mt-2">
+              Add customers here or when recording income.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            size="cta"
+            className="w-full shrink-0 sm:w-auto"
+            onClick={() => setAddCustomerOpen(true)}
+          >
+            <Plus className="size-5" strokeWidth={2.25} aria-hidden />
+            Add customer
+          </Button>
         </div>
 
         <QueryState
@@ -82,6 +100,13 @@ export function CustomersPageView() {
           timeZone={page.timeZone}
           onClose={() => page.setSelectedCustomerId(null)}
           onRecordForPhone={openRecordForPhone}
+        />
+
+        <AddCustomerModal
+          open={addCustomerOpen}
+          businessId={page.businessId}
+          onClose={() => setAddCustomerOpen(false)}
+          onCreated={(customerId) => page.setSelectedCustomerId(customerId)}
         />
       </div>
     </AppShell>

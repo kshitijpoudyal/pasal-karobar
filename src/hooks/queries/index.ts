@@ -38,6 +38,7 @@ export {
 export { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries";
 
 export {
+  useCreateCustomerMutation,
   useCustomerQuery,
   useCustomersQuery,
   useUpdateCustomerMutation,
