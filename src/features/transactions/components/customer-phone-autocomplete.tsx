@@ -113,7 +113,10 @@ export function CustomerPhoneAutocomplete({
   const rootRef = useRef<HTMLDivElement>(null);
   const { businessId } = useActiveBusiness();
   const customersQuery = useCustomersQuery(businessId);
-  const customers = customersQuery.data ?? [];
+  const customers = useMemo(
+    () => customersQuery.data ?? [],
+    [customersQuery.data],
+  );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [nameQuery, setNameQuery] = useState("");

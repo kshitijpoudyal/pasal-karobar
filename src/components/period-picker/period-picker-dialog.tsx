@@ -8,7 +8,6 @@ import {
   MONTH_LABELS,
   WEEKDAY_HEADERS,
   addMonths,
-  addYears,
   calendarCellsForMonth,
   format,
   getYear,

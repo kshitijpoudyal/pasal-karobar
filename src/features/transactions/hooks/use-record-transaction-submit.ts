@@ -26,7 +26,7 @@ function allocateIncomeSubtotals(
   const autoSum = defaults.reduce((sum, value) => sum + value, 0);
   if (autoSum <= 0) {
     const even = Math.floor(combinedSubtotal / serviceIds.length);
-    let remainder = combinedSubtotal - even * serviceIds.length;
+    const remainder = combinedSubtotal - even * serviceIds.length;
     return serviceIds.map((_, index) =>
       index === 0 ? even + remainder : even,
     );

@@ -2,18 +2,10 @@ import {
   addDays,
   addMonths,
   addYears,
-  endOfDay,
-  endOfMonth,
-  endOfWeek,
-  endOfYear,
   format,
   isAfter,
   isBefore,
   parseISO,
-  startOfDay,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
   subDays,
   subMonths,
   subWeeks,
@@ -45,8 +37,6 @@ export function getActivityDateRange(
 }
 
 export type DashboardGranularity = "day" | "week" | "month" | "year";
-
-const WEEK_OPTS = { weekStartsOn: 1 as const };
 
 /** @deprecated Use DashboardGranularity */
 export type DashboardPeriod = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
