@@ -18,9 +18,13 @@ import {
 } from "@/features/transactions/components/record-transaction-modal-icons";
 
 import { getServiceIconComponent } from "@/constants/service-icons";
+import { useConfirmDrawer } from "@/components/confirm-drawer";
 import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
+import { planCustomerNameSaveOnEntry } from "@/features/transactions/utils/customer-name-on-entry";
 import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
+import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { cn } from "@/lib/utils";
+import { parseNepalPhone } from "@/utils/phone-np";
 import type { UiPaymentMethod } from "@/utils/payment-method";
 
 type RecordTransactionModalProps = {
@@ -112,7 +116,10 @@ export function RecordTransactionModal({
     submitIncome,
     submitExpense,
     resolveCategoryIdByName,
+    businessId,
   } = useRecordTransactionSubmit(onClose);
+  const { confirm } = useConfirmDrawer();
+  const customersQuery = useCustomersQuery(businessId);
 
   const resetFormState = useCallback(() => {
     setTab("income");
@@ -138,12 +145,15 @@ export function RecordTransactionModal({
   }, [open, onClose]);
 
   useEffect(() => {
-    if (open) {
+    if (!open) {
       resetFormState();
-      if (initialCustomerPhone) {
-        setTab("income");
-        setCustomerPhone(initialCustomerPhone);
-      }
+      return;
+    }
+    resetFormState();
+    if (initialCustomerPhone) {
+      setTab("income");
+      setCustomerPhone(initialCustomerPhone);
+      setCustomerName("");
     }
   }, [open, initialCustomerPhone, resetFormState]);
 
@@ -197,12 +207,39 @@ export function RecordTransactionModal({
           setFormError("Select at least one service.");
           return;
         }
+
+        const customers = customersQuery.data ?? [];
+        const nameTrim = customerName.trim();
+        const phoneTrim = customerPhone.trim();
+        const savePlan = planCustomerNameSaveOnEntry(
+          customers,
+          phoneTrim,
+          nameTrim,
+        );
+        let saveCustomerName = savePlan === "apply";
+
+        if (savePlan === "needs_confirm") {
+          const parsed = parseNepalPhone(phoneTrim);
+          const existing = parsed.ok
+            ? customers.find((c) => c.phone_normalized === parsed.normalized)
+            : undefined;
+          const existingName = existing?.name?.trim() ?? "";
+          saveCustomerName = await confirm({
+            title: "Update customer name?",
+            description: `This number is saved as “${existingName}”. Change it to “${nameTrim}”?`,
+            confirmLabel: "Update name",
+            cancelLabel: "Keep existing",
+          });
+        }
+
         await submitIncome({
           serviceIds: selectedServiceIds,
           subtotal,
           tip: tipValue,
           payment,
           customerPhone,
+          customerName: nameTrim || undefined,
+          saveCustomerName,
         });
         return;
       }
@@ -389,6 +426,7 @@ export function RecordTransactionModal({
                 nameValue={customerName}
                 onNameChange={setCustomerName}
                 showLinkedNameField
+                autoFillNameFromPhone={false}
               />
 
               <PaymentMethodField payment={payment} onSelect={setPayment} />

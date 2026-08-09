@@ -101,6 +101,28 @@ export class CustomerService {
     });
   }
 
+  /** After income entry: set display name when phone matches and name is provided. */
+  async applyNameForNormalizedPhone(
+    businessId: string,
+    phoneRaw: string,
+    nameRaw: string,
+  ): Promise<void> {
+    const name = nameRaw.trim();
+    if (!name) return;
+
+    const parsed = parseNepalPhone(phoneRaw);
+    if (!parsed.ok) return;
+
+    const customer = await this.customerRepository.findByNormalizedPhone(
+      businessId,
+      parsed.normalized,
+    );
+    if (!customer) return;
+    if ((customer.name?.trim() ?? "") === name) return;
+
+    await this.update(customer.id, { name });
+  }
+
   private async findOrCreateByNormalizedPhone(
     businessId: string,
     parsed: Extract<ParsedNepalPhone, { ok: true }>,

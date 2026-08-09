@@ -52,7 +52,17 @@ export function AddCustomerModal({
   const { isOnline } = useConnectivity();
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setPhone("");
+      setName("");
+      setNote("");
+      setFormError(null);
+      setPendingPhotos((prev) => {
+        revokePendingPhotoUrls(prev);
+        return [];
+      });
+      return;
+    }
     setPhone("");
     setName("");
     setNote("");
@@ -101,6 +111,9 @@ export function AddCustomerModal({
 
       revokePendingPhotoUrls(pendingPhotos);
       setPendingPhotos([]);
+      setPhone("");
+      setName("");
+      setNote("");
       onCreated?.(customer);
       onClose();
     } catch (error) {

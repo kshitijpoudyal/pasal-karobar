@@ -3,14 +3,17 @@
 import { z } from "zod";
 
 import { toast } from "@/components/toast";
+import { queryKeys } from "@/constants/query-keys";
 import { useCreateTransactionMutation } from "@/hooks/queries/use-transaction-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useConnectivity } from "@/providers/connectivity-provider";
+import { getClientAppServices } from "@/services/client";
 import { createTransactionSchema, type CreateTransactionInput } from "@/services/schemas";
 import { shouldQueueTransactionOffline } from "@/offline/pending-transaction";
 import { uiPaymentToDb, type UiPaymentMethod } from "@/utils/payment-method";
+import { useQueryClient } from "@tanstack/react-query";
 
 function allocateIncomeSubtotals(
   serviceIds: string[],
@@ -48,6 +51,7 @@ function allocateIncomeSubtotals(
 export function useRecordTransactionSubmit(onSuccess: () => void) {
   const { businessId } = useActiveBusiness();
   const { isOnline: appOnline } = useConnectivity();
+  const queryClient = useQueryClient();
   const servicesQuery = useServiceCatalogQuery(businessId);
   const categoriesQuery = useExpenseCategoriesQuery(businessId);
   const createMutation = useCreateTransactionMutation(businessId);
@@ -62,6 +66,8 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
     tip: number;
     payment: UiPaymentMethod;
     customerPhone?: string;
+    customerName?: string;
+    saveCustomerName?: boolean;
   }) {
     const tip = input.tip || 0;
     const combinedSubtotal = input.subtotal;
@@ -98,6 +104,22 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       } satisfies CreateTransactionInput);
       const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
       await createMutation.mutateAsync({ ...payload, offlineClientId });
+    }
+
+    if (
+      input.saveCustomerName &&
+      !queuedOffline &&
+      customerPhone &&
+      input.customerName?.trim()
+    ) {
+      await getClientAppServices().customer.applyNameForNormalizedPhone(
+        businessId,
+        customerPhone,
+        input.customerName,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.customers.list(businessId),
+      });
     }
 
     toast({

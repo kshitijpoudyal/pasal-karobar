@@ -84,6 +84,8 @@ type CustomerPhoneAutocompleteProps = {
   onNameChange?: (name: string) => void;
   nameInputId?: string;
   showLinkedNameField?: boolean;
+  /** When false, name is only set from suggestion picks (not from typing a matching phone). */
+  autoFillNameFromPhone?: boolean;
 };
 
 const EMBEDDED_INPUT_CLASS =
@@ -106,6 +108,7 @@ export function CustomerPhoneAutocomplete({
   onNameChange,
   nameInputId,
   showLinkedNameField = false,
+  autoFillNameFromPhone = true,
 }: CustomerPhoneAutocompleteProps) {
   const listboxId = useId();
   const generatedNameInputId = useId();
@@ -133,10 +136,10 @@ export function CustomerPhoneAutocomplete({
   }, [suggestions.length, suggestionQuery]);
 
   useEffect(() => {
-    if (!onNameChange || !value.trim()) return;
+    if (!autoFillNameFromPhone || !onNameChange || !value.trim()) return;
     syncNameFromPhone(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when customers load for prefilled phone
-  }, [customers, value, onNameChange]);
+  }, [autoFillNameFromPhone, customers, value, onNameChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -167,7 +170,9 @@ export function CustomerPhoneAutocomplete({
 
   function handlePhoneChange(raw: string) {
     onChange(raw);
-    syncNameFromPhone(raw);
+    if (autoFillNameFromPhone) {
+      syncNameFromPhone(raw);
+    }
     setOpen(true);
   }
 
