@@ -5,7 +5,8 @@ export type PaymentMethod =
   | "ESEWA"
   | "KHALTI"
   | "FONEPAY"
-  | "BANK_TRANSFER";
+  | "BANK_TRANSFER"
+  | "OTHER";
 
 export type BusinessType =
   | "BARBER"
@@ -98,6 +99,32 @@ export type ExpenseCategoryUpdate = Partial<
   Pick<
     ExpenseCategory,
     "name" | "icon" | "color" | "display_order" | "is_active"
+  >
+>;
+
+export type BusinessPaymentMethodRecord = {
+  id: string;
+  business_id: string;
+  method_code: PaymentMethod;
+  label: string;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type BusinessPaymentMethodInsert = Pick<
+  BusinessPaymentMethodRecord,
+  "business_id" | "method_code" | "label"
+> &
+  Partial<
+    Pick<BusinessPaymentMethodRecord, "display_order" | "is_active">
+  >;
+
+export type BusinessPaymentMethodUpdate = Partial<
+  Pick<
+    BusinessPaymentMethodRecord,
+    "method_code" | "label" | "display_order" | "is_active"
   >
 >;
 
@@ -262,6 +289,12 @@ export type Database = {
         Row: ExpenseCategory;
         Insert: ExpenseCategoryInsert & { id?: string };
         Update: ExpenseCategoryUpdate;
+        Relationships: [];
+      };
+      business_payment_methods: {
+        Row: BusinessPaymentMethodRecord;
+        Insert: BusinessPaymentMethodInsert & { id?: string };
+        Update: BusinessPaymentMethodUpdate;
         Relationships: [];
       };
       customers: {

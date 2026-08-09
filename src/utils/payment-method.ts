@@ -21,6 +21,7 @@ const DB_TO_UI: Record<PaymentMethod, UiPaymentMethod | string> = {
   KHALTI: "Khalti",
   BANK_TRANSFER: "Bank Transfer",
   FONEPAY: "FonePay",
+  OTHER: "Other",
 };
 
 export function uiPaymentToDb(method: UiPaymentMethod): PaymentMethod {

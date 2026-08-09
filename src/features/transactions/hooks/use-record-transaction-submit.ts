@@ -11,8 +11,8 @@ import { useActiveBusiness } from "@/providers/business-provider";
 import { useConnectivity } from "@/providers/connectivity-provider";
 import { getClientAppServices } from "@/services/client";
 import { createTransactionSchema, type CreateTransactionInput } from "@/services/schemas";
+import type { PaymentMethod } from "@/types/database";
 import { shouldQueueTransactionOffline } from "@/offline/pending-transaction";
-import { uiPaymentToDb, type UiPaymentMethod } from "@/utils/payment-method";
 import { useQueryClient } from "@tanstack/react-query";
 
 function allocateIncomeSubtotals(
@@ -64,7 +64,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
     serviceIds: string[];
     subtotal: number;
     tip: number;
-    payment: UiPaymentMethod;
+    payment: PaymentMethod;
     customerPhone?: string;
     customerName?: string;
     saveCustomerName?: boolean;
@@ -84,7 +84,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
     );
     const queuedOffline = shouldQueueOffline();
     const transactionDate = new Date().toISOString();
-    const paymentMethod = uiPaymentToDb(input.payment);
+    const paymentMethod = input.payment;
     const customerPhone = input.customerPhone?.trim();
 
     for (let index = 0; index < input.serviceIds.length; index++) {
@@ -137,7 +137,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
     expenseCategoryId: string;
     amount: number;
     note?: string;
-    payment: UiPaymentMethod;
+    payment: PaymentMethod;
   }) {
     const payload = createTransactionSchema.parse({
       business_id: businessId,
@@ -145,7 +145,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       expense_category_id: input.expenseCategoryId,
       subtotal: input.amount,
       total: input.amount,
-      payment_method: uiPaymentToDb(input.payment),
+      payment_method: input.payment,
       note: input.note ?? null,
       transaction_date: new Date().toISOString(),
     } satisfies CreateTransactionInput);

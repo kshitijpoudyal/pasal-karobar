@@ -7,11 +7,13 @@ import { cn } from "@/lib/utils";
 type ServiceCatalogAddCardProps = {
   onClick: () => void;
   className?: string;
+  label?: string;
 };
 
 export function ServiceCatalogAddCard({
   onClick,
   className,
+  label = "Add Service",
 }: ServiceCatalogAddCardProps) {
   return (
     <button
@@ -30,7 +32,7 @@ export function ServiceCatalogAddCard({
         <Plus className="size-6" strokeWidth={2} />
       </div>
       <p className="font-semibold text-on-surface-variant transition-colors group-hover:text-primary">
-        Add Service
+        {label}
       </p>
     </button>
   );

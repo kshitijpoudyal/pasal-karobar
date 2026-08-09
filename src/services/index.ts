@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createRepositories, type Repositories } from "@/repository";
+import { BusinessPaymentMethodService } from "@/services/business-payment-method.service";
 import { BusinessService } from "@/services/business.service";
 import { BusinessSettingService } from "@/services/business-setting.service";
 import { CustomerPhotoService } from "@/services/customer-photo.service";
@@ -17,6 +18,7 @@ export type AppServices = {
   expenseCategory: ExpenseCategoryService;
   transaction: TransactionService;
   businessSetting: BusinessSettingService;
+  businessPaymentMethod: BusinessPaymentMethodService;
   customer: CustomerService;
   customerPhoto: CustomerPhotoService;
   dashboard: DashboardService;
@@ -30,6 +32,9 @@ export function createServices(repositories: Repositories): AppServices {
   );
   const transaction = new TransactionService(repositories.transaction, customer);
   const serviceCatalog = new ServiceCatalogService(repositories.serviceCatalog);
+  const businessPaymentMethod = new BusinessPaymentMethodService(
+    repositories.businessPaymentMethod,
+  );
 
   const business = new BusinessService(
     repositories.business,
@@ -44,6 +49,7 @@ export function createServices(repositories: Repositories): AppServices {
     expenseCategory: new ExpenseCategoryService(repositories.expenseCategory),
     transaction,
     businessSetting: new BusinessSettingService(repositories.businessSetting),
+    businessPaymentMethod,
     customer,
     customerPhoto,
     dashboard: new DashboardService(transaction, serviceCatalog, business, customer),
@@ -57,6 +63,7 @@ export function createAppServices(
 }
 
 export {
+  BusinessPaymentMethodService,
   BusinessService,
   BusinessSettingService,
   CustomerPhotoService,

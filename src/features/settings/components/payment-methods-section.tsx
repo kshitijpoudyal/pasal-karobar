@@ -1,18 +1,25 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import { ChevronDown, ChevronUp, MoreVertical, Pencil, Scissors, Trash2 } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  CreditCard,
+  MoreVertical,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
+import { PaymentMethodVisual } from "@/components/payment-method-picker";
 import { QueryState } from "@/components/layout/query-state";
-import { Button } from "@/components/ui/button";
 import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
-import { getServiceIconComponent, DEFAULT_SERVICE_ICON_ID } from "@/constants/service-icons";
+import { Button } from "@/components/ui/button";
+import type { PaymentMethodPresetCode } from "@/constants/payment-method-presets";
+import { RegisterPaymentMethodModal } from "@/features/settings/components/register-payment-method-modal";
 import { ServiceCatalogAddCard } from "@/features/settings/components/service-catalog-add-card";
-import { RegisterServiceModal } from "@/features/settings/components/register-service-modal";
-import { useServiceCatalogSection } from "@/features/settings/hooks/use-service-catalog-section";
+import { usePaymentMethodsSection } from "@/features/settings/hooks/use-payment-methods-section";
 import { cn } from "@/lib/utils";
-import { formatNpr } from "@/utils/format";
+import type { BusinessPaymentMethodRecord, PaymentMethod } from "@/types/database";
 
 const wrapClasses = [
   "bg-primary-container text-on-primary-container",
@@ -20,19 +27,26 @@ const wrapClasses = [
   "bg-tertiary-container text-on-tertiary-container",
 ];
 
-type ServiceCatalogMoreMenuProps = {
+function paymentMethodSubtitle(methodCode: PaymentMethod): string {
+  if (methodCode === "OTHER") return "Custom payment type";
+  return methodCode.replace(/_/g, " ");
+}
+
+type PaymentMethodMoreMenuProps = {
   onEdit: () => void;
   onDelete: () => void;
+  deleteDisabled?: boolean;
   disabled?: boolean;
   triggerClassName?: string;
 };
 
-function ServiceCatalogMoreMenu({
+function PaymentMethodMoreMenu({
   onEdit,
   onDelete,
+  deleteDisabled = false,
   disabled = false,
   triggerClassName,
-}: ServiceCatalogMoreMenuProps) {
+}: PaymentMethodMoreMenuProps) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -92,7 +106,7 @@ function ServiceCatalogMoreMenu({
           <button
             type="button"
             role="menuitem"
-            disabled={disabled}
+            disabled={disabled || deleteDisabled}
             onClick={() => {
               setOpen(false);
               onDelete();
@@ -100,7 +114,7 @@ function ServiceCatalogMoreMenu({
             className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-error transition-colors hover:bg-error-container/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Trash2 className="size-4 shrink-0" strokeWidth={1.75} />
-            Delete
+            Remove
           </button>
         </div>
       ) : null}
@@ -108,11 +122,12 @@ function ServiceCatalogMoreMenu({
   );
 }
 
-type ServiceCatalogItemProps = {
+type PaymentMethodItemProps = {
+  row: BusinessPaymentMethodRecord;
   title: string;
-  rate: string;
-  rateClassName?: string;
-  icon: LucideIcon;
+  subtitle: string;
+  orderLabel: string;
+  orderClassName?: string;
   iconWrapClassName: string;
   onEdit: () => void;
   onDelete: () => void;
@@ -122,12 +137,13 @@ type ServiceCatalogItemProps = {
   canMoveDown?: boolean;
   isReordering?: boolean;
   isRemoving: boolean;
+  deleteDisabled?: boolean;
 };
 
-function ServiceCatalogListItem({
+function PaymentMethodListItem({
+  row,
   title,
-  rate,
-  icon: Icon,
+  subtitle,
   iconWrapClassName,
   onEdit,
   onDelete,
@@ -137,7 +153,8 @@ function ServiceCatalogListItem({
   canMoveDown = false,
   isReordering = false,
   isRemoving,
-}: ServiceCatalogItemProps) {
+  deleteDisabled = false,
+}: PaymentMethodItemProps) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-3">
       <div
@@ -146,11 +163,11 @@ function ServiceCatalogListItem({
           iconWrapClassName,
         )}
       >
-        <Icon className="size-5" strokeWidth={1.75} />
+        <PaymentMethodVisual methodCode={row.method_code} size="sm" />
       </div>
       <div className="min-w-0 flex-1">
         <h4 className="truncate text-body-md font-medium text-on-surface">{title}</h4>
-        <p className="truncate text-[11px] text-on-surface-variant">Default rate · {rate}</p>
+        <p className="truncate text-[11px] text-on-surface-variant">{subtitle}</p>
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
         {onMoveUp || onMoveDown ? (
@@ -179,10 +196,11 @@ function ServiceCatalogListItem({
             </Button>
           </>
         ) : null}
-        <ServiceCatalogMoreMenu
+        <PaymentMethodMoreMenu
           onEdit={onEdit}
           onDelete={onDelete}
           disabled={isRemoving}
+          deleteDisabled={deleteDisabled}
           triggerClassName="size-8"
         />
       </div>
@@ -190,16 +208,12 @@ function ServiceCatalogListItem({
   );
 }
 
-type ServiceCatalogCardProps = ServiceCatalogItemProps & {
-  description: string;
-};
-
-function ServiceCatalogCard({
+function PaymentMethodCard({
+  row,
   title,
-  description,
-  rate,
-  rateClassName,
-  icon: Icon,
+  subtitle,
+  orderLabel,
+  orderClassName,
   iconWrapClassName,
   onEdit,
   onDelete,
@@ -209,7 +223,8 @@ function ServiceCatalogCard({
   canMoveDown = false,
   isReordering = false,
   isRemoving,
-}: ServiceCatalogCardProps) {
+  deleteDisabled = false,
+}: PaymentMethodItemProps) {
   return (
     <div className="squircle group hidden min-w-0 bg-surface-container-low p-5 transition-all hover:bg-surface-container-high md:block sm:p-8">
       <div className="mb-8 flex items-start justify-between">
@@ -219,7 +234,7 @@ function ServiceCatalogCard({
             iconWrapClassName,
           )}
         >
-          <Icon className="size-8" strokeWidth={1.75} />
+          <PaymentMethodVisual methodCode={row.method_code} size="md" />
         </div>
         <div className="flex gap-2">
           {onMoveUp || onMoveDown ? (
@@ -248,76 +263,135 @@ function ServiceCatalogCard({
               </Button>
             </div>
           ) : null}
-          <ServiceCatalogMoreMenu
+          <PaymentMethodMoreMenu
             onEdit={onEdit}
             onDelete={onDelete}
             disabled={isRemoving}
+            deleteDisabled={deleteDisabled}
           />
         </div>
       </div>
       <h4 className="font-headline mb-1 truncate text-xl font-semibold">{title}</h4>
-      <p className="mb-8 line-clamp-2 text-sm text-on-surface-variant">
-        {description || "Catalog service"}
-      </p>
+      <p className="mb-8 line-clamp-2 text-sm text-on-surface-variant">{subtitle}</p>
       <div className="squircle flex items-center justify-between bg-surface-container-high p-5">
         <span className="text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-          Rate
+          Entry form
         </span>
-        <span className={cn("font-headline text-xl font-semibold", rateClassName)}>
-          {rate}
+        <span className={cn("font-headline text-xl font-semibold", orderClassName)}>
+          {orderLabel}
         </span>
       </div>
     </div>
   );
 }
 
-export function ServiceCatalogSection() {
-  const [registerOpen, setRegisterOpen] = useState(false);
-  const [orderEditMode, setOrderEditMode] = useState(false);
+export function PaymentMethodsSection() {
   const { confirm } = useConfirmDrawer();
+  const [addOpen, setAddOpen] = useState(false);
+  const [orderEditMode, setOrderEditMode] = useState(false);
+  const [addMode, setAddMode] = useState<"preset" | "custom">("preset");
+  const [presetCode, setPresetCode] = useState<PaymentMethodPresetCode>("CASH");
+  const [customLabel, setCustomLabel] = useState("");
   const {
-    services,
-    serviceCount,
+    methods,
+    methodCount,
+    inactivePresets,
     isLoading,
     error,
+    refetch,
     deleteError,
     clearDeleteError,
-    refetch,
-    registerForm,
-    submitRegister,
-    isRegistering,
-    editingService,
-    editForm,
-    closeEdit,
-    submitEdit,
-    isUpdating,
-    openEdit,
-    removeService,
-    removingServiceId,
-    moveService,
+    moveMethod,
     isReordering,
-  } = useServiceCatalogSection({
-    onServiceCreated: () => setRegisterOpen(false),
-  });
+    addPreset,
+    addCustom,
+    isAdding,
+    removeMethod,
+    removingId,
+    editingMethod,
+    editLabel,
+    setEditLabel,
+    editEntryPosition,
+    setEditEntryPosition,
+    openEdit,
+    closeEdit,
+    saveEdit,
+    isSavingEdit,
+  } = usePaymentMethodsSection();
 
-  const closeRegister = () => {
-    setRegisterOpen(false);
-    registerForm.reset({
-      name: "",
-      default_price: 0,
-      icon: DEFAULT_SERVICE_ICON_ID,
-    });
-  };
+  function buildItemProps(row: BusinessPaymentMethodRecord, index: number) {
+    const iconWrapClassName: string =
+      wrapClasses[index % wrapClasses.length] ??
+      "bg-primary-container text-on-primary-container";
+    const orderClassName =
+      index % 3 === 0
+        ? "text-primary"
+        : index % 3 === 1
+          ? "text-on-secondary-container"
+          : "text-on-tertiary-container";
+
+    return {
+      row,
+      title: row.label,
+      subtitle: paymentMethodSubtitle(row.method_code),
+      orderLabel: `#${index + 1}`,
+      orderClassName,
+      iconWrapClassName,
+      onEdit: () => openEdit(row),
+      ...(orderEditMode
+        ? {
+            onMoveUp: () => void moveMethod(row.id, "up"),
+            onMoveDown: () => void moveMethod(row.id, "down"),
+            canMoveUp: index > 0,
+            canMoveDown: index < methods.length - 1,
+            isReordering,
+          }
+        : {}),
+      onDelete: () => {
+        void runConfirmedAction(
+          confirm,
+          {
+            title: "Remove payment method?",
+            description: `"${row.label}" will be hidden from new entries. Past transactions are unchanged.`,
+            confirmLabel: "Remove",
+            cancelLabel: "Keep",
+            tone: "destructive",
+          },
+          () => removeMethod(row),
+        );
+      },
+      isRemoving: removingId === row.id,
+      deleteDisabled: methods.length <= 1,
+    };
+  }
+
+  async function handleAddSubmit() {
+    if (addMode === "preset") {
+      await addPreset(presetCode);
+    } else {
+      await addCustom(customLabel);
+      setCustomLabel("");
+    }
+    setAddOpen(false);
+  }
+
+  function openAddModal() {
+    setAddMode("preset");
+    if (inactivePresets[0]) {
+      setPresetCode(inactivePresets[0].code);
+    }
+    setAddOpen(true);
+  }
 
   return (
     <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
       <section className="space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="squircle bg-secondary-container p-3 text-on-secondary-container">
-              <Scissors className="size-6" strokeWidth={1.75} />
+            <div className="squircle bg-primary-container p-3 text-on-primary-container">
+              <CreditCard className="size-6" strokeWidth={1.75} />
             </div>
-            <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
+            <h3 className="font-headline text-xl font-semibold">Payment Methods</h3>
           </div>
           <Button
             type="button"
@@ -332,7 +406,7 @@ export function ServiceCatalogSection() {
           {orderEditMode ? (
             <>
               <span className="md:hidden">
-                Tap ↑↓ to move services. Changes save immediately.
+                Tap ↑↓ to move payment types. Changes save immediately.
               </span>
               <span className="hidden md:inline">
                 Use ↑↓ on each card to adjust order. Changes save immediately.
@@ -341,11 +415,11 @@ export function ServiceCatalogSection() {
           ) : (
             <>
               <span className="md:hidden">
-                Edit a service to change its entry form position, or tap Edit order for
+                Edit a method to change its entry form position, or tap Edit order for
                 quick moves.
               </span>
               <span className="hidden md:inline">
-                Edit a service to set entry form position (1 = first), or use Edit order
+                Edit a method to set entry form position (1 = first), or use Edit order
                 for quick ↑↓ adjustments.
               </span>
             </>
@@ -364,132 +438,65 @@ export function ServiceCatalogSection() {
           </div>
         ) : null}
 
-        <RegisterServiceModal
-          open={registerOpen}
-          onClose={closeRegister}
-          form={registerForm}
-          onSubmit={submitRegister}
-          isSubmitting={isRegistering}
+        <RegisterPaymentMethodModal
+          open={addOpen}
+          onClose={() => setAddOpen(false)}
+          mode="add"
+          addMode={addMode}
+          onAddModeChange={setAddMode}
+          inactivePresets={inactivePresets}
+          presetCode={presetCode}
+          onPresetCodeChange={setPresetCode}
+          customLabel={customLabel}
+          onCustomLabelChange={setCustomLabel}
+          editLabel=""
+          onEditLabelChange={() => {}}
+          onSubmit={() => void handleAddSubmit()}
+          isSubmitting={isAdding}
         />
 
-        <RegisterServiceModal
-          open={editingService !== null}
+        <RegisterPaymentMethodModal
+          open={editingMethod !== null}
           onClose={closeEdit}
-          form={editForm}
-          onSubmit={submitEdit}
-          isSubmitting={isUpdating}
-          title="Edit Service"
-          submitLabel="Save changes"
-          showEntryPosition
-          maxEntryPosition={serviceCount}
+          mode="edit"
+          addMode="preset"
+          onAddModeChange={() => {}}
+          inactivePresets={[]}
+          presetCode="CASH"
+          onPresetCodeChange={() => {}}
+          customLabel=""
+          onCustomLabelChange={() => {}}
+          editLabel={editLabel}
+          onEditLabelChange={setEditLabel}
+          editEntryPosition={editEntryPosition}
+          onEditEntryPositionChange={setEditEntryPosition}
+          maxEntryPosition={methodCount}
+          onSubmit={() => void saveEdit()}
+          isSubmitting={isSavingEdit}
         />
 
         <ul className="flex flex-col gap-2 md:hidden">
-          {services.map((service, index) => {
-            const Icon = getServiceIconComponent(service.icon);
-            const iconWrapClassName: string =
-              wrapClasses[index % wrapClasses.length] ??
-              "bg-primary-container text-on-primary-container";
-            const itemProps = {
-              title: service.name,
-              rate: formatNpr(Number(service.default_price)),
-              rateClassName:
-                index % 3 === 0
-                  ? "text-primary"
-                  : index % 3 === 1
-                    ? "text-on-secondary-container"
-                    : "text-on-tertiary-container",
-              icon: Icon,
-              iconWrapClassName,
-              onEdit: () => openEdit(service),
-              ...(orderEditMode
-                ? {
-                    onMoveUp: () => void moveService(service.id, "up"),
-                    onMoveDown: () => void moveService(service.id, "down"),
-                    canMoveUp: index > 0,
-                    canMoveDown: index < services.length - 1,
-                    isReordering,
-                  }
-                : {}),
-              onDelete: () => {
-                void runConfirmedAction(
-                  confirm,
-                  {
-                    title: "Remove service?",
-                    description: `"${service.name}" will be removed from your catalog. Past income entries will still reference this service for reporting.`,
-                    confirmLabel: "Delete",
-                    cancelLabel: "Keep",
-                    tone: "destructive",
-                  },
-                  () => removeService(service.id, service.name),
-                );
-              },
-              isRemoving: removingServiceId === service.id,
-            };
-            return (
-              <li key={service.id}>
-                <ServiceCatalogListItem {...itemProps} />
-              </li>
-            );
-          })}
+          {methods.map((row, index) => (
+            <li key={row.id}>
+              <PaymentMethodListItem {...buildItemProps(row, index)} />
+            </li>
+          ))}
           <li>
             <ServiceCatalogAddCard
-              onClick={() => setRegisterOpen(true)}
+              onClick={openAddModal}
+              label="Add payment method"
               className="min-h-0 flex-row gap-3 rounded-xl p-3"
             />
           </li>
         </ul>
 
         <div className="hidden md:grid md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-          {services.map((service, index) => {
-            const Icon = getServiceIconComponent(service.icon);
-            const iconWrapClassName: string =
-              wrapClasses[index % wrapClasses.length] ??
-              "bg-primary-container text-on-primary-container";
-            return (
-              <ServiceCatalogCard
-                key={service.id}
-                title={service.name}
-                description=""
-                rate={formatNpr(Number(service.default_price))}
-                rateClassName={
-                  index % 3 === 0
-                    ? "text-primary"
-                    : index % 3 === 1
-                      ? "text-on-secondary-container"
-                      : "text-on-tertiary-container"
-                }
-                icon={Icon}
-                iconWrapClassName={iconWrapClassName}
-                onEdit={() => openEdit(service)}
-                {...(orderEditMode
-                  ? {
-                      onMoveUp: () => void moveService(service.id, "up"),
-                      onMoveDown: () => void moveService(service.id, "down"),
-                      canMoveUp: index > 0,
-                      canMoveDown: index < services.length - 1,
-                      isReordering,
-                    }
-                  : {})}
-                onDelete={() => {
-                  void runConfirmedAction(
-                    confirm,
-                    {
-                      title: "Remove service?",
-                      description: `"${service.name}" will be removed from your catalog. Past income entries will still reference this service for reporting.`,
-                      confirmLabel: "Delete",
-                      cancelLabel: "Keep",
-                      tone: "destructive",
-                    },
-                    () => removeService(service.id, service.name),
-                  );
-                }}
-                isRemoving={removingServiceId === service.id}
-              />
-            );
-          })}
+          {methods.map((row, index) => (
+            <PaymentMethodCard key={row.id} {...buildItemProps(row, index)} />
+          ))}
           <ServiceCatalogAddCard
-            onClick={() => setRegisterOpen(true)}
+            onClick={openAddModal}
+            label="Add payment method"
             className="h-full min-h-[16.5rem]"
           />
         </div>

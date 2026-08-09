@@ -20,6 +20,11 @@ export const queryKeys = {
     detail: (id: string) =>
       [...queryKeys.expenseCategory.all, "detail", id] as const,
   },
+  businessPaymentMethod: {
+    all: ["business-payment-method"] as const,
+    list: (businessId: string) =>
+      [...queryKeys.businessPaymentMethod.all, "list", businessId] as const,
+  },
   transactions: {
     all: ["transactions"] as const,
     list: (businessId: string, filters?: TransactionListFilters) =>

@@ -294,6 +294,11 @@ SELECT has_function_privilege(
 - `KHALTI`
 - `FONEPAY`
 - `BANK_TRANSFER`
+- `OTHER`
+
+## `business_payment_methods`
+
+Per-business payment catalog: `method_code`, display `label`, `display_order`, `is_active`. Custom labels use `method_code` = `OTHER`. New businesses get Cash, eSewa, Khalti, eBank, fonPay via `seed_default_business_payment_methods`.
 
 ## `business_type`
 

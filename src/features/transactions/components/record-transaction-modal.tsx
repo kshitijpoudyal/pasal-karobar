@@ -1,31 +1,33 @@
 "use client";
 
-import type { ReactNode } from "react";
 import { useCallback, useEffect, useId, useState } from "react";
 import {
-  Banknote,
   Bolt,
   ChevronDown,
   CirclePlus,
   Home,
-  Landmark,
   Loader2,
   Package,
-  QrCode,
   X,
   type LucideIcon,
   QUICK_CATEGORY_ICONS,
 } from "@/features/transactions/components/record-transaction-modal-icons";
 
+import {
+  businessPaymentRowsToPickerOptions,
+  PaymentMethodPicker,
+  type PaymentMethodPickerOption,
+} from "@/components/payment-method-picker";
 import { getServiceIconComponent } from "@/constants/service-icons";
 import { useConfirmDrawer } from "@/components/confirm-drawer";
 import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
 import { planCustomerNameSaveOnEntry } from "@/features/transactions/utils/customer-name-on-entry";
 import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
+import { useActiveBusinessPaymentMethodsQuery } from "@/hooks/queries/use-business-payment-method-queries";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { cn } from "@/lib/utils";
 import { parseNepalPhone } from "@/utils/phone-np";
-import type { UiPaymentMethod } from "@/utils/payment-method";
+import type { PaymentMethod } from "@/types/database";
 
 type RecordTransactionModalProps = {
   open: boolean;
@@ -35,8 +37,6 @@ type RecordTransactionModalProps = {
 
 type Tab = "income" | "expense";
 
-type PaymentMethod = UiPaymentMethod;
-
 const FIELD_LABEL =
   "font-body block text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase";
 
@@ -45,50 +45,6 @@ const rsFormatter = new Intl.NumberFormat("en-NP", { maximumFractionDigits: 0 })
 function formatRs(amount: number): string {
   return `Rs. ${rsFormatter.format(amount)}`;
 }
-
-const PAYMENT_OPTIONS: {
-  label: string;
-  value: PaymentMethod;
-  icon: ReactNode;
-}[] = [
-  {
-    label: "Cash",
-    value: "Cash",
-    icon: (
-      <Banknote className="size-7 text-secondary" strokeWidth={1.75} aria-hidden />
-    ),
-  },
-  {
-    label: "eSewa",
-    value: "eSewa",
-    icon: (
-      <div className="flex size-7 items-center justify-center rounded-lg bg-[#4CAF50] text-[10px] font-bold text-white">
-        eS
-      </div>
-    ),
-  },
-  {
-    label: "Khalti",
-    value: "Khalti",
-    icon: (
-      <div className="flex size-7 items-center justify-center rounded-lg bg-[#673AB7] text-[10px] font-bold text-white">
-        K
-      </div>
-    ),
-  },
-  {
-    label: "eBank",
-    value: "eBank",
-    icon: <Landmark className="size-7 text-primary" strokeWidth={1.75} aria-hidden />,
-  },
-  {
-    label: "fonPay",
-    value: "fonPay",
-    icon: (
-      <QrCode className="size-7 text-tertiary-fixed-dim" strokeWidth={1.75} aria-hidden />
-    ),
-  },
-];
 
 export function RecordTransactionModal({
   open,
@@ -101,7 +57,7 @@ export function RecordTransactionModal({
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [price, setPrice] = useState("");
   const [tip, setTip] = useState("");
-  const [payment, setPayment] = useState<PaymentMethod>("Cash");
+  const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseDesc, setExpenseDesc] = useState("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string | null>(null);
@@ -120,13 +76,23 @@ export function RecordTransactionModal({
   } = useRecordTransactionSubmit(onClose);
   const { confirm } = useConfirmDrawer();
   const customersQuery = useCustomersQuery(businessId);
+  const paymentMethodsQuery = useActiveBusinessPaymentMethodsQuery(businessId);
+  const paymentPickerOptions = businessPaymentRowsToPickerOptions(
+    paymentMethodsQuery.data ?? [],
+  );
+  const selectedPaymentOption: PaymentMethodPickerOption | null =
+    paymentPickerOptions.find((option) => option.id === selectedPaymentMethodId) ??
+    paymentPickerOptions[0] ??
+    null;
+  const selectedPaymentCode: PaymentMethod =
+    selectedPaymentOption?.methodCode ?? "CASH";
 
   const resetFormState = useCallback(() => {
     setTab("income");
     setSelectedServiceIds([]);
     setPrice("");
     setTip("");
-    setPayment("Cash");
+    setSelectedPaymentMethodId("");
     setExpenseAmount("");
     setExpenseDesc("");
     setExpenseCategoryId(null);
@@ -134,6 +100,16 @@ export function RecordTransactionModal({
     setCustomerName("");
     setFormError(null);
   }, []);
+
+  useEffect(() => {
+    if (!open || paymentPickerOptions.length === 0) return;
+    setSelectedPaymentMethodId((current) => {
+      if (current && paymentPickerOptions.some((option) => option.id === current)) {
+        return current;
+      }
+      return paymentPickerOptions[0]?.id ?? "";
+    });
+  }, [open, paymentPickerOptions]);
 
   useEffect(() => {
     if (!open) return;
@@ -236,7 +212,7 @@ export function RecordTransactionModal({
           serviceIds: selectedServiceIds,
           subtotal,
           tip: tipValue,
-          payment,
+          payment: selectedPaymentCode,
           customerPhone,
           customerName: nameTrim || undefined,
           saveCustomerName,
@@ -256,7 +232,7 @@ export function RecordTransactionModal({
         expenseCategoryId: categoryId,
         amount,
         note: expenseDesc,
-        payment,
+        payment: selectedPaymentCode,
       });
     } catch (error) {
       setFormError(
@@ -429,7 +405,12 @@ export function RecordTransactionModal({
                 autoFillNameFromPhone={false}
               />
 
-              <PaymentMethodField payment={payment} onSelect={setPayment} />
+              <PaymentMethodPicker
+                options={paymentPickerOptions}
+                valueId={selectedPaymentMethodId}
+                onChange={(option) => setSelectedPaymentMethodId(option.id)}
+                labelClassName={FIELD_LABEL}
+              />
             </div>
           ) : (
             <div className="space-y-10">
@@ -507,6 +488,13 @@ export function RecordTransactionModal({
                   className="font-body w-full border-none bg-transparent p-0 text-lg font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0"
                 />
               </div>
+
+              <PaymentMethodPicker
+                options={paymentPickerOptions}
+                valueId={selectedPaymentMethodId}
+                onChange={(option) => setSelectedPaymentMethodId(option.id)}
+                labelClassName={FIELD_LABEL}
+              />
             </div>
           )}
         </div>
@@ -578,56 +566,6 @@ function AmountCard({
         >
           Rs.
         </span>
-      </div>
-    </div>
-  );
-}
-
-function PaymentMethodField({
-  payment,
-  onSelect,
-}: {
-  payment: PaymentMethod;
-  onSelect: (value: PaymentMethod) => void;
-}) {
-  return (
-    <div>
-      <p className={`${FIELD_LABEL} mb-4`}>Payment Method</p>
-      {/* Mobile: horizontal pill strip */}
-      <div className="-mx-6 flex gap-2 overflow-x-auto px-6 pb-1 hide-scrollbar sm:hidden">
-        {PAYMENT_OPTIONS.map(({ label, value, icon }) => (
-          <button
-            key={`${value}-pill`}
-            type="button"
-            data-selected={payment === value}
-            onClick={() => onSelect(value)}
-            className="payment-method-pill shrink-0 flex cursor-pointer items-center gap-2 rounded-full bg-surface-container-low px-4 py-2.5 shadow-sm active:scale-95"
-          >
-            <span className="flex shrink-0 items-center justify-center [&_svg]:size-5">
-              {icon}
-            </span>
-            <span className="font-body text-sm font-medium whitespace-nowrap text-on-surface">
-              {label}
-            </span>
-          </button>
-        ))}
-      </div>
-      {/* sm+: tile grid */}
-      <div className="hidden flex-wrap gap-3 sm:flex">
-        {PAYMENT_OPTIONS.map(({ label, value, icon }) => (
-          <button
-            key={value}
-            type="button"
-            data-selected={payment === value}
-            onClick={() => onSelect(value)}
-            className="payment-method-tile squircle flex min-w-[90px] flex-1 cursor-pointer flex-col items-center gap-2 bg-surface-container-low py-4 shadow-sm hover:shadow-md active:scale-95"
-          >
-            {icon}
-            <span className="font-body text-[12px] font-medium text-on-surface">
-              {label}
-            </span>
-          </button>
-        ))}
       </div>
     </div>
   );

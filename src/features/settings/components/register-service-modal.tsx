@@ -23,6 +23,8 @@ type RegisterServiceModalProps = {
   title?: string;
   submitLabel?: string;
   submittingLabel?: string;
+  showEntryPosition?: boolean;
+  maxEntryPosition?: number;
 };
 
 export function RegisterServiceModal({
@@ -34,11 +36,14 @@ export function RegisterServiceModal({
   title = "Add Service",
   submitLabel = "Add service",
   submittingLabel = "Saving…",
+  showEntryPosition = false,
+  maxEntryPosition = 1,
 }: RegisterServiceModalProps) {
   const titleId = useId();
   const fieldIdPrefix = useId();
   const nameFieldId = `${fieldIdPrefix}-service-name`;
   const priceFieldId = `${fieldIdPrefix}-service-price`;
+  const positionFieldId = `${fieldIdPrefix}-service-position`;
   const {
     register,
     control,
@@ -125,6 +130,28 @@ export function RegisterServiceModal({
                 <p className="text-xs text-error">{errors.default_price.message}</p>
               ) : null}
             </div>
+            {showEntryPosition ? (
+              <div className="space-y-2">
+                <label className={FIELD_LABEL} htmlFor={positionFieldId}>
+                  Entry form position
+                </label>
+                <input
+                  id={positionFieldId}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={maxEntryPosition}
+                  className={FIELD_INPUT}
+                  {...register("entry_position", { valueAsNumber: true })}
+                />
+                <p className="text-xs text-on-surface-variant">
+                  1 shows first in the new entry form (max {maxEntryPosition}).
+                </p>
+                {errors.entry_position ? (
+                  <p className="text-xs text-error">{errors.entry_position.message}</p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <footer className="flex flex-wrap gap-4 px-8 pb-8">

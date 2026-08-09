@@ -19,7 +19,20 @@ export const paymentMethodSchema = z.enum([
   "KHALTI",
   "FONEPAY",
   "BANK_TRANSFER",
+  "OTHER",
 ]);
+
+export const createBusinessPaymentMethodSchema = z.object({
+  business_id: z.string().uuid(),
+  method_code: paymentMethodSchema,
+  label: z.string().trim().min(1).max(80),
+  display_order: z.coerce.number().int().nonnegative().optional(),
+  is_active: z.boolean().optional(),
+});
+
+export const updateBusinessPaymentMethodSchema = createBusinessPaymentMethodSchema
+  .omit({ business_id: true })
+  .partial();
 
 export const transactionTypeSchema = z.enum(["INCOME", "EXPENSE"]);
 
@@ -141,6 +154,12 @@ export type CreateExpenseCategoryInput = z.infer<
 >;
 export type UpdateExpenseCategoryInput = z.infer<
   typeof updateExpenseCategorySchema
+>;
+export type CreateBusinessPaymentMethodInput = z.infer<
+  typeof createBusinessPaymentMethodSchema
+>;
+export type UpdateBusinessPaymentMethodInput = z.infer<
+  typeof updateBusinessPaymentMethodSchema
 >;
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
