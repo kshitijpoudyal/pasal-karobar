@@ -8,6 +8,7 @@ import { AppMobileBottomNav } from "@/components/layout/app-mobile-bottom-nav";
 import { AppMobileMenuProvider } from "@/components/layout/app-mobile-menu-provider";
 import { AppMobileTopBar } from "@/components/layout/app-mobile-top-bar";
 import { AppPageHeader } from "@/components/layout/app-page-header";
+import { OfflineStatusBanner } from "@/components/layout/offline-status-banner";
 import { cn } from "@/lib/utils";
 
 type AppShellProps = {
@@ -44,6 +45,7 @@ export function AppShell({
           <div className="hidden lg:block">
             <AppPageHeader title={desktopHeaderTitle} />
           </div>
+          <OfflineStatusBanner />
           {children}
         </AppMain>
         <AppMobileBottomNav />

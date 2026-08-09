@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { DashboardEmptyHint } from "@/components/layout/business-gate";
 import { QueryState } from "@/components/layout/query-state";
 import { DashboardBottomSection } from "@/features/dashboard/components/dashboard-bottom-section";
+import { DashboardPendingSyncNote } from "@/features/dashboard/components/dashboard-pending-sync-note";
 import { DashboardTimeNavigator } from "@/features/dashboard/components/dashboard-time-navigator";
 import { InsightsSection } from "@/features/dashboard/components/insights-section";
 import { KpiGrid } from "@/features/dashboard/components/kpi-grid";
@@ -92,6 +93,8 @@ export function DashboardContent() {
         onRefreshStats={() => void handleRefreshStats()}
         isRefreshingStats={summaryQuery.isFetching}
       />
+
+      <DashboardPendingSyncNote />
 
       <QueryState
         isLoading={summaryQuery.isLoading}

@@ -29,7 +29,7 @@ import {
   zonedPeriodBounds,
 } from "@/utils/business-datetime";
 
-export type ActivityTimeframe = "This Week" | "This Month" | "This Year";
+export type ActivityTimeframe = "Today" | "This Week" | "This Month" | "This Year";
 
 export type ActivityCategoryFilter = "All" | "Income" | "Expense";
 

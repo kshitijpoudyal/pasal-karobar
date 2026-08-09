@@ -10,6 +10,7 @@ export type { ActivityCategoryFilter, ActivityTimeframe };
 export type ActivityPaymentFilter = "All" | PaymentMethod;
 
 export const TIMEFRAMES = [
+  "Today",
   "This Week",
   "This Month",
   "This Year",

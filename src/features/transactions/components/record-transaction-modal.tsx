@@ -142,9 +142,8 @@ export function RecordTransactionModal({
         setTab("income");
         setCustomerPhone(initialCustomerPhone);
       }
-      void servicesQuery.refetch();
     }
-  }, [open, initialCustomerPhone, resetFormState, servicesQuery.refetch]);
+  }, [open, initialCustomerPhone, resetFormState]);
 
   if (!open) return null;
 

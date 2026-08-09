@@ -5,6 +5,7 @@ import { CirclePlus, Loader2, X } from "lucide-react";
 
 import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
 import { useCreateCustomerMutation } from "@/hooks/queries/use-customer-queries";
+import { useConnectivity } from "@/providers/connectivity-provider";
 import {
   CustomerDuplicateError,
   CustomerPhoneError,
@@ -33,6 +34,7 @@ export function AddCustomerModal({
   const [name, setName] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const createMutation = useCreateCustomerMutation(businessId);
+  const { isOnline } = useConnectivity();
 
   useEffect(() => {
     if (!open) return;
@@ -53,6 +55,10 @@ export function AddCustomerModal({
   if (!open) return null;
 
   async function handleSubmit() {
+    if (!isOnline) {
+      setFormError("You're offline. Connect to the internet to add a customer.");
+      return;
+    }
     setFormError(null);
     try {
       const customer = await createMutation.mutateAsync({
@@ -72,7 +78,7 @@ export function AddCustomerModal({
     }
   }
 
-  const canSubmit = phone.trim().length > 0 && !createMutation.isPending;
+  const canSubmit = phone.trim().length > 0 && !createMutation.isPending && isOnline;
 
   return (
     <div

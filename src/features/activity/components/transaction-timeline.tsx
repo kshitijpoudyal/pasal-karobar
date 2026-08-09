@@ -15,6 +15,7 @@ import {
   formatTimeInBusinessZone,
   logTimezoneFormatMismatch,
 } from "@/utils/business-datetime";
+import { isPendingSyncTransactionId } from "@/offline/pending-transaction";
 import { formatNpr } from "@/utils/format";
 
 type TransactionTimelineProps = {
@@ -93,8 +94,10 @@ export function TransactionTimeline({
                 timeZone,
               );
 
+              const pendingSync = isPendingSyncTransactionId(tx.id);
+
               const deleteHandler =
-                isDeleting
+                isDeleting || pendingSync
                   ? undefined
                   : () => {
                       const entryKind = isIncome ? "income entry" : "expense";
@@ -148,6 +151,7 @@ export function TransactionTimeline({
                   borderClassName={
                     isIncome ? "border-l-secondary" : "border-l-tertiary"
                   }
+                  pendingSync={pendingSync}
                   onDelete={deleteHandler}
                 />
               );

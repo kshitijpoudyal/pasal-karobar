@@ -10,6 +10,7 @@ import { AppNavProvider } from "@/providers/app-nav-provider";
 import { ConfirmDrawerProvider } from "@/components/confirm-drawer";
 import { ToastViewport } from "@/components/toast";
 import { RecordTransactionModalProvider } from "@/features/transactions";
+import { ConnectivityProvider } from "@/providers/connectivity-provider";
 import { PwaInstallProvider } from "@/providers/pwa-install-provider";
 
 type AppProvidersProps = {
@@ -25,6 +26,7 @@ export function AppProviders({ children }: AppProvidersProps) {
           <BusinessProvider>
             <SupabaseGate>
               <BusinessGate>
+                <ConnectivityProvider>
                 <AppNavProvider>
                   <ConfirmDrawerProvider>
                     <RecordTransactionModalProvider>
@@ -33,6 +35,7 @@ export function AppProviders({ children }: AppProvidersProps) {
                     </RecordTransactionModalProvider>
                   </ConfirmDrawerProvider>
                 </AppNavProvider>
+                </ConnectivityProvider>
               </BusinessGate>
             </SupabaseGate>
           </BusinessProvider>

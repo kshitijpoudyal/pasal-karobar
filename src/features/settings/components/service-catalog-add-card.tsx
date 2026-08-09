@@ -18,7 +18,7 @@ export function ServiceCatalogAddCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "squircle group flex h-full min-h-[16.5rem] w-full min-w-0 flex-row items-center justify-center gap-4",
+        "squircle group flex w-full min-w-0 flex-row items-center justify-center gap-4",
         "border-2 border-dashed border-outline-variant bg-surface-container-high",
         "p-5 transition-colors sm:p-8",
         "hover:border-primary hover:bg-primary-container/20",

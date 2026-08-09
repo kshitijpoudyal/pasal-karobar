@@ -26,6 +26,7 @@ type TransactionActivityCardProps = {
   borderClassName: string;
   onEdit?: () => void;
   onDelete?: () => void;
+  pendingSync?: boolean;
 };
 
 type ActivityItemMoreMenuProps = {
@@ -132,8 +133,9 @@ export function TransactionActivityCard({
   borderClassName,
   onEdit,
   onDelete,
+  pendingSync = false,
 }: TransactionActivityCardProps) {
-  const hasActions = Boolean(onEdit || onDelete);
+  const hasActions = Boolean(onEdit || onDelete) && !pendingSync;
   const mobileAmount = mobileTotal ?? 0;
 
   return (
@@ -164,6 +166,11 @@ export function TransactionActivityCard({
             ) : null}
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
               <span className="text-[10px] text-on-surface-variant">{time}</span>
+              {pendingSync ? (
+                <span className="rounded-full bg-primary-container px-2 py-0.5 text-[9px] font-semibold tracking-wide text-on-primary-container uppercase">
+                  Pending sync
+                </span>
+              ) : null}
               <PaymentMethodIcon method={paymentMethod} />
             </div>
           </div>
@@ -219,6 +226,11 @@ export function TransactionActivityCard({
                 <Clock className="size-3.5" strokeWidth={1.75} />
                 {time}
               </span>
+              {pendingSync ? (
+                <span className="rounded-full bg-primary-container px-2 py-0.5 text-[10px] font-semibold tracking-wide text-on-primary-container uppercase">
+                  Pending sync
+                </span>
+              ) : null}
               <span className="hidden size-1 rounded-full bg-outline-variant sm:block" />
               <PaymentMethodIcon method={paymentMethod} />
             </div>

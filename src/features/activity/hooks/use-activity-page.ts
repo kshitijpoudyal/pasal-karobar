@@ -23,6 +23,7 @@ import {
   type ActivityPaymentFilter,
 } from "@/features/activity/constants";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
+import { isPendingSyncTransactionId } from "@/offline/pending-transaction";
 
 function titleForSearch(
   tx: Transaction,
@@ -64,7 +65,7 @@ function transactionMatchesSearch(
 export function useActivityPage() {
   const { businessId } = useActiveBusiness();
   const timeZone = useBusinessTimeZone();
-  const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
+  const [timeframe, setTimeframe] = useState<ActivityTimeframe>("Today");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
   const [paymentMethod, setPaymentMethod] =
     useState<ActivityPaymentFilter>("All");
@@ -167,7 +168,12 @@ export function useActivityPage() {
   }
 
   async function deleteTransaction(transactionId: string) {
-    if (transactionId.startsWith("optimistic-")) return;
+    if (
+      transactionId.startsWith("optimistic-") ||
+      isPendingSyncTransactionId(transactionId)
+    ) {
+      return;
+    }
     await deleteMutation.mutateAsync(transactionId);
   }
 

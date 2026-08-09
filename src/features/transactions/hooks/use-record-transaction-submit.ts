@@ -7,14 +7,21 @@ import { useCreateTransactionMutation } from "@/hooks/queries/use-transaction-qu
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
+import { useConnectivity } from "@/providers/connectivity-provider";
 import { createTransactionSchema, type CreateTransactionInput } from "@/services/schemas";
+import { shouldQueueTransactionOffline } from "@/offline/pending-transaction";
 import { uiPaymentToDb, type UiPaymentMethod } from "@/utils/payment-method";
 
 export function useRecordTransactionSubmit(onSuccess: () => void) {
   const { businessId } = useActiveBusiness();
+  const { isOnline: appOnline } = useConnectivity();
   const servicesQuery = useServiceCatalogQuery(businessId);
   const categoriesQuery = useExpenseCategoriesQuery(businessId);
   const createMutation = useCreateTransactionMutation(businessId);
+
+  function shouldQueueOffline(): boolean {
+    return shouldQueueTransactionOffline(appOnline);
+  }
 
   async function submitIncome(input: {
     serviceId: string;
@@ -37,10 +44,15 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
         ? { customer_phone: input.customerPhone.trim() }
         : {}),
     } satisfies CreateTransactionInput);
-    await createMutation.mutateAsync(payload);
+    const queuedOffline = shouldQueueOffline();
+    const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
+
+    await createMutation.mutateAsync({ ...payload, offlineClientId });
     toast({
       title: "Entry added",
-      description: "Income recorded successfully.",
+      description: queuedOffline
+        ? "Saved on this device — will sync when you're back online."
+        : "Income recorded successfully.",
     });
     onSuccess();
   }
@@ -61,10 +73,15 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       note: input.note ?? null,
       transaction_date: new Date().toISOString(),
     } satisfies CreateTransactionInput);
-    await createMutation.mutateAsync(payload);
+    const queuedOffline = shouldQueueOffline();
+    const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
+
+    await createMutation.mutateAsync({ ...payload, offlineClientId });
     toast({
       title: "Entry added",
-      description: "Expense recorded successfully.",
+      description: queuedOffline
+        ? "Saved on this device — will sync when you're back online."
+        : "Expense recorded successfully.",
     });
     onSuccess();
   }

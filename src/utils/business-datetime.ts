@@ -207,6 +207,11 @@ export function getActivityDateRangeInTimeZone(
   const to = endOfZonedDay(todayKey, timeZone).toISOString();
 
   switch (timeframe) {
+    case "Today":
+      return {
+        from: startOfZonedDay(todayKey, timeZone).toISOString(),
+        to,
+      };
     case "This Week": {
       const isoDay = isoDayInTimeZone(now.toISOString(), timeZone);
       const weekStartKey = addDaysToDateKey(todayKey, -(isoDay - 1));

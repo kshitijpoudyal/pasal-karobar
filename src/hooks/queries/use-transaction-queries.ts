@@ -10,11 +10,22 @@ import {
 import { queryKeys } from "@/constants/query-keys";
 import {
   removeTransactionFromListCaches,
+  replaceTransactionInListCaches,
   restoreTransactionListSnapshots,
+  scheduleAfterTransactionChange,
   snapshotTransactionLists,
-  syncAfterTransactionChange,
 } from "@/hooks/queries/transaction-query-cache";
-import { syncAfterCustomerLinkedTransaction } from "@/hooks/queries/use-customer-queries";
+import {
+  enqueueOutboxEntry,
+  type OutboxEntry,
+} from "@/offline/outbox-store";
+import { notifyOutboxChanged } from "@/offline/outbox-events";
+import {
+  buildPendingTransaction,
+  isBrowserOnline,
+  isPendingSyncTransactionId,
+  pendingSyncTransactionId,
+} from "@/offline/pending-transaction";
 import type { TransactionListFilters } from "@/repository";
 import { getClientAppServices } from "@/services/client";
 import type {
@@ -23,6 +34,17 @@ import type {
 } from "@/services/schemas";
 import type { Transaction } from "@/types/database";
 import { isSupabaseConfigured } from "@/utils/env";
+
+export type CreateTransactionMutationVariables = CreateTransactionInput & {
+  offlineClientId?: string;
+};
+
+function stripOfflineMeta(
+  input: CreateTransactionMutationVariables,
+): CreateTransactionInput {
+  const { offlineClientId: _offlineClientId, ...payload } = input;
+  return payload;
+}
 
 export function useTransactionsQuery(
   businessId: string,
@@ -60,44 +82,92 @@ export function useCreateTransactionMutation(businessId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateTransactionInput) =>
-      getClientAppServices().transaction.create(input),
+    networkMode: "always",
+    mutationFn: async (input: CreateTransactionMutationVariables) => {
+      const payload = stripOfflineMeta(input);
+      const queueOffline =
+        Boolean(input.offlineClientId) || !isBrowserOnline();
+      if (queueOffline) {
+        const clientId = input.offlineClientId ?? crypto.randomUUID();
+        const entry: OutboxEntry = {
+          clientId,
+          businessId: payload.business_id,
+          payload,
+          createdAt: new Date().toISOString(),
+          status: "pending",
+        };
+        await enqueueOutboxEntry(entry);
+        notifyOutboxChanged();
+        return buildPendingTransaction(clientId, businessId, payload);
+      }
+      return getClientAppServices().transaction.create(payload);
+    },
     onMutate: async (input) => {
-      await queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
-      const listKey = queryKeys.transactions.list(businessId);
-      const previous = queryClient.getQueryData<Transaction[]>(listKey);
+      const payload = stripOfflineMeta(input);
+      void queryClient.cancelQueries({ queryKey: queryKeys.transactions.all });
+      const previousLists = snapshotTransactionLists(queryClient, businessId);
+
+      const offline = !isBrowserOnline();
+      const clientId =
+        input.offlineClientId ?? (offline ? crypto.randomUUID() : undefined);
+      const optimisticId = clientId
+        ? pendingSyncTransactionId(clientId)
+        : `optimistic-${Date.now()}`;
 
       const optimistic: Transaction = {
-        id: `optimistic-${Date.now()}`,
+        id: optimisticId,
         business_id: businessId,
-        type: input.type,
-        service_id: input.type === "INCOME" ? input.service_id : null,
+        type: payload.type,
+        service_id: payload.type === "INCOME" ? payload.service_id : null,
         expense_category_id:
-          input.type === "EXPENSE" ? input.expense_category_id : null,
+          payload.type === "EXPENSE" ? payload.expense_category_id : null,
         customer_id: null,
-        subtotal: input.subtotal,
-        tip: input.type === "INCOME" ? (input.tip ?? 0) : 0,
-        total: input.total,
-        payment_method: input.payment_method,
-        note: input.note ?? null,
-        transaction_date: input.transaction_date,
+        subtotal: payload.subtotal,
+        tip: payload.type === "INCOME" ? (payload.tip ?? 0) : 0,
+        total: payload.total,
+        payment_method: payload.payment_method,
+        note: payload.note ?? null,
+        transaction_date: payload.transaction_date,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
 
-      queryClient.setQueryData<Transaction[]>(listKey, (current) =>
-        current ? [optimistic, ...current] : [optimistic],
+      queryClient.setQueriesData<Transaction[]>(
+        {
+          queryKey: queryKeys.transactions.all,
+          predicate: (query) =>
+            query.queryKey[0] === queryKeys.transactions.all[0] &&
+            query.queryKey[1] === "list" &&
+            query.queryKey[2] === businessId,
+        },
+        (current) =>
+          current ? [optimistic, ...current] : [optimistic],
       );
 
-      return { previous, listKey };
+      return { previousLists, offlineClientId: clientId, optimisticId };
     },
-    onError: (_error, _input, context) => {
-      if (context?.listKey && context.previous) {
-        queryClient.setQueryData(context.listKey, context.previous);
+    onError: (_error, input, context) => {
+      if (context?.previousLists) {
+        restoreTransactionListSnapshots(queryClient, context.previousLists);
+      }
+      if (!isBrowserOnline() && input.offlineClientId) {
+        notifyOutboxChanged();
       }
     },
-    onSettled: async () => {
-      await syncAfterCustomerLinkedTransaction(queryClient, businessId);
+    onSuccess: (data, _input, context) => {
+      if (isPendingSyncTransactionId(data.id)) {
+        notifyOutboxChanged();
+        return;
+      }
+      if (context?.optimisticId) {
+        replaceTransactionInListCaches(
+          queryClient,
+          businessId,
+          context.optimisticId,
+          data,
+        );
+      }
+      scheduleAfterTransactionChange(queryClient);
     },
   });
 }
@@ -112,7 +182,7 @@ export function useUpdateTransactionMutation(
     mutationFn: (input: UpdateTransactionInput) =>
       getClientAppServices().transaction.update(transactionId, input),
     onSuccess: async () => {
-      await syncAfterTransactionChange(queryClient);
+      scheduleAfterTransactionChange(queryClient);
     },
   });
 }
@@ -134,8 +204,8 @@ export function useDeleteTransactionMutation(businessId: string) {
         restoreTransactionListSnapshots(queryClient, context.snapshots);
       }
     },
-    onSettled: async () => {
-      await syncAfterTransactionChange(queryClient);
+    onSettled: () => {
+      scheduleAfterTransactionChange(queryClient);
     },
   });
 }

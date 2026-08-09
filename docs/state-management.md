@@ -56,4 +56,6 @@ Feature-level hooks (UI orchestration, filters, forms) live under `src/features/
 
 ## Global providers
 
-Composed in `src/providers/app-providers.tsx`: Theme → TanStack Query → Auth → Business → SupabaseGate → record-transaction modal provider.
+Composed in `src/providers/app-providers.tsx`: Theme → TanStack Query (persisted cache) → Auth → Business → SupabaseGate → BusinessGate → **Connectivity (outbox sync)** → record-transaction modal provider.
+
+Offline recording, outbox, and QA: [offline.md](./offline.md).

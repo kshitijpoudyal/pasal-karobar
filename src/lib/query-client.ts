@@ -7,6 +7,7 @@ function makeQueryClient() {
         staleTime: 60 * 1000,
         refetchOnWindowFocus: false,
         retry: 1,
+        networkMode: "offlineFirst",
       },
       mutations: {
         retry: 0,

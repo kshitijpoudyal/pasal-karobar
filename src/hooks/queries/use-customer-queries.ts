@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 
 import { queryKeys } from "@/constants/query-keys";
-import { syncAfterTransactionChange } from "@/hooks/queries/transaction-query-cache";
+import { scheduleAfterTransactionChange } from "@/hooks/queries/transaction-query-cache";
 import { getClientAppServices } from "@/services/client";
 import type { CreateCustomerInput, UpdateCustomerInput } from "@/services/schemas";
 import type { Customer } from "@/types/database";
@@ -47,8 +47,8 @@ export function useCreateCustomerMutation(businessId: string) {
   return useMutation({
     mutationFn: (input: CreateCustomerInput) =>
       getClientAppServices().customer.create(businessId, input),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
         queryKey: queryKeys.customers.list(businessId),
       });
     },
@@ -79,10 +79,7 @@ export function useUpdateCustomerMutation(businessId: string) {
 
 export async function syncAfterCustomerLinkedTransaction(
   queryClient: ReturnType<typeof useQueryClient>,
-  businessId: string,
+  _businessId: string,
 ): Promise<void> {
-  await syncAfterTransactionChange(queryClient);
-  await queryClient.invalidateQueries({
-    queryKey: queryKeys.customers.list(businessId),
-  });
+  scheduleAfterTransactionChange(queryClient);
 }

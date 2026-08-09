@@ -12,6 +12,12 @@ import {
   useBusinessListQuery,
   useCreateBusinessMutation,
 } from "@/hooks/queries/use-business-queries";
+import {
+  readCachedBusiness,
+  readCachedBusinessId,
+  writeCachedBusiness,
+} from "@/offline/cached-business";
+import { isBrowserOnline } from "@/offline/pending-transaction";
 import { DEFAULT_BOOTSTRAP_BUSINESS } from "@/services/onboarding-defaults";
 import { useAuth } from "@/providers/auth-provider";
 import type { Business } from "@/types/database";
@@ -38,6 +44,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!enabled || listQuery.isLoading) return;
+    if (!isBrowserOnline()) return;
     if (listQuery.data && listQuery.data.length > 0) return;
     if (bootstrapped.current || createMutation.isPending) return;
 
@@ -49,11 +56,24 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     });
   }, [enabled, listQuery.isLoading, listQuery.data, createMutation]);
 
-  const business = useMemo(() => {
+  const businessFromList = useMemo(() => {
     const list = listQuery.data ?? [];
     if (list.length === 0) return null;
     return list.find((b) => b.id === DEMO_BUSINESS_ID) ?? list[0] ?? null;
   }, [listQuery.data]);
+
+  useEffect(() => {
+    if (!businessFromList) return;
+    writeCachedBusiness(businessFromList);
+  }, [businessFromList]);
+
+  const business = useMemo(() => {
+    if (businessFromList) return businessFromList;
+    if (!isBrowserOnline()) {
+      return readCachedBusiness();
+    }
+    return null;
+  }, [businessFromList]);
 
   const bootstrapPending =
     enabled &&
@@ -62,26 +82,36 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     (createMutation.isPending ||
       (!bootstrapped.current && !createMutation.isError));
 
+  const cachedBusinessId = readCachedBusinessId();
+  const offlineWithCache =
+    !isBrowserOnline() && Boolean(business?.id ?? cachedBusinessId);
+
   const value = useMemo<BusinessContextValue>(
     () => ({
       business,
-      businessId: business?.id ?? "",
+      businessId: business?.id ?? cachedBusinessId ?? "",
       isLoading:
         !isSupabaseConfigured() ||
         !session ||
-        listQuery.isLoading ||
-        createMutation.isPending ||
-        bootstrapPending,
-      error: (listQuery.error ?? createMutation.error) as Error | null,
+        (offlineWithCache
+          ? false
+          : listQuery.isLoading ||
+            createMutation.isPending ||
+            bootstrapPending),
+      error: offlineWithCache
+        ? null
+        : ((listQuery.error ?? createMutation.error) as Error | null),
     }),
     [
       business,
+      cachedBusinessId,
       session,
       listQuery.isLoading,
       listQuery.error,
       createMutation.isPending,
       createMutation.error,
       bootstrapPending,
+      offlineWithCache,
     ],
   );
 
