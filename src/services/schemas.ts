@@ -61,11 +61,26 @@ export const updateExpenseCategorySchema = createExpenseCategorySchema
 
 export const updateCustomerSchema = z.object({
   name: z.string().trim().max(200).nullable().optional(),
+  profile_note: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const updateCustomerPhotoCaptionSchema = z.object({
+  caption: z.string().trim().max(100).nullable(),
+});
+
+export const uploadCustomerPhotoSchema = z.object({
+  business_id: z.string().uuid(),
+  customer_id: z.string().uuid(),
+  content_type: z.string(),
+  byte_length: z.number().int().positive(),
+  caption: z.string().trim().max(100).nullable().optional(),
+  data: z.instanceof(ArrayBuffer),
 });
 
 export const createCustomerSchema = z.object({
   phone: z.string().trim().min(1).max(32),
   name: z.string().trim().max(200).optional(),
+  profile_note: z.string().trim().max(2000).nullable().optional(),
 });
 
 const transactionBaseSchema = z.object({
@@ -129,6 +144,10 @@ export type UpdateExpenseCategoryInput = z.infer<
 >;
 export type UpdateCustomerInput = z.infer<typeof updateCustomerSchema>;
 export type CreateCustomerInput = z.infer<typeof createCustomerSchema>;
+export type UpdateCustomerPhotoCaptionInput = z.infer<
+  typeof updateCustomerPhotoCaptionSchema
+>;
+export type UploadCustomerPhotoInput = z.infer<typeof uploadCustomerPhotoSchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
 export type UpsertBusinessSettingInput = z.infer<

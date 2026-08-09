@@ -34,6 +34,7 @@ function customer(
     phone: "9841234567",
     phone_normalized: "9841234567",
     name: null,
+    profile_note: null,
     first_visit_at,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",

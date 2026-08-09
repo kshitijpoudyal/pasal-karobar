@@ -5,16 +5,20 @@ import { useMemo, useState } from "react";
 import {
   aggregateCustomerDirectoryStats,
   computeCustomerPeriodInsights,
-  EMPTY_CUSTOMER_PERIOD_INSIGHTS,
   filterIncomeInInstantRange,
 } from "@/services/customer-analytics.service";
+import {
+  hasCustomerSecondaryFilters,
+  type CustomerVisitFilter,
+} from "@/features/customers/constants";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
 import type { Customer } from "@/types/database";
-import { zonedPeriodBounds } from "@/utils/business-datetime";
+import { getActivityDateRange, type ActivityTimeframe } from "@/utils/date-ranges";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
+import { groupCustomersByLastVisit } from "@/features/customers/components/customer-timeline";
 
 export type CustomerDirectoryRow = {
   customer: Customer;
@@ -27,18 +31,17 @@ export type CustomerDirectoryRow = {
 export function useCustomersPage() {
   const { businessId } = useActiveBusiness();
   const timeZone = useBusinessTimeZone();
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
-    null,
-  );
   const [searchQuery, setSearchQuery] = useState("");
+  const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
+  const [visitFilter, setVisitFilter] = useState<CustomerVisitFilter>("All");
 
   const customersQuery = useCustomersQuery(businessId);
   const allIncomeQuery = useTransactionsQuery(businessId, { type: "INCOME" });
 
-  const statsWeekRange = useMemo(() => {
-    const now = new Date();
-    return zonedPeriodBounds("week", now, timeZone, now);
-  }, [timeZone]);
+  const periodRange = useMemo(
+    () => getActivityDateRange(timeframe, timeZone),
+    [timeframe, timeZone],
+  );
 
   const customersById = useMemo(() => {
     const map = new Map<string, Customer>();
@@ -51,16 +54,21 @@ export function useCustomersPage() {
   const periodInsights = useMemo(() => {
     const income = filterIncomeInInstantRange(
       allIncomeQuery.data ?? [],
-      statsWeekRange.from,
-      statsWeekRange.to,
+      periodRange.from,
+      periodRange.to,
     );
     return computeCustomerPeriodInsights(
       income,
       customersById,
-      statsWeekRange.from,
-      statsWeekRange.to,
+      periodRange.from,
+      periodRange.to,
     );
-  }, [allIncomeQuery.data, customersById, statsWeekRange.from, statsWeekRange.to]);
+  }, [
+    allIncomeQuery.data,
+    customersById,
+    periodRange.from,
+    periodRange.to,
+  ]);
 
   const directoryRows = useMemo(() => {
     const stats = aggregateCustomerDirectoryStats(allIncomeQuery.data ?? []);
@@ -88,38 +96,46 @@ export function useCustomersPage() {
   }, [allIncomeQuery.data, customersQuery.data]);
 
   const filteredDirectory = useMemo(() => {
+    let rows = directoryRows;
+    if (visitFilter === "With visits") {
+      rows = rows.filter((row) => row.visitCount > 0);
+    } else if (visitFilter === "No visits") {
+      rows = rows.filter((row) => row.visitCount === 0);
+    }
+
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return directoryRows;
-    return directoryRows.filter((row) => {
+    if (!q) return rows;
+    return rows.filter((row) => {
       const name = row.customer.name?.toLowerCase() ?? "";
       const phone = row.customer.phone_normalized;
       return name.includes(q) || phone.includes(q.replace(/\D/g, ""));
     });
-  }, [directoryRows, searchQuery]);
+  }, [directoryRows, searchQuery, visitFilter]);
 
-  const selectedCustomer = selectedCustomerId
-    ? (customersById.get(selectedCustomerId) ?? null)
-    : null;
+  const groupedCustomers = useMemo(
+    () => groupCustomersByLastVisit(filteredDirectory, timeZone),
+    [filteredDirectory, timeZone],
+  );
 
-  const selectedCustomerVisits = useMemo(() => {
-    if (!selectedCustomerId) return [];
-    return (allIncomeQuery.data ?? []).filter(
-      (tx) => tx.customer_id === selectedCustomerId,
-    );
-  }, [allIncomeQuery.data, selectedCustomerId]);
+  const totalCustomers = directoryRows.length;
+  const hasSecondaryFilters = hasCustomerSecondaryFilters(visitFilter);
+  const hasActiveSearch = searchQuery.trim().length > 0;
 
   return {
     businessId,
     timeZone,
+    timeframe,
+    setTimeframe,
+    visitFilter,
+    setVisitFilter,
     periodInsights,
-    statsPeriodLabel: "This week" as const,
+    totalCustomers,
     directoryRows: filteredDirectory,
+    groupedCustomers,
     searchQuery,
     setSearchQuery,
-    selectedCustomer,
-    selectedCustomerId,
-    setSelectedCustomerId,
-    selectedCustomerVisits,
+    hasSecondaryFilters,
+    hasActiveSearch,
     isLoading: customersQuery.isLoading || allIncomeQuery.isLoading,
     error: customersQuery.error ?? allIncomeQuery.error ?? null,
     refetch: async () => {

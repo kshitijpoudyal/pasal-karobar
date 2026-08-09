@@ -35,7 +35,13 @@ type CustomerPhoneAutocompleteProps = {
   label?: string;
   value: string;
   onChange: (value: string) => void;
+  inputClassName?: string;
+  /** Matches squircle field cards in add-customer (same as name / notes). */
+  variant?: "default" | "embedded";
 };
+
+const EMBEDDED_INPUT_CLASS =
+  "font-body w-full border-none bg-transparent p-0 text-lg font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0";
 
 export function CustomerPhoneAutocomplete({
   id,
@@ -43,6 +49,8 @@ export function CustomerPhoneAutocomplete({
   label = "Customer phone (optional)",
   value,
   onChange,
+  inputClassName,
+  variant = "default",
 }: CustomerPhoneAutocompleteProps) {
   const listboxId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -78,7 +86,15 @@ export function CustomerPhoneAutocomplete({
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div
+      ref={rootRef}
+      className={cn(
+        "relative",
+        variant === "embedded"
+          ? "squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm"
+          : "flex flex-col gap-2",
+      )}
+    >
       <label htmlFor={id} className={labelClassName}>
         {label}
       </label>
@@ -115,7 +131,12 @@ export function CustomerPhoneAutocomplete({
             setOpen(false);
           }
         }}
-        className="font-body mt-3 w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-4 py-3 text-base text-on-surface outline-none focus:border-primary"
+        className={cn(
+          variant === "embedded"
+            ? EMBEDDED_INPUT_CLASS
+            : "font-body w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-4 py-3 text-base text-on-surface outline-none focus:border-primary",
+          inputClassName,
+        )}
       />
       {showList ? (
         <ul

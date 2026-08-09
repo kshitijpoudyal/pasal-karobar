@@ -107,6 +107,7 @@ export type Customer = {
   phone: string;
   phone_normalized: string;
   name: string | null;
+  profile_note: string | null;
   first_visit_at: string | null;
   created_at: string;
   updated_at: string;
@@ -116,11 +117,40 @@ export type CustomerInsert = Pick<
   Customer,
   "business_id" | "phone" | "phone_normalized"
 > &
-  Partial<Pick<Customer, "name" | "first_visit_at">>;
+  Partial<Pick<Customer, "name" | "first_visit_at" | "profile_note">>;
 
 export type CustomerUpdate = Partial<
-  Pick<Customer, "phone" | "phone_normalized" | "name" | "first_visit_at">
+  Pick<
+    Customer,
+    "phone" | "phone_normalized" | "name" | "first_visit_at" | "profile_note"
+  >
 >;
+
+export type CustomerPhoto = {
+  id: string;
+  business_id: string;
+  customer_id: string;
+  storage_path: string;
+  caption: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CustomerPhotoInsert = Pick<
+  CustomerPhoto,
+  "business_id" | "customer_id" | "storage_path" | "sort_order"
+> &
+  Partial<Pick<CustomerPhoto, "caption">> & { id?: string };
+
+export type CustomerPhotoUpdate = Partial<
+  Pick<CustomerPhoto, "caption" | "sort_order">
+>;
+
+/** Row plus signed URL for display (client-only enrichment). */
+export type CustomerPhotoWithUrl = CustomerPhoto & {
+  signed_url: string;
+};
 
 export type Transaction = {
   id: string;
@@ -238,6 +268,12 @@ export type Database = {
         Row: Customer;
         Insert: CustomerInsert & { id?: string };
         Update: CustomerUpdate;
+        Relationships: [];
+      };
+      customer_photos: {
+        Row: CustomerPhoto;
+        Insert: CustomerPhotoInsert;
+        Update: CustomerPhotoUpdate;
         Relationships: [];
       };
       transactions: {

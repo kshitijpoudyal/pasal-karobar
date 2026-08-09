@@ -60,6 +60,9 @@ export class CustomerService {
       phone: parsed.display,
       phone_normalized: parsed.normalized,
       name: payload.name?.trim() ? payload.name.trim() : null,
+      profile_note: payload.profile_note?.trim()
+        ? payload.profile_note.trim()
+        : null,
       first_visit_at: null,
     });
   }

@@ -51,4 +51,9 @@ export const queryKeys = {
     detail: (id: string) =>
       [...queryKeys.customers.all, "detail", id] as const,
   },
+  customerPhotos: {
+    all: ["customer-photos"] as const,
+    list: (customerId: string) =>
+      [...queryKeys.customerPhotos.all, "list", customerId] as const,
+  },
 } as const;

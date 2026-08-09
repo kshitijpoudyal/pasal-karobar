@@ -3,7 +3,13 @@
 import { useEffect, useId, useState } from "react";
 import { CirclePlus, Loader2, X } from "lucide-react";
 
+import {
+  CustomerPhotoDraftPicker,
+  revokePendingPhotoUrls,
+  type PendingCustomerPhoto,
+} from "@/features/customers/components/customer-photo-draft-picker";
 import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
+import { useUploadCustomerPhotoMutation } from "@/hooks/queries/use-customer-photo-queries";
 import { useCreateCustomerMutation } from "@/hooks/queries/use-customer-queries";
 import { useConnectivity } from "@/providers/connectivity-provider";
 import {
@@ -11,15 +17,19 @@ import {
   CustomerPhoneError,
 } from "@/services/customer.service";
 import { cn } from "@/lib/utils";
+import type { Customer } from "@/types/database";
 
 const FIELD_LABEL =
   "font-body block text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase";
+
+const SQUIRCLE_FIELD_INPUT =
+  "font-body w-full border-none bg-transparent p-0 text-lg font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0";
 
 type AddCustomerModalProps = {
   open: boolean;
   businessId: string;
   onClose: () => void;
-  onCreated?: (customerId: string) => void;
+  onCreated?: (customer: Customer) => void;
 };
 
 export function AddCustomerModal({
@@ -30,17 +40,27 @@ export function AddCustomerModal({
 }: AddCustomerModalProps) {
   const titleId = useId();
   const nameInputId = useId();
+  const noteInputId = useId();
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [note, setNote] = useState("");
+  const [pendingPhotos, setPendingPhotos] = useState<PendingCustomerPhoto[]>([]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const createMutation = useCreateCustomerMutation(businessId);
+  const uploadPhotoMutation = useUploadCustomerPhotoMutation(businessId);
   const { isOnline } = useConnectivity();
 
   useEffect(() => {
     if (!open) return;
     setPhone("");
     setName("");
+    setNote("");
     setFormError(null);
+    setPendingPhotos((prev) => {
+      revokePendingPhotoUrls(prev);
+      return [];
+    });
   }, [open]);
 
   useEffect(() => {
@@ -60,12 +80,28 @@ export function AddCustomerModal({
       return;
     }
     setFormError(null);
+    setIsSaving(true);
     try {
       const customer = await createMutation.mutateAsync({
         phone: phone.trim(),
         ...(name.trim() ? { name: name.trim() } : {}),
+        ...(note.trim() ? { profile_note: note.trim() } : {}),
       });
-      onCreated?.(customer.id);
+
+      for (const photo of pendingPhotos) {
+        await uploadPhotoMutation.mutateAsync({
+          business_id: businessId,
+          customer_id: customer.id,
+          content_type: photo.contentType,
+          byte_length: photo.byteLength,
+          data: photo.data,
+          caption: photo.caption.trim() || null,
+        });
+      }
+
+      revokePendingPhotoUrls(pendingPhotos);
+      setPendingPhotos([]);
+      onCreated?.(customer);
       onClose();
     } catch (error) {
       if (error instanceof CustomerPhoneError || error instanceof CustomerDuplicateError) {
@@ -75,10 +111,13 @@ export function AddCustomerModal({
       setFormError(
         error instanceof Error ? error.message : "Could not save customer.",
       );
+    } finally {
+      setIsSaving(false);
     }
   }
 
-  const canSubmit = phone.trim().length > 0 && !createMutation.isPending && isOnline;
+  const canSubmit =
+    phone.trim().length > 0 && !isSaving && !createMutation.isPending && isOnline;
 
   return (
     <div
@@ -103,6 +142,7 @@ export function AddCustomerModal({
             aria-hidden
           />
         </div>
+
         <div className="shrink-0 px-6 pt-2 pb-4 lg:px-8 lg:pt-8 lg:pb-6">
           <header className="flex items-center justify-between">
             <h2
@@ -129,6 +169,7 @@ export function AddCustomerModal({
             labelClassName={FIELD_LABEL}
             value={phone}
             onChange={setPhone}
+            variant="embedded"
           />
 
           <div className="squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm">
@@ -142,9 +183,29 @@ export function AddCustomerModal({
               placeholder="Customer name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              className="font-body w-full border-none bg-transparent p-0 text-lg font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0"
+              className={SQUIRCLE_FIELD_INPUT}
             />
           </div>
+
+          <div className="squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm">
+            <label className={FIELD_LABEL} htmlFor={noteInputId}>
+              Notes (optional)
+            </label>
+            <textarea
+              id={noteInputId}
+              rows={3}
+              placeholder="Preferences, allergies, special requests…"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              className={cn(SQUIRCLE_FIELD_INPUT, "resize-none")}
+            />
+          </div>
+
+          <CustomerPhotoDraftPicker
+            photos={pendingPhotos}
+            onChange={setPendingPhotos}
+            disabled={!isOnline || isSaving}
+          />
         </div>
 
         <footer className="shrink-0 bg-surface-bright px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pt-6 lg:pb-8">
@@ -159,7 +220,7 @@ export function AddCustomerModal({
             onClick={() => void handleSubmit()}
             className="font-headline deep-indigo-gradient squircle flex h-16 w-full items-center justify-center gap-3 text-xl font-medium tracking-wide text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
           >
-            {createMutation.isPending ? (
+            {isSaving || createMutation.isPending ? (
               <>
                 <Loader2 className="size-6 animate-spin" aria-hidden />
                 Saving…

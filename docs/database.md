@@ -110,6 +110,7 @@ Primary key: `(business_id, setting_key)`.
 | phone              | Display formatting (as entered) |
 | phone_normalized   | Dedup key; unique per business (10-digit Nepal mobile) |
 | name               | Optional profile label |
+| profile_note       | Optional free-text note (hairstyle preferences, etc.) |
 | first_visit_at     | First linked income; used for new vs returning analytics |
 | created_at         |       |
 | updated_at         |       |
@@ -117,6 +118,25 @@ Primary key: `(business_id, setting_key)`.
 Unique: `(business_id, phone_normalized)`.
 
 Phone normalization (app): strip spaces/dashes; accept `98xxxxxxxx`, `977…`, `+977…`; store **`phone_normalized`** as 10 digits (e.g. `9841234567`).
+
+---
+
+## `customer_photos`
+
+Hairstyle reference images for a customer profile (max **5** per customer enforced in app).
+
+| Column        | Notes |
+| ------------- | ----- |
+| id            |       |
+| business_id   |       |
+| customer_id   | FK → `customers` (CASCADE on delete) |
+| storage_path  | Key in Storage bucket `customer-photos` |
+| caption       | Optional label (e.g. “Fade”) |
+| sort_order    | `0`–`4` display order |
+| created_at    |       |
+| updated_at    |       |
+
+Files live in private bucket **`customer-photos`** at path `{business_id}/{customer_id}/{photo_id}.{ext}`. RLS on `storage.objects` uses `is_business_member` on the first path segment.
 
 ---
 
@@ -191,6 +211,7 @@ SQL migrations live in `supabase/migrations/`.
 | `20260807150000_business_profile_to_settings.sql` | Profile fields → `business_settings`; slim `business` |
 | `20260807153000_seed_default_catalog_on_create.sql` | Default services/categories on create; `seed_default_business_catalog` RPC |
 | `20260808120000_customers.sql` | `customers` table; `transactions.customer_id`; RLS |
+| `20260809140000_customer_profile_photos.sql` | `profile_note`; `customer_photos`; Storage bucket `customer-photos` |
 
 Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supabase dashboard.
 
@@ -208,7 +229,9 @@ Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supaba
    (or `supabase/sql/seed_default_catalog_on_create.sql`).
 6. Paste and run `supabase/migrations/20260808120000_customers.sql`
    (or `supabase/sql/customers.sql` when present).
-7. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+7. Paste and run `supabase/migrations/20260809140000_customer_profile_photos.sql`
+   (or `supabase/sql/customer_profile_photos.sql`).
+8. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
 
 ### Daily mock transactions (dev / demo)
 
