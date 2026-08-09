@@ -94,7 +94,7 @@ export function RecordTransactionModal({
   const titleId = useId();
   const typeSelectId = useId();
   const [tab, setTab] = useState<Tab>("income");
-  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [price, setPrice] = useState("");
   const [tip, setTip] = useState("");
   const [payment, setPayment] = useState<PaymentMethod>("Cash");
@@ -102,6 +102,7 @@ export function RecordTransactionModal({
   const [expenseDesc, setExpenseDesc] = useState("");
   const [expenseCategoryId, setExpenseCategoryId] = useState<string | null>(null);
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const {
@@ -115,7 +116,7 @@ export function RecordTransactionModal({
 
   const resetFormState = useCallback(() => {
     setTab("income");
-    setSelectedServiceId(null);
+    setSelectedServiceIds([]);
     setPrice("");
     setTip("");
     setPayment("Cash");
@@ -123,6 +124,7 @@ export function RecordTransactionModal({
     setExpenseDesc("");
     setExpenseCategoryId(null);
     setCustomerPhone("");
+    setCustomerName("");
     setFormError(null);
   }, []);
 
@@ -154,9 +156,23 @@ export function RecordTransactionModal({
   const submitLabel =
     tab === "income" ? `Add ${formatRs(incomeTotal)}` : "Add Expense";
 
-  function selectService(serviceId: string, servicePrice: number) {
-    setSelectedServiceId(serviceId);
-    setPrice(String(servicePrice));
+  function sumDefaultPricesForServices(serviceIds: string[]): number {
+    const services = servicesQuery.data ?? [];
+    return serviceIds.reduce((sum, id) => {
+      const service = services.find((row) => row.id === id);
+      return sum + (service ? Number(service.default_price) : 0);
+    }, 0);
+  }
+
+  function toggleService(serviceId: string) {
+    setSelectedServiceIds((previous) => {
+      const next = previous.includes(serviceId)
+        ? previous.filter((id) => id !== serviceId)
+        : [...previous, serviceId];
+      const total = sumDefaultPricesForServices(next);
+      setPrice(total > 0 ? String(total) : "");
+      return next;
+    });
     setFormError(null);
   }
 
@@ -177,12 +193,12 @@ export function RecordTransactionModal({
       if (tab === "income") {
         const subtotal = parseFloat(price) || 0;
         const tipValue = parseFloat(tip) || 0;
-        if (!selectedServiceId) {
-          setFormError("Select a service.");
+        if (selectedServiceIds.length === 0) {
+          setFormError("Select at least one service.");
           return;
         }
         await submitIncome({
-          serviceId: selectedServiceId,
+          serviceIds: selectedServiceIds,
           subtotal,
           tip: tipValue,
           payment,
@@ -292,7 +308,13 @@ export function RecordTransactionModal({
           {tab === "income" ? (
             <div className="space-y-10">
               <div>
-                <p className={`${FIELD_LABEL} mb-4`}>Select Service</p>
+                <p className={`${FIELD_LABEL} mb-4`}>
+                  Select service
+                  <span className="normal-case tracking-normal text-on-surface-variant/80">
+                    {" "}
+                    · tap to select multiple
+                  </span>
+                </p>
                 {servicesQuery.isLoading ? (
                   <div className="flex items-center gap-2 py-4 text-sm text-on-surface-variant">
                     <Loader2 className="size-5 animate-spin" aria-hidden />
@@ -307,12 +329,12 @@ export function RecordTransactionModal({
                     {catalogServices.map((service) => {
                       const Icon = getServiceIconComponent(service.icon);
                       const defaultPrice = Number(service.default_price);
-                      const isActive = selectedServiceId === service.id;
+                      const isActive = selectedServiceIds.includes(service.id);
                       return (
                         <button
                           key={service.id}
                           type="button"
-                          onClick={() => selectService(service.id, defaultPrice)}
+                          onClick={() => toggleService(service.id)}
                           className={cn(
                             "service-card group shrink-0 bg-surface-container-lowest shadow-sm transition-all active:scale-95",
                             "flex min-w-[9.5rem] items-center gap-3 rounded-full border border-outline-variant/80 px-4 py-3",
@@ -360,9 +382,13 @@ export function RecordTransactionModal({
 
               <CustomerPhoneAutocomplete
                 id="record-income-phone"
+                label="Phone number (optional)"
                 labelClassName={FIELD_LABEL}
                 value={customerPhone}
                 onChange={setCustomerPhone}
+                nameValue={customerName}
+                onNameChange={setCustomerName}
+                showLinkedNameField
               />
 
               <PaymentMethodField payment={payment} onSelect={setPayment} />

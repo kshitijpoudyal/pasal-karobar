@@ -12,6 +12,39 @@ import { createTransactionSchema, type CreateTransactionInput } from "@/services
 import { shouldQueueTransactionOffline } from "@/offline/pending-transaction";
 import { uiPaymentToDb, type UiPaymentMethod } from "@/utils/payment-method";
 
+function allocateIncomeSubtotals(
+  serviceIds: string[],
+  combinedSubtotal: number,
+  defaultPriceByServiceId: Map<string, number>,
+): number[] {
+  if (serviceIds.length === 0) return [];
+  if (serviceIds.length === 1) return [combinedSubtotal];
+
+  const defaults = serviceIds.map(
+    (id) => defaultPriceByServiceId.get(id) ?? 0,
+  );
+  const autoSum = defaults.reduce((sum, value) => sum + value, 0);
+  if (autoSum <= 0) {
+    const even = Math.floor(combinedSubtotal / serviceIds.length);
+    let remainder = combinedSubtotal - even * serviceIds.length;
+    return serviceIds.map((_, index) =>
+      index === 0 ? even + remainder : even,
+    );
+  }
+
+  let allocated = 0;
+  return serviceIds.map((id, index) => {
+    if (index === serviceIds.length - 1) {
+      return combinedSubtotal - allocated;
+    }
+    const share = Math.round(
+      (combinedSubtotal * (defaultPriceByServiceId.get(id) ?? 0)) / autoSum,
+    );
+    allocated += share;
+    return share;
+  });
+}
+
 export function useRecordTransactionSubmit(onSuccess: () => void) {
   const { businessId } = useActiveBusiness();
   const { isOnline: appOnline } = useConnectivity();
@@ -24,35 +57,56 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
   }
 
   async function submitIncome(input: {
-    serviceId: string;
+    serviceIds: string[];
     subtotal: number;
     tip: number;
     payment: UiPaymentMethod;
     customerPhone?: string;
   }) {
     const tip = input.tip || 0;
-    const payload = createTransactionSchema.parse({
-      business_id: businessId,
-      type: "INCOME",
-      service_id: input.serviceId,
-      subtotal: input.subtotal,
-      tip,
-      total: input.subtotal + tip,
-      payment_method: uiPaymentToDb(input.payment),
-      transaction_date: new Date().toISOString(),
-      ...(input.customerPhone?.trim()
-        ? { customer_phone: input.customerPhone.trim() }
-        : {}),
-    } satisfies CreateTransactionInput);
+    const combinedSubtotal = input.subtotal;
+    const priceById = new Map(
+      (servicesQuery.data ?? []).map((service) => [
+        service.id,
+        Number(service.default_price),
+      ]),
+    );
+    const subtotals = allocateIncomeSubtotals(
+      input.serviceIds,
+      combinedSubtotal,
+      priceById,
+    );
     const queuedOffline = shouldQueueOffline();
-    const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
+    const transactionDate = new Date().toISOString();
+    const paymentMethod = uiPaymentToDb(input.payment);
+    const customerPhone = input.customerPhone?.trim();
 
-    await createMutation.mutateAsync({ ...payload, offlineClientId });
+    for (let index = 0; index < input.serviceIds.length; index++) {
+      const serviceId = input.serviceIds[index]!;
+      const rowSubtotal = subtotals[index] ?? 0;
+      const rowTip = index === 0 ? tip : 0;
+      const payload = createTransactionSchema.parse({
+        business_id: businessId,
+        type: "INCOME",
+        service_id: serviceId,
+        subtotal: rowSubtotal,
+        tip: rowTip,
+        total: rowSubtotal + rowTip,
+        payment_method: paymentMethod,
+        transaction_date: transactionDate,
+        ...(customerPhone ? { customer_phone: customerPhone } : {}),
+      } satisfies CreateTransactionInput);
+      const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
+      await createMutation.mutateAsync({ ...payload, offlineClientId });
+    }
+
     toast({
       title: "Entry added",
       description: queuedOffline
         ? "Saved on this device — will sync when you're back online."
-        : "Income recorded successfully.",
+        : input.serviceIds.length > 1
+          ? `${input.serviceIds.length} income entries recorded.`
+          : "Income recorded successfully.",
     });
     onSuccess();
   }
@@ -96,7 +150,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
   function validateIncome(input: unknown) {
     return z
       .object({
-        serviceId: z.string().uuid(),
+        serviceIds: z.array(z.string().uuid()).min(1),
         subtotal: z.number().positive(),
         tip: z.number().nonnegative(),
         payment: z.string(),

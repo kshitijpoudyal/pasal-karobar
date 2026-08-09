@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Trash2 } from "lucide-react";
 
 import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
 import { MAX_CUSTOMER_PHOTOS } from "@/constants/customer-photos";
+import { CustomerPhotoAddControls } from "@/features/customers/components/customer-photo-add-controls";
 import {
   useCustomerPhotosQuery,
   useDeleteCustomerPhotoMutation,
@@ -15,7 +16,6 @@ import {
   CustomerPhotoLimitError,
   CustomerPhotoValidationError,
 } from "@/services/customer-photo.service";
-import { cn } from "@/lib/utils";
 import {
   fileToArrayBuffer,
   resizeImageFileForUpload,
@@ -35,7 +35,6 @@ export function CustomerProfilePhotos({
   customerId,
   isOnline,
 }: CustomerProfilePhotosProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { confirm } = useConfirmDrawer();
   const photosQuery = useCustomerPhotosQuery(customerId);
   const uploadMutation = useUploadCustomerPhotoMutation(businessId);
@@ -61,10 +60,8 @@ export function CustomerProfilePhotos({
     return serverCaption ?? "";
   }
 
-  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file || !isOnline) return;
+  async function uploadPhotoFile(file: File) {
+    if (!isOnline) return;
 
     setUploadError(null);
     try {
@@ -189,36 +186,16 @@ export function CustomerProfilePhotos({
           ))}
           {canAddMore ? (
             <li>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => fileInputRef.current?.click()}
-                className={cn(
-                  "squircle flex aspect-square w-full flex-col items-center justify-center gap-2",
-                  "border-2 border-dashed border-outline-variant bg-surface-container-high",
-                  "text-on-surface-variant transition-colors hover:border-primary hover:bg-primary-container/20",
-                  busy && "opacity-60",
-                )}
-              >
-                {uploadMutation.isPending ? (
-                  <Loader2 className="size-6 animate-spin" aria-hidden />
-                ) : (
-                  <ImagePlus className="size-6" strokeWidth={1.75} aria-hidden />
-                )}
-                <span className="text-xs font-medium">Add photo</span>
-              </button>
+              <CustomerPhotoAddControls
+                disabled={!isOnline}
+                busy={uploadMutation.isPending}
+                onFile={uploadPhotoFile}
+                tileClassName="squircle bg-surface-container-high hover:border-primary hover:bg-primary-container/20"
+              />
             </li>
           ) : null}
         </ul>
       )}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/*"
-        className="sr-only"
-        onChange={(event) => void handleFileChange(event)}
-      />
     </div>
   );
 }

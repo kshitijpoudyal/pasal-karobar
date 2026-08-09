@@ -9,24 +9,66 @@ import { cn } from "@/lib/utils";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 
 const MIN_DIGITS_FOR_SUGGESTIONS = 2;
+const MIN_NAME_QUERY_LENGTH = 2;
 const MAX_SUGGESTIONS = 8;
 
-function matchCustomers(customers: Customer[], query: string): Customer[] {
-  const digits = query.replace(/\D/g, "");
-  if (digits.length < MIN_DIGITS_FOR_SUGGESTIONS) return [];
+function normalizePhoneDigits(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("977") && digits.length >= 12) {
+    digits = digits.slice(3);
+  }
+  return digits;
+}
 
-  const matched = customers.filter((customer) =>
-    customer.phone_normalized.includes(digits),
-  );
+function matchCustomers(customers: Customer[], query: string): Customer[] {
+  const trimmed = query.trim();
+  const digits = trimmed.replace(/\D/g, "");
+  const qLower = trimmed.toLowerCase();
+  const seen = new Set<string>();
+  const matched: Customer[] = [];
+
+  function add(customer: Customer) {
+    if (seen.has(customer.id)) return;
+    seen.add(customer.id);
+    matched.push(customer);
+  }
+
+  if (digits.length >= MIN_DIGITS_FOR_SUGGESTIONS) {
+    for (const customer of customers) {
+      if (customer.phone_normalized.includes(digits)) {
+        add(customer);
+      }
+    }
+  }
+
+  if (qLower.length >= MIN_NAME_QUERY_LENGTH) {
+    for (const customer of customers) {
+      const name = customer.name?.trim().toLowerCase() ?? "";
+      if (name.includes(qLower)) {
+        add(customer);
+      }
+    }
+  }
 
   matched.sort((a, b) => {
-    const aPrefix = a.phone_normalized.startsWith(digits) ? 0 : 1;
-    const bPrefix = b.phone_normalized.startsWith(digits) ? 0 : 1;
-    if (aPrefix !== bPrefix) return aPrefix - bPrefix;
+    if (digits.length >= MIN_DIGITS_FOR_SUGGESTIONS) {
+      const aPrefix = a.phone_normalized.startsWith(digits) ? 0 : 1;
+      const bPrefix = b.phone_normalized.startsWith(digits) ? 0 : 1;
+      if (aPrefix !== bPrefix) return aPrefix - bPrefix;
+    }
     return a.phone_normalized.localeCompare(b.phone_normalized);
   });
 
   return matched.slice(0, MAX_SUGGESTIONS);
+}
+
+function findCustomerByPhoneDigits(
+  customers: Customer[],
+  rawPhone: string,
+): Customer | undefined {
+  const local = normalizePhoneDigits(rawPhone);
+  if (local.length !== 10) return undefined;
+  return customers.find((customer) => customer.phone_normalized === local);
 }
 
 type CustomerPhoneAutocompleteProps = {
@@ -38,10 +80,19 @@ type CustomerPhoneAutocompleteProps = {
   inputClassName?: string;
   /** Matches squircle field cards in add-customer (same as name / notes). */
   variant?: "default" | "embedded";
+  nameValue?: string;
+  onNameChange?: (name: string) => void;
+  nameInputId?: string;
+  showLinkedNameField?: boolean;
 };
 
 const EMBEDDED_INPUT_CLASS =
   "font-body w-full border-none bg-transparent p-0 text-lg font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0";
+
+const DEFAULT_FIELD_WRAP_CLASS = "flex flex-col gap-2";
+
+const DEFAULT_INPUT_CLASS =
+  "font-body w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-4 py-3 text-base text-on-surface outline-none focus:border-primary";
 
 export function CustomerPhoneAutocomplete({
   id,
@@ -51,22 +102,38 @@ export function CustomerPhoneAutocomplete({
   onChange,
   inputClassName,
   variant = "default",
+  nameValue = "",
+  onNameChange,
+  nameInputId,
+  showLinkedNameField = false,
 }: CustomerPhoneAutocompleteProps) {
   const listboxId = useId();
+  const generatedNameInputId = useId();
+  const resolvedNameInputId = nameInputId ?? generatedNameInputId;
   const rootRef = useRef<HTMLDivElement>(null);
   const { businessId } = useActiveBusiness();
   const customersQuery = useCustomersQuery(businessId);
+  const customers = customersQuery.data ?? [];
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [nameQuery, setNameQuery] = useState("");
+
+  const suggestionQuery = showLinkedNameField && nameQuery.trim() ? nameQuery : value;
 
   const suggestions = useMemo(
-    () => matchCustomers(customersQuery.data ?? [], value),
-    [customersQuery.data, value],
+    () => matchCustomers(customers, suggestionQuery),
+    [customers, suggestionQuery],
   );
 
   useEffect(() => {
     setActiveIndex(0);
-  }, [suggestions.length, value]);
+  }, [suggestions.length, suggestionQuery]);
+
+  useEffect(() => {
+    if (!onNameChange || !value.trim()) return;
+    syncNameFromPhone(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync when customers load for prefilled phone
+  }, [customers, value, onNameChange]);
 
   useEffect(() => {
     if (!open) return;
@@ -80,19 +147,33 @@ export function CustomerPhoneAutocomplete({
 
   const showList = open && suggestions.length > 0;
 
-  function pickCustomer(customer: Customer) {
+  function applyCustomer(customer: Customer) {
     onChange(customer.phone_normalized);
+    onNameChange?.(customer.name?.trim() ?? "");
+    setNameQuery("");
     setOpen(false);
   }
 
-  return (
+  function syncNameFromPhone(rawPhone: string) {
+    if (!onNameChange) return;
+    const match = findCustomerByPhoneDigits(customers, rawPhone);
+    if (match) {
+      onNameChange(match.name?.trim() ?? "");
+    }
+  }
+
+  function handlePhoneChange(raw: string) {
+    onChange(raw);
+    syncNameFromPhone(raw);
+    setOpen(true);
+  }
+
+  const linkedPair = showLinkedNameField && onNameChange && variant !== "embedded";
+
+  const phoneField = (
     <div
-      ref={rootRef}
       className={cn(
-        "relative",
-        variant === "embedded"
-          ? "squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm"
-          : "flex flex-col gap-2",
+        variant === "embedded" ? "space-y-3" : DEFAULT_FIELD_WRAP_CLASS,
       )}
     >
       <label htmlFor={id} className={labelClassName}>
@@ -109,10 +190,7 @@ export function CustomerPhoneAutocomplete({
         aria-autocomplete="list"
         placeholder="9841234567"
         value={value}
-        onChange={(event) => {
-          onChange(event.target.value);
-          setOpen(true);
-        }}
+        onChange={(event) => handlePhoneChange(event.target.value)}
         onFocus={() => setOpen(true)}
         onKeyDown={(event) => {
           if (!showList) return;
@@ -126,18 +204,82 @@ export function CustomerPhoneAutocomplete({
             );
           } else if (event.key === "Enter" && suggestions[activeIndex]) {
             event.preventDefault();
-            pickCustomer(suggestions[activeIndex]!);
+            applyCustomer(suggestions[activeIndex]!);
           } else if (event.key === "Escape") {
             setOpen(false);
           }
         }}
         className={cn(
-          variant === "embedded"
-            ? EMBEDDED_INPUT_CLASS
-            : "font-body w-full rounded-lg border border-outline-variant/60 bg-surface-container-lowest px-4 py-3 text-base text-on-surface outline-none focus:border-primary",
+          variant === "embedded" ? EMBEDDED_INPUT_CLASS : DEFAULT_INPUT_CLASS,
           inputClassName,
         )}
       />
+    </div>
+  );
+
+  const nameField =
+    linkedPair && onNameChange ? (
+      <div className={DEFAULT_FIELD_WRAP_CLASS}>
+        <label className={labelClassName} htmlFor={resolvedNameInputId}>
+          Customer name (optional)
+        </label>
+        <input
+          id={resolvedNameInputId}
+          type="text"
+          autoComplete="name"
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls={showList ? listboxId : undefined}
+          aria-autocomplete="list"
+          placeholder="Customer name"
+          value={nameValue}
+          onChange={(event) => {
+            onNameChange(event.target.value);
+            setNameQuery(event.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={(event) => {
+            if (!showList) return;
+            if (event.key === "ArrowDown") {
+              event.preventDefault();
+              setActiveIndex((i) => (i + 1) % suggestions.length);
+            } else if (event.key === "ArrowUp") {
+              event.preventDefault();
+              setActiveIndex(
+                (i) => (i - 1 + suggestions.length) % suggestions.length,
+              );
+            } else if (event.key === "Enter" && suggestions[activeIndex]) {
+              event.preventDefault();
+              applyCustomer(suggestions[activeIndex]!);
+            } else if (event.key === "Escape") {
+              setOpen(false);
+            }
+          }}
+          className={DEFAULT_INPUT_CLASS}
+        />
+      </div>
+    ) : null;
+
+  return (
+    <div
+      ref={rootRef}
+      className={cn(
+        "relative",
+        variant === "embedded" &&
+          "squircle bg-surface-container-lowest p-5 shadow-sm",
+        !linkedPair && variant !== "embedded" && "flex flex-col gap-4",
+      )}
+    >
+      {linkedPair ? (
+        <div className="grid grid-cols-2 gap-3 sm:gap-5">
+          {phoneField}
+          {nameField}
+        </div>
+      ) : (
+        phoneField
+      )}
+
       {showList ? (
         <ul
           id={listboxId}
@@ -145,7 +287,10 @@ export function CustomerPhoneAutocomplete({
           className="absolute top-full z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
         >
           {suggestions.map((customer, index) => {
-            const label = formatNepalPhoneDisplay(customer.phone_normalized);
+            const phoneLabel = formatNepalPhoneDisplay(
+              customer.phone_normalized,
+            );
+            const displayName = customer.name?.trim();
             return (
               <li key={customer.id} role="presentation">
                 <button
@@ -153,16 +298,18 @@ export function CustomerPhoneAutocomplete({
                   role="option"
                   aria-selected={index === activeIndex}
                   onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => pickCustomer(customer)}
+                  onClick={() => applyCustomer(customer)}
                   className={cn(
                     "flex w-full flex-col items-start gap-0.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-surface-container-low",
                     index === activeIndex && "bg-surface-container-low",
                   )}
                 >
-                  <span className="font-medium text-on-surface">{label}</span>
-                  {customer.name ? (
+                  <span className="font-medium text-on-surface">
+                    {displayName || phoneLabel}
+                  </span>
+                  {displayName ? (
                     <span className="text-xs text-on-surface-variant">
-                      {customer.name}
+                      {phoneLabel}
                     </span>
                   ) : null}
                 </button>

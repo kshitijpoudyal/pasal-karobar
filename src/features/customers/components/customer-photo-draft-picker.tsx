@@ -1,15 +1,15 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ImagePlus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 
 import { MAX_CUSTOMER_PHOTOS } from "@/constants/customer-photos";
 import type { AllowedCustomerPhotoMimeType } from "@/constants/customer-photos";
+import { CustomerPhotoAddControls } from "@/features/customers/components/customer-photo-add-controls";
 import {
   CustomerPhotoLimitError,
   CustomerPhotoValidationError,
 } from "@/services/customer-photo.service";
-import { cn } from "@/lib/utils";
 import {
   fileToArrayBuffer,
   resizeImageFileForUpload,
@@ -44,14 +44,11 @@ export function CustomerPhotoDraftPicker({
   onChange,
   disabled = false,
 }: CustomerPhotoDraftPickerProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pickError, setPickError] = useState<string | null>(null);
   const canAddMore = photos.length < MAX_CUSTOMER_PHOTOS;
 
-  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-    if (!file || disabled) return;
+  async function addPhotoFile(file: File) {
+    if (disabled) return;
 
     if (photos.length >= MAX_CUSTOMER_PHOTOS) {
       setPickError(`You can add up to ${MAX_CUSTOMER_PHOTOS} photos per customer.`);
@@ -150,37 +147,13 @@ export function CustomerPhotoDraftPicker({
         ))}
         {canAddMore ? (
           <li>
-            <button
-              type="button"
+            <CustomerPhotoAddControls
               disabled={disabled}
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "flex aspect-square w-full flex-col items-center justify-center gap-2 rounded-[24px]",
-                "border-2 border-dashed border-outline-variant bg-surface-container-low",
-                "text-on-surface-variant transition-all hover:border-primary-container hover:bg-surface-container",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container focus-visible:ring-offset-2",
-                disabled && "opacity-60",
-              )}
-            >
-              <ImagePlus
-                className="size-8 text-on-surface-variant transition-colors group-hover:text-primary"
-                strokeWidth={1.75}
-                aria-hidden
-              />
-              <span className="font-label-sm text-label-sm text-outline">
-                Add photo
-              </span>
-            </button>
+              onFile={addPhotoFile}
+            />
           </li>
         ) : null}
       </ul>
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/*"
-        className="sr-only"
-        onChange={(event) => void handleFileChange(event)}
-      />
     </div>
   );
 }
