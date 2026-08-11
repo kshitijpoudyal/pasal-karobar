@@ -1,4 +1,8 @@
 import { BUSINESS_SETTING_KEYS } from "@/constants/business-setting-keys";
+import {
+  DEFAULT_CALENDAR_SYSTEM,
+  resolveCalendarSystem,
+} from "@/constants/calendar-system";
 import { businessTypeSchema } from "@/services/schemas";
 import type {
   Business,
@@ -28,6 +32,9 @@ export function hydrateBusiness(
   return {
     ...record,
     business_type,
+    calendar_system: resolveCalendarSystem(
+      map.get(BUSINESS_SETTING_KEYS.calendarSystem),
+    ),
     currency: map.get(BUSINESS_SETTING_KEYS.currency)?.trim() || DEFAULT_BUSINESS_CURRENCY,
     timezone:
       map.get(BUSINESS_SETTING_KEYS.timezone)?.trim() || DEFAULT_BUSINESS_TIMEZONE,
@@ -36,7 +43,7 @@ export function hydrateBusiness(
 
 export function profileFieldsFromSettings(
   settings: BusinessSetting[],
-): Pick<Business, "business_type" | "currency" | "timezone"> {
+): Pick<Business, "business_type" | "calendar_system" | "currency" | "timezone"> {
   return hydrateBusiness(
     {
       id: "",
@@ -49,7 +56,7 @@ export function profileFieldsFromSettings(
 }
 
 export type BusinessProfilePatch = Partial<
-  Pick<Business, "business_type" | "currency" | "timezone">
+  Pick<Business, "business_type" | "calendar_system" | "currency" | "timezone">
 >;
 
 export function profilePatchToUpserts(
@@ -63,6 +70,13 @@ export function profilePatchToUpserts(
       business_id: businessId,
       setting_key: BUSINESS_SETTING_KEYS.businessType,
       setting_value: patch.business_type,
+    });
+  }
+  if (patch.calendar_system !== undefined) {
+    rows.push({
+      business_id: businessId,
+      setting_key: BUSINESS_SETTING_KEYS.calendarSystem,
+      setting_value: patch.calendar_system,
     });
   }
   if (patch.currency !== undefined) {
@@ -89,6 +103,7 @@ export function defaultProfileUpserts(businessId: string): {
 }[] {
   return profilePatchToUpserts(businessId, {
     business_type: DEFAULT_BUSINESS_TYPE,
+    calendar_system: DEFAULT_CALENDAR_SYSTEM,
     currency: DEFAULT_BUSINESS_CURRENCY,
     timezone: DEFAULT_BUSINESS_TIMEZONE,
   });

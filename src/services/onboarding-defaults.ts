@@ -1,3 +1,4 @@
+import { DEFAULT_CALENDAR_SYSTEM } from "@/constants/calendar-system";
 import type { BusinessType } from "@/types/database";
 import { DEFAULT_BUSINESS_TIMEZONE } from "@/utils/business-datetime";
 
@@ -18,6 +19,7 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
 export const DEFAULT_BOOTSTRAP_BUSINESS = {
   name: "Royal Cuts Barber Shop",
   business_type: DEFAULT_BUSINESS_TYPE satisfies BusinessType,
+  calendar_system: DEFAULT_CALENDAR_SYSTEM,
   currency: DEFAULT_BUSINESS_CURRENCY,
   timezone: DEFAULT_BUSINESS_TIMEZONE,
 } as const;

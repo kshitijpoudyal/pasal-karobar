@@ -16,6 +16,8 @@ export type BusinessType =
   | "RESTAURANT"
   | "OTHER";
 
+export type CalendarSystem = "AD" | "BS";
+
 export type BusinessRecord = {
   id: string;
   name: string;
@@ -26,6 +28,7 @@ export type BusinessRecord = {
 /** Shop row plus profile fields loaded from `business_settings`. */
 export type Business = BusinessRecord & {
   business_type: BusinessType;
+  calendar_system: CalendarSystem;
   currency: string;
   timezone: string;
 };
@@ -33,6 +36,7 @@ export type Business = BusinessRecord & {
 export type BusinessInsert = {
   name: string;
   business_type?: BusinessType;
+  calendar_system?: CalendarSystem;
   currency?: string;
   timezone?: string;
 };
@@ -40,6 +44,7 @@ export type BusinessInsert = {
 export type BusinessUpdate = Partial<{
   name: string;
   business_type: BusinessType;
+  calendar_system: CalendarSystem;
   currency: string;
   timezone: string;
 }>;

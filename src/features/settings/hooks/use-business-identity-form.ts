@@ -10,6 +10,7 @@ import {
   useUpdateBusinessMutation,
 } from "@/hooks/queries/use-business-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
+import { DEFAULT_CALENDAR_SYSTEM } from "@/constants/calendar-system";
 import { DEFAULT_BUSINESS_TIMEZONE } from "@/constants/business-timezones";
 import { businessTypeSchema, updateBusinessSchema } from "@/services/schemas";
 
@@ -34,6 +35,7 @@ export function useBusinessIdentityForm() {
     defaultValues: {
       name: "",
       business_type: "BARBER",
+      calendar_system: DEFAULT_CALENDAR_SYSTEM,
       currency: "NPR",
       timezone: DEFAULT_BUSINESS_TIMEZONE,
     },
@@ -45,6 +47,7 @@ export function useBusinessIdentityForm() {
     form.reset({
       name: business.name,
       business_type: business.business_type,
+      calendar_system: business.calendar_system,
       currency: business.currency,
       timezone: business.timezone?.trim() || DEFAULT_BUSINESS_TIMEZONE,
     });

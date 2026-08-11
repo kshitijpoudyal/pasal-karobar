@@ -74,6 +74,7 @@ function ActivityTimelineBody({
         onDelete={activity.deleteTransaction}
         isDeleting={activity.isDeleting}
         timeZone={activity.timeZone}
+        calendarSystem={activity.calendarSystem}
       />
     </QueryState>
   );

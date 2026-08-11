@@ -7,12 +7,14 @@ import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
+import { useCalendarSystem } from "@/hooks/use-calendar-system";
 import { parseCustomerPhoneRouteParam } from "@/utils/customer-routes";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 
 export function useCustomerDetailPage(phoneRouteParam: string) {
   const { businessId } = useActiveBusiness();
   const timeZone = useBusinessTimeZone();
+  const calendarSystem = useCalendarSystem();
 
   const parsedPhone = useMemo(
     () => parseCustomerPhoneRouteParam(phoneRouteParam),
@@ -62,6 +64,7 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
   return {
     businessId,
     timeZone,
+    calendarSystem,
     parsedPhone,
     customer,
     displayPhone,

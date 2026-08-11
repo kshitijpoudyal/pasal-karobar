@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 
 import { PeriodPickerDialog } from "@/components/period-picker";
 import type { PeriodPickerMode } from "@/components/period-picker";
+import type { CalendarSystem } from "@/constants/calendar-system";
 import { cn } from "@/lib/utils";
 import {
   formatDashboardScrubberLabel,
@@ -25,6 +26,7 @@ type DashboardTimeNavigatorProps = {
   granularity: DashboardGranularity;
   anchorDate: Date;
   timeZone: string;
+  calendarSystem: CalendarSystem;
   onGranularityChange: (value: DashboardGranularity) => void;
   onAnchorChange: (date: Date) => void;
   minSelectableDate?: Date | null;
@@ -36,6 +38,7 @@ export function DashboardTimeNavigator({
   granularity,
   anchorDate,
   timeZone,
+  calendarSystem,
   onGranularityChange,
   onAnchorChange,
   minSelectableDate = null,
@@ -44,16 +47,32 @@ export function DashboardTimeNavigator({
 }: DashboardTimeNavigatorProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const periodTriggerRef = useRef<HTMLDivElement>(null);
-  const range = resolveDashboardRange(granularity, anchorDate, new Date(), timeZone);
+  const range = resolveDashboardRange(
+    granularity,
+    anchorDate,
+    new Date(),
+    timeZone,
+    calendarSystem,
+  );
   const scrubberLabel = formatDashboardScrubberLabel(
     granularity,
     anchorDate,
     range,
+    timeZone,
+    calendarSystem,
   );
-  const atLatest = isDashboardAtLatest(granularity, anchorDate, new Date(), timeZone);
+  const atLatest = isDashboardAtLatest(
+    granularity,
+    anchorDate,
+    new Date(),
+    timeZone,
+    calendarSystem,
+  );
 
   function step(direction: -1 | 1) {
-    onAnchorChange(stepDashboardAnchor(granularity, anchorDate, direction));
+    onAnchorChange(
+      stepDashboardAnchor(granularity, anchorDate, direction, timeZone, calendarSystem),
+    );
   }
 
   const pickerMode = granularity as PeriodPickerMode;
@@ -144,6 +163,8 @@ export function DashboardTimeNavigator({
         anchorDate={anchorDate}
         anchorRef={periodTriggerRef}
         minSelectableDate={minSelectableDate}
+        calendarSystem={calendarSystem}
+        timeZone={timeZone}
         onClose={() => setPickerOpen(false)}
         onApply={(date) => onAnchorChange(date)}
       />

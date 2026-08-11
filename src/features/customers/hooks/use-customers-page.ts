@@ -15,6 +15,7 @@ import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
+import { useCalendarSystem } from "@/hooks/use-calendar-system";
 import type { Customer } from "@/types/database";
 import { getActivityDateRange, type ActivityTimeframe } from "@/utils/date-ranges";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
@@ -31,6 +32,7 @@ export type CustomerDirectoryRow = {
 export function useCustomersPage() {
   const { businessId } = useActiveBusiness();
   const timeZone = useBusinessTimeZone();
+  const calendarSystem = useCalendarSystem();
   const [searchQuery, setSearchQuery] = useState("");
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
   const [visitFilter, setVisitFilter] = useState<CustomerVisitFilter>("All");
@@ -39,8 +41,8 @@ export function useCustomersPage() {
   const allIncomeQuery = useTransactionsQuery(businessId, { type: "INCOME" });
 
   const periodRange = useMemo(
-    () => getActivityDateRange(timeframe, timeZone),
-    [timeframe, timeZone],
+    () => getActivityDateRange(timeframe, timeZone, new Date(), calendarSystem),
+    [timeframe, timeZone, calendarSystem],
   );
 
   const customersById = useMemo(() => {
@@ -124,6 +126,7 @@ export function useCustomersPage() {
   return {
     businessId,
     timeZone,
+    calendarSystem,
     timeframe,
     setTimeframe,
     visitFilter,

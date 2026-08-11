@@ -1,5 +1,6 @@
 import type { BusinessService } from "@/services/business.service";
 import type { CustomerService } from "@/services/customer.service";
+import { resolveCalendarSystem, type CalendarSystem } from "@/constants/calendar-system";
 import { computeCustomerPeriodInsights } from "@/services/customer-analytics.service";
 import type { TransactionService } from "@/services/transaction.service";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
@@ -20,6 +21,14 @@ import {
   startOfZonedDay,
   zonedPeriodBounds,
 } from "@/utils/business-datetime";
+import {
+  adDateKeyToBs,
+  bsMonthBounds,
+  bsToAdDateKey,
+  daysInBsMonth,
+  formatBsDayShort,
+  formatBsMonthYear,
+} from "@/utils/nepali-calendar";
 import {
   eachDayOfInterval,
   eachMonthOfInterval,
@@ -94,7 +103,72 @@ export function buildMonthDayHeatmap(
   transactions: Transaction[],
   referenceDate: Date,
   timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
+  calendarSystem: CalendarSystem = "AD",
 ): MonthDayHeatmap {
+  if (calendarSystem === "BS") {
+    const refKey = dateKeyInTimeZone(referenceDate.toISOString(), timeZone);
+    const refBs = adDateKeyToBs(refKey);
+    if (!refBs) {
+      return buildMonthDayHeatmap(transactions, referenceDate, timeZone, "AD");
+    }
+    const bounds = bsMonthBounds(refBs.year, refBs.month);
+    if (!bounds) {
+      return buildMonthDayHeatmap(transactions, referenceDate, timeZone, "AD");
+    }
+
+    const byDate = new Map<string, { visitCount: number; revenue: number }>();
+    for (const tx of transactions) {
+      if (tx.type !== "INCOME") continue;
+      const key = dateKeyInTimeZone(tx.transaction_date, timeZone);
+      if (key < bounds.fromKey || key > bounds.toKey) continue;
+      const bucket = byDate.get(key) ?? { visitCount: 0, revenue: 0 };
+      bucket.visitCount += 1;
+      bucket.revenue += Number(tx.total);
+      byDate.set(key, bucket);
+    }
+
+    const monthDays = daysInBsMonth(refBs.year, refBs.month);
+    const monthStart = startOfZonedDay(bounds.fromKey, timeZone);
+    const days: MonthHeatmapDay[] = [];
+    const leadingPad = isoDayInTimeZone(monthStart.toISOString(), timeZone) - 1;
+    for (let i = 0; i < leadingPad; i += 1) {
+      days.push({
+        dateKey: "",
+        dayOfMonth: 0,
+        visitCount: 0,
+        revenue: 0,
+        inMonth: false,
+      });
+    }
+
+    for (let day = 1; day <= monthDays; day += 1) {
+      const key = bsToAdDateKey(refBs.year, refBs.month, day) ?? "";
+      const stats = key ? (byDate.get(key) ?? { visitCount: 0, revenue: 0 }) : { visitCount: 0, revenue: 0 };
+      days.push({
+        dateKey: key,
+        dayOfMonth: day,
+        visitCount: stats.visitCount,
+        revenue: stats.revenue,
+        inMonth: Boolean(key),
+      });
+    }
+
+    while (days.length % 7 !== 0) {
+      days.push({
+        dateKey: "",
+        dayOfMonth: 0,
+        visitCount: 0,
+        revenue: 0,
+        inMonth: false,
+      });
+    }
+
+    return {
+      monthLabel: formatBsMonthYear(bounds.fromKey) ?? `${refBs.year}`,
+      days,
+    };
+  }
+
   const refKey = dateKeyInTimeZone(referenceDate.toISOString(), timeZone);
   const { year, month } = parseDateKey(refKey);
   const monthStartKey = `${year}-${String(month).padStart(2, "0")}-01`;
@@ -280,10 +354,28 @@ function weekRangeLabelForMonthWeek(
   return `${formatDateKeyShort(startKey, timeZone)} – ${formatDateKeyShort(endKey, timeZone)}`;
 }
 
+function weekRangeLabelForBsMonthWeek(
+  bsYear: number,
+  bsMonth: number,
+  weekIndex: number,
+): string {
+  const startDay = weekIndex * 7 + 1;
+  const endDay = Math.min(startDay + 6, daysInBsMonth(bsYear, bsMonth));
+  const startKey = bsToAdDateKey(bsYear, bsMonth, startDay);
+  const endKey = bsToAdDateKey(bsYear, bsMonth, endDay);
+  if (!startKey || !endKey) return `W${weekIndex + 1}`;
+  const startShort = formatBsDayShort(startKey);
+  const endShort = formatBsDayShort(endKey);
+  if (!startShort || !endShort) return `W${weekIndex + 1}`;
+  if (startDay === endDay) return startShort;
+  return `${startShort} – ${endShort}`;
+}
+
 export function buildPeakAnalysisInsights(
   transactions: Transaction[],
   periodToIso: string,
   timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
+  calendarSystem: CalendarSystem = "AD",
 ): PeakAnalysisInsights {
   const empty: PeakAnalysisInsights = {
     busiestDayOfWeek: null,
@@ -333,54 +425,111 @@ export function buildPeakAnalysisInsights(
   };
 
   // Busiest week of month (calendar month of period end in business TZ)
-  const periodMonthKey = dateKeyInTimeZone(periodToIso, timeZone).slice(0, 7);
-  const { year: monthYear, month: monthNum } = parseDateKey(`${periodMonthKey}-01`);
-  const daysInMonth = new Date(Date.UTC(monthYear, monthNum, 0)).getUTCDate();
-  const numWeeks = Math.ceil(daysInMonth / 7);
-  const weekStats = Array.from({ length: numWeeks }, () => ({
-    visits: 0,
-    revenue: 0,
-  }));
+  let busiestWeekOfMonth: BusiestWeekOfMonthInsight | null = null;
 
-  for (const tx of incomeTx) {
-    const txKey = dateKeyInTimeZone(tx.transaction_date, timeZone);
-    if (!txKey.startsWith(periodMonthKey)) continue;
-    const dayOfMonth = Number.parseInt(txKey.slice(8, 10), 10);
-    const weekIndex = Math.floor((dayOfMonth - 1) / 7);
-    const bucket = weekStats[weekIndex];
-    if (!bucket) continue;
-    bucket.visits += 1;
-    bucket.revenue += Number(tx.total);
-  }
+  if (calendarSystem === "BS") {
+    const periodKey = dateKeyInTimeZone(periodToIso, timeZone);
+    const periodBs = adDateKeyToBs(periodKey);
+    const bounds = periodBs ? bsMonthBounds(periodBs.year, periodBs.month) : null;
+    if (periodBs && bounds) {
+      const daysInMonth = daysInBsMonth(periodBs.year, periodBs.month);
+      const numWeeks = Math.ceil(daysInMonth / 7);
+      const weekStats = Array.from({ length: numWeeks }, () => ({
+        visits: 0,
+        revenue: 0,
+      }));
 
-  let peakWeekIndex = 0;
-  let peakWeekVisits = 0;
-  let peakWeekRevenue = 0;
-  weekStats.forEach((stats, index) => {
-    if (
-      stats.visits > peakWeekVisits ||
-      (stats.visits === peakWeekVisits && stats.revenue > peakWeekRevenue)
-    ) {
-      peakWeekVisits = stats.visits;
-      peakWeekRevenue = stats.revenue;
-      peakWeekIndex = index;
-    }
-  });
+      for (const tx of incomeTx) {
+        const txKey = dateKeyInTimeZone(tx.transaction_date, timeZone);
+        if (txKey < bounds.fromKey || txKey > bounds.toKey) continue;
+        const txBs = adDateKeyToBs(txKey);
+        if (!txBs) continue;
+        const weekIndex = Math.floor((txBs.day - 1) / 7);
+        const bucket = weekStats[weekIndex];
+        if (!bucket) continue;
+        bucket.visits += 1;
+        bucket.revenue += Number(tx.total);
+      }
 
-  const busiestWeekOfMonth: BusiestWeekOfMonthInsight | null =
-    peakWeekVisits > 0
-      ? {
-          weekLabel: `W${peakWeekIndex + 1}`,
-          rangeLabel: weekRangeLabelForMonthWeek(
-            periodMonthKey,
-            peakWeekIndex,
-            timeZone,
-          ),
-          monthLabel: formatMonthYearFromMonthKey(periodMonthKey, timeZone),
-          visitCount: peakWeekVisits,
-          revenue: peakWeekRevenue,
+      let peakWeekIndex = 0;
+      let peakWeekVisits = 0;
+      let peakWeekRevenue = 0;
+      weekStats.forEach((stats, index) => {
+        if (
+          stats.visits > peakWeekVisits ||
+          (stats.visits === peakWeekVisits && stats.revenue > peakWeekRevenue)
+        ) {
+          peakWeekVisits = stats.visits;
+          peakWeekRevenue = stats.revenue;
+          peakWeekIndex = index;
         }
-      : null;
+      });
+
+      busiestWeekOfMonth =
+        peakWeekVisits > 0
+          ? {
+              weekLabel: `W${peakWeekIndex + 1}`,
+              rangeLabel: weekRangeLabelForBsMonthWeek(
+                periodBs.year,
+                periodBs.month,
+                peakWeekIndex,
+              ),
+              monthLabel: formatBsMonthYear(bounds.fromKey) ?? String(periodBs.year),
+              visitCount: peakWeekVisits,
+              revenue: peakWeekRevenue,
+            }
+          : null;
+    }
+  } else {
+    const periodMonthKey = dateKeyInTimeZone(periodToIso, timeZone).slice(0, 7);
+    const { year: monthYear, month: monthNum } = parseDateKey(`${periodMonthKey}-01`);
+    const daysInMonth = new Date(Date.UTC(monthYear, monthNum, 0)).getUTCDate();
+    const numWeeks = Math.ceil(daysInMonth / 7);
+    const weekStats = Array.from({ length: numWeeks }, () => ({
+      visits: 0,
+      revenue: 0,
+    }));
+
+    for (const tx of incomeTx) {
+      const txKey = dateKeyInTimeZone(tx.transaction_date, timeZone);
+      if (!txKey.startsWith(periodMonthKey)) continue;
+      const dayOfMonth = Number.parseInt(txKey.slice(8, 10), 10);
+      const weekIndex = Math.floor((dayOfMonth - 1) / 7);
+      const bucket = weekStats[weekIndex];
+      if (!bucket) continue;
+      bucket.visits += 1;
+      bucket.revenue += Number(tx.total);
+    }
+
+    let peakWeekIndex = 0;
+    let peakWeekVisits = 0;
+    let peakWeekRevenue = 0;
+    weekStats.forEach((stats, index) => {
+      if (
+        stats.visits > peakWeekVisits ||
+        (stats.visits === peakWeekVisits && stats.revenue > peakWeekRevenue)
+      ) {
+        peakWeekVisits = stats.visits;
+        peakWeekRevenue = stats.revenue;
+        peakWeekIndex = index;
+      }
+    });
+
+    busiestWeekOfMonth =
+      peakWeekVisits > 0
+        ? {
+            weekLabel: `W${peakWeekIndex + 1}`,
+            rangeLabel: weekRangeLabelForMonthWeek(
+              periodMonthKey,
+              peakWeekIndex,
+              timeZone,
+            ),
+            monthLabel: formatMonthYearFromMonthKey(periodMonthKey, timeZone),
+            visitCount: peakWeekVisits,
+            revenue: peakWeekRevenue,
+          }
+        : null;
+  }
 
   // Busiest hour range (period-wide)
   const hourCounts = new Array<number>(24).fill(0);
@@ -516,9 +665,10 @@ export class DashboardService {
   ): Promise<DashboardSummary> {
     const business = await this.businessService.getById(businessId);
     const timeZone = resolveBusinessTimeZone(business?.timezone);
+    const calendarSystem = resolveCalendarSystem(business?.calendar_system);
 
     const now = new Date();
-    const defaultDay = zonedPeriodBounds("day", now, timeZone, now);
+    const defaultDay = zonedPeriodBounds("day", now, timeZone, now, calendarSystem);
     const periodFromIso = params.from ?? defaultDay.from;
     const periodToIso = params.to ?? defaultDay.to;
     const granularity: DashboardGranularity = params.granularity ?? "week";
@@ -530,6 +680,7 @@ export class DashboardService {
       anchorForPrior,
       now,
       timeZone,
+      calendarSystem,
     );
 
     const fetchFromIso = min([
@@ -622,10 +773,11 @@ export class DashboardService {
       periodTransactions,
       periodToIso,
       timeZone,
+      calendarSystem,
     );
     const monthDayHeatmap =
       granularity === "month"
-        ? buildMonthDayHeatmap(transactions, heatmapAnchor, timeZone)
+        ? buildMonthDayHeatmap(transactions, heatmapAnchor, timeZone, calendarSystem)
         : null;
 
     const incomeInPeriod = periodTransactions.filter((tx) => tx.type === "INCOME");

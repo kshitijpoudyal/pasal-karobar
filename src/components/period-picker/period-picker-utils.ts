@@ -18,6 +18,11 @@ import {
 } from "date-fns";
 
 import type { DashboardGranularity } from "@/utils/date-ranges";
+import {
+  businessTodayDateKey,
+  dateKeyInTimeZone,
+} from "@/utils/business-datetime";
+import { adDateKeyToBs } from "@/utils/nepali-calendar";
 
 export type PeriodPickerMode = Extract<
   DashboardGranularity,
@@ -44,6 +49,119 @@ const WEEKDAY_HEADERS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
 const YEAR_PAGE_ORIGIN = 2000;
 const YEARS_PER_PAGE = 12;
+
+export const BS_YEAR_PAGE_ORIGIN = 2070;
+export const BS_YEARS_PER_PAGE = 12;
+
+export function bsYearPageStartFor(year: number): number {
+  const offset = Math.floor((year - BS_YEAR_PAGE_ORIGIN) / BS_YEARS_PER_PAGE);
+  return BS_YEAR_PAGE_ORIGIN + offset * BS_YEARS_PER_PAGE;
+}
+
+export function bsYearsOnPage(pageStart: number): number[] {
+  return Array.from({ length: BS_YEARS_PER_PAGE }, (_, i) => pageStart + i);
+}
+
+export function stepBsMonthView(
+  bsYear: number,
+  bsMonth: number,
+  direction: -1 | 1,
+): { year: number; month: number } {
+  let month = bsMonth + direction;
+  let year = bsYear;
+  if (month > 12) {
+    month = 1;
+    year += 1;
+  } else if (month < 1) {
+    month = 12;
+    year -= 1;
+  }
+  return { year, month };
+}
+
+export function isFutureBsDateKey(
+  adDateKey: string,
+  timeZone: string,
+  now: Date = new Date(),
+): boolean {
+  if (!adDateKey) return true;
+  return adDateKey > businessTodayDateKey(timeZone, now);
+}
+
+export function isBeforeEarliestBsDateKey(
+  adDateKey: string,
+  earliest: Date | null | undefined,
+  timeZone: string,
+): boolean {
+  if (!adDateKey || !earliest) return false;
+  return adDateKey < businessTodayDateKey(timeZone, earliest);
+}
+
+export function isFutureBsMonth(
+  bsYear: number,
+  bsMonth: number,
+  timeZone: string,
+  now: Date = new Date(),
+): boolean {
+  const todayBs = adDateKeyToBs(businessTodayDateKey(timeZone, now));
+  if (!todayBs) return false;
+  return bsYear > todayBs.year || (bsYear === todayBs.year && bsMonth > todayBs.month);
+}
+
+export function isBeforeEarliestBsMonth(
+  bsYear: number,
+  bsMonth: number,
+  earliest: Date | null | undefined,
+  timeZone: string,
+): boolean {
+  if (!earliest) return false;
+  const earliestBs = adDateKeyToBs(businessTodayDateKey(timeZone, earliest));
+  if (!earliestBs) return false;
+  return (
+    bsYear < earliestBs.year ||
+    (bsYear === earliestBs.year && bsMonth < earliestBs.month)
+  );
+}
+
+export function isFutureBsYear(
+  bsYear: number,
+  timeZone: string,
+  now: Date = new Date(),
+): boolean {
+  const todayBs = adDateKeyToBs(businessTodayDateKey(timeZone, now));
+  if (!todayBs) return false;
+  return bsYear > todayBs.year;
+}
+
+export function isBeforeEarliestBsYear(
+  bsYear: number,
+  earliest: Date | null | undefined,
+  timeZone: string,
+): boolean {
+  if (!earliest) return false;
+  const earliestBs = adDateKeyToBs(businessTodayDateKey(timeZone, earliest));
+  if (!earliestBs) return false;
+  return bsYear < earliestBs.year;
+}
+
+export function isBsYearPageBeforeEarliest(
+  pageStart: number,
+  earliest: Date | null | undefined,
+  timeZone: string,
+): boolean {
+  if (!earliest) return false;
+  const earliestBs = adDateKeyToBs(businessTodayDateKey(timeZone, earliest));
+  if (!earliestBs) return false;
+  return pageStart <= bsYearPageStartFor(earliestBs.year);
+}
+
+export function anchorBsParts(
+  anchorDate: Date,
+  timeZone: string,
+): { year: number; month: number; day: number } | null {
+  const anchorKey = dateKeyInTimeZone(anchorDate.toISOString(), timeZone);
+  return adDateKeyToBs(anchorKey);
+}
 
 export function calendarCellsForMonth(viewMonth: Date): Date[] {
   const monthStart = startOfMonth(viewMonth);

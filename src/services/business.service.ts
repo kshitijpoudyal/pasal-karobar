@@ -52,7 +52,7 @@ export class BusinessService {
 
   async update(id: string, input: UpdateBusinessInput): Promise<Business> {
     const payload = updateBusinessSchema.parse(input);
-    const { name, business_type, currency, timezone } = payload;
+    const { name, business_type, calendar_system, currency, timezone } = payload;
 
     if (name !== undefined) {
       await this.businessRepository.update(id, { name });
@@ -60,6 +60,7 @@ export class BusinessService {
 
     const upserts = profilePatchToUpserts(id, {
       business_type,
+      calendar_system,
       currency,
       timezone,
     });

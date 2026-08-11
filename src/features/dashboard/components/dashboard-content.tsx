@@ -18,6 +18,7 @@ import { refreshBusinessStats } from "@/hooks/queries/transaction-query-cache";
 import { normalizeDashboardSummary } from "@/services/dashboard-summary";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
+import { useCalendarSystem } from "@/hooks/use-calendar-system";
 import {
   clampAnchorToDataBounds,
   clampAnchorToToday,
@@ -42,14 +43,22 @@ export function DashboardContent() {
   const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
   const timeZone = useBusinessTimeZone();
+  const calendarSystem = useCalendarSystem();
   const [granularity, setGranularity] = useState<DashboardGranularity>("day");
   const [anchorDate, setAnchorDate] = useState(() =>
     clampAnchorToToday(new Date(), new Date(), timeZone),
   );
 
   const range = useMemo(
-    () => resolveDashboardRange(granularity, anchorDate, new Date(), timeZone),
-    [granularity, anchorDate, timeZone],
+    () =>
+      resolveDashboardRange(
+        granularity,
+        anchorDate,
+        new Date(),
+        timeZone,
+        calendarSystem,
+      ),
+    [granularity, anchorDate, timeZone, calendarSystem],
   );
 
   const summaryQuery = useDashboardSummaryQuery(businessId, {
@@ -88,6 +97,7 @@ export function DashboardContent() {
         anchorDate={anchorDate}
         minSelectableDate={minSelectableDate}
         timeZone={timeZone}
+        calendarSystem={calendarSystem}
         onGranularityChange={handleGranularityChange}
         onAnchorChange={(date) => setAnchorDate(clampAnchor(date))}
         onRefreshStats={() => void handleRefreshStats()}

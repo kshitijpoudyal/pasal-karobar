@@ -1,8 +1,19 @@
 import { format, getHours, parseISO } from "date-fns";
 
+import type { CalendarSystem } from "@/constants/calendar-system";
 import type { ActivityTimeframe } from "@/utils/date-ranges";
 import type { DashboardGranularity } from "@/utils/date-ranges";
 import type { Transaction } from "@/types/database";
+import {
+  adDateKeyToBs,
+  bsMonthBounds,
+  bsMonthLabel,
+  bsYearBounds,
+  formatBsDayLong,
+  formatBsDayShort,
+  formatBsMonthYear,
+  formatBsWeekday,
+} from "@/utils/nepali-calendar";
 
 export const DEFAULT_BUSINESS_TIMEZONE = "Asia/Kathmandu";
 
@@ -132,10 +143,26 @@ export function formatDayLabelForDateKey(
   dateKey: string,
   timeZone: string,
   now: Date = new Date(),
+  calendarSystem: CalendarSystem = "AD",
 ): string {
   const todayKey = businessTodayDateKey(timeZone, now);
   const yesterdayKey = addDaysToDateKey(todayKey, -1);
   const labelDate = parseISO(`${dateKey}T12:00:00`);
+
+  if (calendarSystem === "BS") {
+    const bsShort = formatBsDayShort(dateKey);
+    if (!bsShort) {
+      return format(labelDate, "EEEE, do MMM");
+    }
+    if (dateKey === todayKey) {
+      return `Today, ${bsShort}`;
+    }
+    if (dateKey === yesterdayKey) {
+      return `Yesterday, ${bsShort}`;
+    }
+    const weekday = formatBsWeekday(dateKey);
+    return weekday ? `${weekday}, ${bsShort}` : formatBsDayLong(dateKey) ?? bsShort;
+  }
 
   if (dateKey === todayKey) {
     return `Today, ${format(labelDate, "do MMM")}`;
@@ -146,47 +173,82 @@ export function formatDayLabelForDateKey(
   return format(labelDate, "EEEE, do MMM");
 }
 
+function zonedPeriodBoundsAd(
+  granularity: DashboardGranularity,
+  anchorKey: string,
+  timeZone: string,
+  now: Date,
+): { fromKey: string; toKey: string } {
+  switch (granularity) {
+    case "day":
+      return { fromKey: anchorKey, toKey: anchorKey };
+    case "week": {
+      const isoDay = isoDayInTimeZone(
+        startOfZonedDay(anchorKey, timeZone).toISOString(),
+        timeZone,
+      );
+      const fromKey = addDaysToDateKey(anchorKey, -(isoDay - 1));
+      return { fromKey, toKey: addDaysToDateKey(fromKey, 6) };
+    }
+    case "month": {
+      const { year, month } = parseDateKey(anchorKey);
+      const fromKey = `${year}-${String(month).padStart(2, "0")}-01`;
+      const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+      const toKey = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+      return { fromKey, toKey };
+    }
+    case "year": {
+      const y = Number.parseInt(anchorKey.slice(0, 4), 10);
+      return { fromKey: `${y}-01-01`, toKey: `${y}-12-31` };
+    }
+  }
+}
+
+function zonedPeriodBoundsBs(
+  granularity: DashboardGranularity,
+  anchorKey: string,
+  timeZone: string,
+): { fromKey: string; toKey: string } | null {
+  const anchorBs = adDateKeyToBs(anchorKey);
+  if (!anchorBs) return null;
+
+  switch (granularity) {
+    case "day":
+      return { fromKey: anchorKey, toKey: anchorKey };
+    case "week": {
+      const isoDay = isoDayInTimeZone(
+        startOfZonedDay(anchorKey, timeZone).toISOString(),
+        timeZone,
+      );
+      const fromKey = addDaysToDateKey(anchorKey, -(isoDay - 1));
+      return { fromKey, toKey: addDaysToDateKey(fromKey, 6) };
+    }
+    case "month":
+      return bsMonthBounds(anchorBs.year, anchorBs.month);
+    case "year":
+      return bsYearBounds(anchorBs.year);
+  }
+}
+
 export function zonedPeriodBounds(
   granularity: DashboardGranularity,
   anchorDate: Date,
   timeZone: string,
   now: Date = new Date(),
+  calendarSystem: CalendarSystem = "AD",
 ): { from: string; to: string } {
   const anchorKey = dateKeyInTimeZone(anchorDate.toISOString(), timeZone);
   const todayKey = businessTodayDateKey(timeZone, now);
   const todayEnd = endOfZonedDay(todayKey, timeZone);
 
-  let fromKey: string;
-  let toKey: string;
+  const bounds =
+    calendarSystem === "BS"
+      ? zonedPeriodBoundsBs(granularity, anchorKey, timeZone) ??
+        zonedPeriodBoundsAd(granularity, anchorKey, timeZone, now)
+      : zonedPeriodBoundsAd(granularity, anchorKey, timeZone, now);
 
-  switch (granularity) {
-    case "day":
-      fromKey = anchorKey;
-      toKey = anchorKey;
-      break;
-    case "week": {
-      const isoDay = isoDayInTimeZone(anchorDate.toISOString(), timeZone);
-      fromKey = addDaysToDateKey(anchorKey, -(isoDay - 1));
-      toKey = addDaysToDateKey(fromKey, 6);
-      break;
-    }
-    case "month": {
-      const { year, month } = parseDateKey(anchorKey);
-      fromKey = `${year}-${String(month).padStart(2, "0")}-01`;
-      const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
-      toKey = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-      break;
-    }
-    case "year": {
-      const y = Number.parseInt(anchorKey.slice(0, 4), 10);
-      fromKey = `${y}-01-01`;
-      toKey = `${y}-12-31`;
-      break;
-    }
-  }
-
-  let from = startOfZonedDay(fromKey, timeZone);
-  let to = endOfZonedDay(toKey, timeZone);
+  let from = startOfZonedDay(bounds.fromKey, timeZone);
+  let to = endOfZonedDay(bounds.toKey, timeZone);
 
   if (to.getTime() > todayEnd.getTime()) {
     to = todayEnd;
@@ -198,45 +260,117 @@ export function zonedPeriodBounds(
   return { from: from.toISOString(), to: to.toISOString() };
 }
 
+function getActivityDateRangeAd(
+  timeframe: ActivityTimeframe,
+  todayKey: string,
+  timeZone: string,
+  now: Date,
+): { fromKey: string; toKey: string } {
+  switch (timeframe) {
+    case "Today":
+      return { fromKey: todayKey, toKey: todayKey };
+    case "This Week": {
+      const isoDay = isoDayInTimeZone(now.toISOString(), timeZone);
+      const weekStartKey = addDaysToDateKey(todayKey, -(isoDay - 1));
+      return { fromKey: weekStartKey, toKey: addDaysToDateKey(weekStartKey, 6) };
+    }
+    case "This Month": {
+      const { year, month } = parseDateKey(todayKey);
+      return { fromKey: `${year}-${String(month).padStart(2, "0")}-01`, toKey: todayKey };
+    }
+    case "This Year": {
+      const y = Number.parseInt(todayKey.slice(0, 4), 10);
+      return { fromKey: `${y}-01-01`, toKey: todayKey };
+    }
+  }
+}
+
+function getActivityDateRangeBs(
+  timeframe: ActivityTimeframe,
+  todayKey: string,
+  timeZone: string,
+  now: Date,
+): { fromKey: string; toKey: string } | null {
+  const todayBs = adDateKeyToBs(todayKey);
+  if (!todayBs) return null;
+
+  switch (timeframe) {
+    case "Today":
+      return { fromKey: todayKey, toKey: todayKey };
+    case "This Week": {
+      const isoDay = isoDayInTimeZone(now.toISOString(), timeZone);
+      const weekStartKey = addDaysToDateKey(todayKey, -(isoDay - 1));
+      return { fromKey: weekStartKey, toKey: addDaysToDateKey(weekStartKey, 6) };
+    }
+    case "This Month": {
+      const bounds = bsMonthBounds(todayBs.year, todayBs.month);
+      if (!bounds) return null;
+      return { fromKey: bounds.fromKey, toKey: todayKey };
+    }
+    case "This Year": {
+      const bounds = bsYearBounds(todayBs.year);
+      if (!bounds) return null;
+      return { fromKey: bounds.fromKey, toKey: todayKey };
+    }
+  }
+}
+
 export function getActivityDateRangeInTimeZone(
   timeframe: ActivityTimeframe,
   timeZone: string,
   now: Date = new Date(),
+  calendarSystem: CalendarSystem = "AD",
 ): { from: string; to: string } {
   const todayKey = businessTodayDateKey(timeZone, now);
   const to = endOfZonedDay(todayKey, timeZone).toISOString();
+  const keys =
+    calendarSystem === "BS"
+      ? getActivityDateRangeBs(timeframe, todayKey, timeZone, now) ??
+        getActivityDateRangeAd(timeframe, todayKey, timeZone, now)
+      : getActivityDateRangeAd(timeframe, todayKey, timeZone, now);
 
-  switch (timeframe) {
-    case "Today":
-      return {
-        from: startOfZonedDay(todayKey, timeZone).toISOString(),
-        to,
-      };
-    case "This Week": {
-      const isoDay = isoDayInTimeZone(now.toISOString(), timeZone);
-      const weekStartKey = addDaysToDateKey(todayKey, -(isoDay - 1));
-      const weekEndKey = addDaysToDateKey(weekStartKey, 6);
-      return {
-        from: startOfZonedDay(weekStartKey, timeZone).toISOString(),
-        to: endOfZonedDay(weekEndKey, timeZone).toISOString(),
-      };
+  return {
+    from: startOfZonedDay(keys.fromKey, timeZone).toISOString(),
+    to: timeframe === "Today" ? to : endOfZonedDay(keys.toKey, timeZone).toISOString(),
+  };
+}
+
+export function formatDashboardScrubberLabelForCalendar(
+  granularity: DashboardGranularity,
+  range: { from: string; to: string },
+  timeZone: string,
+  calendarSystem: CalendarSystem,
+): string | null {
+  if (calendarSystem !== "BS") return null;
+
+  const fromKey = dateKeyInTimeZone(range.from, timeZone);
+  const toKey = dateKeyInTimeZone(range.to, timeZone);
+
+  switch (granularity) {
+    case "day":
+      return formatBsDayLong(fromKey);
+    case "week": {
+      const fromShort = formatBsDayShort(fromKey);
+      const toShort = formatBsDayShort(toKey);
+      const toYear = adDateKeyToBs(toKey)?.year;
+      if (!fromShort || !toShort || !toYear) return null;
+      return `${fromShort} – ${toShort} ${toYear}`;
     }
-    case "This Month": {
-      const { year, month } = parseDateKey(todayKey);
-      const fromKey = `${year}-${String(month).padStart(2, "0")}-01`;
-      return {
-        from: startOfZonedDay(fromKey, timeZone).toISOString(),
-        to,
-      };
-    }
-    case "This Year": {
-      const y = Number.parseInt(todayKey.slice(0, 4), 10);
-      return {
-        from: startOfZonedDay(`${y}-01-01`, timeZone).toISOString(),
-        to,
-      };
+    case "month":
+      return formatBsMonthYear(fromKey);
+    case "year": {
+      const bs = adDateKeyToBs(fromKey);
+      return bs ? String(bs.year) : null;
     }
   }
+}
+
+export function formatBsMonthYearFromDateKey(dateKey: string): string | null {
+  return formatBsMonthYear(dateKey);
+}
+
+export function formatBsMonthYearLabel(bsYear: number, bsMonth: number): string {
+  return `${bsMonthLabel(bsMonth)} ${bsYear}`;
 }
 
 export function groupTransactionsByDayInTimeZone(

@@ -10,6 +10,7 @@ import {
 } from "@/features/activity/components/transaction-activity-card";
 import { incomeTransactionTitle } from "@/features/transactions/utils/income-entry-title";
 import type { Transaction } from "@/types/database";
+import type { CalendarSystem } from "@/constants/calendar-system";
 import {
   formatDayLabelForDateKey,
   formatTimeInBusinessZone,
@@ -26,6 +27,7 @@ type TransactionTimelineProps = {
   onDelete: (transactionId: string) => Promise<void>;
   isDeleting: boolean;
   timeZone: string;
+  calendarSystem: CalendarSystem;
 };
 
 function titleForTransaction(
@@ -55,6 +57,7 @@ export function TransactionTimeline({
   onDelete,
   isDeleting,
   timeZone,
+  calendarSystem,
 }: TransactionTimelineProps) {
   const { confirm } = useConfirmDrawer();
 
@@ -63,7 +66,7 @@ export function TransactionTimeline({
       {grouped.map(([dayKey, transactions]) => (
         <div key={dayKey}>
           <TimelineDateDivider
-            label={formatDayLabelForDateKey(dayKey, timeZone)}
+            label={formatDayLabelForDateKey(dayKey, timeZone, new Date(), calendarSystem)}
           />
           <div className="mb-2 flex flex-col gap-2 pt-4 lg:mb-4 lg:gap-3 lg:pt-3">
             {transactions.map((tx) => {

@@ -4,6 +4,7 @@ import { Clock, UserRound } from "lucide-react";
 
 import { TimelineDateDivider } from "@/features/activity/components/transaction-activity-card";
 import type { CustomerDirectoryRow } from "@/features/customers/hooks/use-customers-page";
+import type { CalendarSystem } from "@/constants/calendar-system";
 import {
   dateKeyInTimeZone,
   formatDayLabelForDateKey,
@@ -42,6 +43,7 @@ export function groupCustomersByLastVisit(
 type CustomerTimelineProps = {
   grouped: [string, CustomerDirectoryRow[]][];
   timeZone: string;
+  calendarSystem: CalendarSystem;
   onSelect: (phoneNormalized: string) => void;
   onRecordForPhone: (phoneNormalized: string) => void;
 };
@@ -49,6 +51,7 @@ type CustomerTimelineProps = {
 export function CustomerTimeline({
   grouped,
   timeZone,
+  calendarSystem,
   onSelect,
   onRecordForPhone,
 }: CustomerTimelineProps) {
@@ -60,7 +63,7 @@ export function CustomerTimeline({
             label={
               dayKey === NO_VISITS_KEY
                 ? "No visits yet"
-                : formatDayLabelForDateKey(dayKey, timeZone)
+                : formatDayLabelForDateKey(dayKey, timeZone, new Date(), calendarSystem)
             }
           />
           <div className="mb-2 flex flex-col gap-2 pt-4 lg:mb-4 lg:gap-3 lg:pt-3">

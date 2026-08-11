@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { CALENDAR_SYSTEMS } from "@/constants/calendar-system";
 import { SERVICE_ICON_IDS } from "@/constants/service-icons";
 
 export const serviceIconIdSchema = z.enum(SERVICE_ICON_IDS);
@@ -36,9 +37,12 @@ export const updateBusinessPaymentMethodSchema = createBusinessPaymentMethodSche
 
 export const transactionTypeSchema = z.enum(["INCOME", "EXPENSE"]);
 
+export const calendarSystemSchema = z.enum(CALENDAR_SYSTEMS);
+
 export const createBusinessSchema = z.object({
   name: z.string().trim().min(1).max(200),
   business_type: businessTypeSchema.default("BARBER"),
+  calendar_system: calendarSystemSchema.default("BS"),
   currency: z.string().trim().min(3).max(3).default("NPR"),
   timezone: z.string().trim().min(1).default("Asia/Kathmandu"),
 });

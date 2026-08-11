@@ -1,4 +1,5 @@
 import type { Transaction } from "@/types/database";
+import type { CalendarSystem } from "@/constants/calendar-system";
 import {
   dateKeyInTimeZone,
   formatDayLabelForDateKey,
@@ -9,9 +10,14 @@ import { formatCompactNpr } from "@/utils/format";
 type CustomerVisitsListProps = {
   visits: Transaction[];
   timeZone: string;
+  calendarSystem: CalendarSystem;
 };
 
-export function CustomerVisitsList({ visits, timeZone }: CustomerVisitsListProps) {
+export function CustomerVisitsList({
+  visits,
+  timeZone,
+  calendarSystem,
+}: CustomerVisitsListProps) {
   return (
     <div>
       <p className="font-body text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase">
@@ -37,6 +43,8 @@ export function CustomerVisitsList({ visits, timeZone }: CustomerVisitsListProps
                 {formatDayLabelForDateKey(
                   dateKeyInTimeZone(tx.transaction_date, timeZone),
                   timeZone,
+                  new Date(),
+                  calendarSystem,
                 )}{" "}
                 {formatTimeInBusinessZone(tx.transaction_date, timeZone)}
               </span>

@@ -165,6 +165,7 @@ export function CustomerDetailPageView({
                   <CustomerVisitsList
                     visits={page.visits}
                     timeZone={page.timeZone}
+                    calendarSystem={page.calendarSystem}
                   />
                 </div>
               )}

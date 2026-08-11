@@ -36,6 +36,7 @@ async function ensureDefaultProfileSettings(
   await repository.upsertMany(
     profilePatchToUpserts(businessId, {
       business_type: input.business_type,
+      calendar_system: input.calendar_system,
       currency: input.currency,
       timezone: input.timezone,
     }),

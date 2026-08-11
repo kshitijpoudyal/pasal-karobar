@@ -5,6 +5,11 @@ import { Store } from "lucide-react";
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
 import {
+  CALENDAR_SYSTEMS,
+  DEFAULT_CALENDAR_SYSTEM,
+  calendarSystemLabel,
+} from "@/constants/calendar-system";
+import {
   DEFAULT_BUSINESS_TIMEZONE,
   timezoneOptionsIncludingCurrent,
 } from "@/constants/business-timezones";
@@ -103,6 +108,26 @@ export function BusinessIdentitySection() {
               {errors.currency ? (
                 <p className="text-xs text-error">{errors.currency.message}</p>
               ) : null}
+            </div>
+            <div className="space-y-3">
+              <label className={labelClassName} htmlFor="calendar-system">
+                Calendar
+              </label>
+              <select
+                id="calendar-system"
+                className={fieldClassName}
+                {...register("calendar_system")}
+              >
+                {CALENDAR_SYSTEMS.map((system) => (
+                  <option key={system} value={system}>
+                    {calendarSystemLabel(system)}
+                  </option>
+                ))}
+              </select>
+              <p className="px-1 text-xs text-on-surface-variant">
+                Controls how dates and report periods are shown. Transaction
+                times stay in UTC.
+              </p>
             </div>
             <div className="space-y-3 md:col-span-2">
               <label className={labelClassName} htmlFor="timezone">
