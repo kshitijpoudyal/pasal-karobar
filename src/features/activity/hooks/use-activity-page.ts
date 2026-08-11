@@ -11,6 +11,7 @@ import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
 import { groupTransactionsByDay } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
+import { incomeTransactionTitle } from "@/features/transactions/utils/income-entry-title";
 import type { Transaction } from "@/types/database";
 import { dbPaymentToLabel } from "@/utils/payment-method";
 import {
@@ -31,8 +32,7 @@ function titleForSearch(
   categoryNames: Map<string, string>,
 ): string {
   if (tx.type === "INCOME") {
-    const name = tx.service_id ? serviceNames.get(tx.service_id) : undefined;
-    return name ?? tx.note ?? "Income";
+    return incomeTransactionTitle(tx, serviceNames);
   }
   const cat = tx.expense_category_id
     ? categoryNames.get(tx.expense_category_id)

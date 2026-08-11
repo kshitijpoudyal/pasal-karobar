@@ -8,6 +8,7 @@ import {
   TimelineDateDivider,
   TransactionActivityCard,
 } from "@/features/activity/components/transaction-activity-card";
+import { incomeTransactionTitle } from "@/features/transactions/utils/income-entry-title";
 import type { Transaction } from "@/types/database";
 import {
   formatDayLabelForDateKey,
@@ -33,10 +34,7 @@ function titleForTransaction(
   categoryNames: Map<string, string>,
 ): string {
   if (tx.type === "INCOME") {
-    const name = tx.service_id
-      ? serviceNames.get(tx.service_id)
-      : undefined;
-    return name ?? tx.note ?? "Income";
+    return incomeTransactionTitle(tx, serviceNames);
   }
   const cat = tx.expense_category_id
     ? categoryNames.get(tx.expense_category_id)

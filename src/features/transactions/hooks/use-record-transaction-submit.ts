@@ -10,43 +10,11 @@ import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-quer
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useConnectivity } from "@/providers/connectivity-provider";
 import { getClientAppServices } from "@/services/client";
+import { buildCombinedServiceTitle } from "@/features/transactions/utils/income-entry-title";
 import { createTransactionSchema, type CreateTransactionInput } from "@/services/schemas";
 import type { PaymentMethod } from "@/types/database";
 import { shouldQueueTransactionOffline } from "@/offline/pending-transaction";
 import { useQueryClient } from "@tanstack/react-query";
-
-function allocateIncomeSubtotals(
-  serviceIds: string[],
-  combinedSubtotal: number,
-  defaultPriceByServiceId: Map<string, number>,
-): number[] {
-  if (serviceIds.length === 0) return [];
-  if (serviceIds.length === 1) return [combinedSubtotal];
-
-  const defaults = serviceIds.map(
-    (id) => defaultPriceByServiceId.get(id) ?? 0,
-  );
-  const autoSum = defaults.reduce((sum, value) => sum + value, 0);
-  if (autoSum <= 0) {
-    const even = Math.floor(combinedSubtotal / serviceIds.length);
-    const remainder = combinedSubtotal - even * serviceIds.length;
-    return serviceIds.map((_, index) =>
-      index === 0 ? even + remainder : even,
-    );
-  }
-
-  let allocated = 0;
-  return serviceIds.map((id, index) => {
-    if (index === serviceIds.length - 1) {
-      return combinedSubtotal - allocated;
-    }
-    const share = Math.round(
-      (combinedSubtotal * (defaultPriceByServiceId.get(id) ?? 0)) / autoSum,
-    );
-    allocated += share;
-    return share;
-  });
-}
 
 export function useRecordTransactionSubmit(onSuccess: () => void) {
   const { businessId } = useActiveBusiness();
@@ -71,40 +39,33 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
   }) {
     const tip = input.tip || 0;
     const combinedSubtotal = input.subtotal;
-    const priceById = new Map(
-      (servicesQuery.data ?? []).map((service) => [
-        service.id,
-        Number(service.default_price),
-      ]),
+    const serviceNames = new Map(
+      (servicesQuery.data ?? []).map((service) => [service.id, service.name]),
     );
-    const subtotals = allocateIncomeSubtotals(
-      input.serviceIds,
-      combinedSubtotal,
-      priceById,
-    );
+    const primaryServiceId = input.serviceIds[0]!;
+    const combinedTitle =
+      input.serviceIds.length > 1
+        ? buildCombinedServiceTitle(input.serviceIds, serviceNames)
+        : undefined;
     const queuedOffline = shouldQueueOffline();
     const transactionDate = new Date().toISOString();
     const paymentMethod = input.payment;
     const customerPhone = input.customerPhone?.trim();
 
-    for (let index = 0; index < input.serviceIds.length; index++) {
-      const serviceId = input.serviceIds[index]!;
-      const rowSubtotal = subtotals[index] ?? 0;
-      const rowTip = index === 0 ? tip : 0;
-      const payload = createTransactionSchema.parse({
-        business_id: businessId,
-        type: "INCOME",
-        service_id: serviceId,
-        subtotal: rowSubtotal,
-        tip: rowTip,
-        total: rowSubtotal + rowTip,
-        payment_method: paymentMethod,
-        transaction_date: transactionDate,
-        ...(customerPhone ? { customer_phone: customerPhone } : {}),
-      } satisfies CreateTransactionInput);
-      const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
-      await createMutation.mutateAsync({ ...payload, offlineClientId });
-    }
+    const payload = createTransactionSchema.parse({
+      business_id: businessId,
+      type: "INCOME",
+      service_id: primaryServiceId,
+      subtotal: combinedSubtotal,
+      tip,
+      total: combinedSubtotal + tip,
+      payment_method: paymentMethod,
+      transaction_date: transactionDate,
+      ...(combinedTitle ? { note: combinedTitle } : {}),
+      ...(customerPhone ? { customer_phone: customerPhone } : {}),
+    } satisfies CreateTransactionInput);
+    const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
+    await createMutation.mutateAsync({ ...payload, offlineClientId });
 
     if (
       input.saveCustomerName &&
@@ -126,9 +87,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       title: "Entry added",
       description: queuedOffline
         ? "Saved on this device — will sync when you're back online."
-        : input.serviceIds.length > 1
-          ? `${input.serviceIds.length} income entries recorded.`
-          : "Income recorded successfully.",
+        : "Income recorded successfully.",
     });
     onSuccess();
   }
