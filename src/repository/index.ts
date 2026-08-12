@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { BusinessPaymentMethodRepository } from "@/repository/business-payment-method.repository";
+import { BusinessMemberRepository, ProfileRepository } from "@/repository/business-member.repository";
 import { CustomerPhotoRepository } from "@/repository/customer-photo.repository";
 import { CustomerRepository } from "@/repository/customer.repository";
 import { BusinessRepository } from "@/repository/business.repository";
@@ -12,6 +13,8 @@ import type { Database } from "@/types/database";
 
 export type Repositories = {
   business: BusinessRepository;
+  businessMember: BusinessMemberRepository;
+  profile: ProfileRepository;
   serviceCatalog: ServiceCatalogRepository;
   expenseCategory: ExpenseCategoryRepository;
   transaction: TransactionRepository;
@@ -24,6 +27,8 @@ export type Repositories = {
 export function createRepositories(supabase: SupabaseClient<Database>): Repositories {
   return {
     business: new BusinessRepository(supabase),
+    businessMember: new BusinessMemberRepository(supabase),
+    profile: new ProfileRepository(supabase),
     serviceCatalog: new ServiceCatalogRepository(supabase),
     expenseCategory: new ExpenseCategoryRepository(supabase),
     transaction: new TransactionRepository(supabase),

@@ -12,6 +12,7 @@ import { useAmountFormat } from "@/hooks/use-amount-format";
 type TransactionActivityCardProps = {
   title: string;
   customerLabel?: string;
+  loggedByLabel?: string;
   time: string;
   paymentMethod: PaymentMethod;
   amountLabel: string;
@@ -120,6 +121,7 @@ function ActivityItemMoreMenu({
 export const TransactionActivityCard = memo(function TransactionActivityCard({
   title,
   customerLabel,
+  loggedByLabel,
   time,
   paymentMethod,
   amountLabel,
@@ -162,6 +164,11 @@ export const TransactionActivityCard = memo(function TransactionActivityCard({
             {customerLabel ? (
               <p className="truncate text-[11px] text-on-surface-variant">
                 {customerLabel}
+              </p>
+            ) : null}
+            {loggedByLabel ? (
+              <p className="truncate text-[10px] text-on-surface-variant/80">
+                {loggedByLabel}
               </p>
             ) : null}
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
@@ -222,6 +229,11 @@ export const TransactionActivityCard = memo(function TransactionActivityCard({
             {customerLabel ? (
               <p className="truncate text-xs text-on-surface-variant">
                 {customerLabel}
+              </p>
+            ) : null}
+            {loggedByLabel ? (
+              <p className="truncate text-[11px] text-on-surface-variant/80">
+                {loggedByLabel}
               </p>
             ) : null}
             <div className="mt-1 flex flex-wrap items-center gap-2 text-on-surface-variant lg:gap-3">

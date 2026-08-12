@@ -32,6 +32,7 @@ import type {
 } from "@/services/schemas";
 import type { Transaction } from "@/types/database";
 import { isSupabaseConfigured } from "@/utils/env";
+import { useActiveMember } from "@/providers/active-member-provider";
 
 export type CreateTransactionMutationVariables = CreateTransactionInput & {
   offlineClientId?: string;
@@ -100,6 +101,7 @@ export function useTransactionQuery(
 
 export function useCreateTransactionMutation(businessId: string) {
   const queryClient = useQueryClient();
+  const { userId } = useActiveMember();
 
   return useMutation({
     networkMode: "always",
@@ -113,6 +115,7 @@ export function useCreateTransactionMutation(businessId: string) {
           payload,
           createdAt: new Date().toISOString(),
           status: "pending",
+          recordedByUserId: userId || null,
           ...(input.offlineCustomerName
             ? { customerName: input.offlineCustomerName }
             : {}),
@@ -124,6 +127,7 @@ export function useCreateTransactionMutation(businessId: string) {
         notifyOutboxChanged();
         return buildPendingTransaction(clientId, businessId, payload, {
           customerId: input.optimisticCustomerId ?? null,
+          recordedByUserId: userId || null,
         });
       }
       return getClientAppServices().transaction.create(payload);
@@ -147,6 +151,7 @@ export function useCreateTransactionMutation(businessId: string) {
         expense_category_id:
           payload.type === "EXPENSE" ? payload.expense_category_id : null,
         customer_id: input.optimisticCustomerId ?? null,
+        recorded_by_user_id: userId || null,
         subtotal: payload.subtotal,
         tip: payload.type === "INCOME" ? (payload.tip ?? 0) : 0,
         total: payload.total,

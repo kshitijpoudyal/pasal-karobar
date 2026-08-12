@@ -34,7 +34,7 @@ export function buildPendingTransaction(
   clientId: string,
   businessId: string,
   input: CreateTransactionInput,
-  options?: { customerId?: string | null },
+  options?: { customerId?: string | null; recordedByUserId?: string | null },
 ): Transaction {
   const now = new Date().toISOString();
   return {
@@ -44,6 +44,7 @@ export function buildPendingTransaction(
     service_id: input.type === "INCOME" ? input.service_id : null,
     expense_category_id: input.type === "EXPENSE" ? input.expense_category_id : null,
     customer_id: options?.customerId ?? null,
+    recorded_by_user_id: options?.recordedByUserId ?? null,
     subtotal: input.subtotal,
     tip: input.type === "INCOME" ? (input.tip ?? 0) : 0,
     total: input.total,

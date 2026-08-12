@@ -4,6 +4,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { BusinessProvider } from "@/providers/business-provider";
+import { ActiveMemberProvider } from "@/providers/active-member-provider";
 import { BusinessGate } from "@/components/layout/business-gate";
 import { SupabaseGate } from "@/components/layout/supabase-gate";
 import { AppNavProvider } from "@/providers/app-nav-provider";
@@ -25,22 +26,24 @@ export function AppProviders({ children }: AppProvidersProps) {
         <PwaInstallProvider>
           <AuthProvider>
             <BusinessProvider>
-              <SupabaseGate>
-                <BusinessGate>
-                  <ConnectivityProvider>
-                    <AppNavProvider>
-                      <AmountVisibilityProvider>
-                        <ConfirmDrawerProvider>
-                          <RecordTransactionModalProvider>
-                            {children}
-                            <ToastViewport />
-                          </RecordTransactionModalProvider>
-                        </ConfirmDrawerProvider>
-                      </AmountVisibilityProvider>
-                    </AppNavProvider>
-                  </ConnectivityProvider>
-                </BusinessGate>
-              </SupabaseGate>
+              <ActiveMemberProvider>
+                <SupabaseGate>
+                  <BusinessGate>
+                    <ConnectivityProvider>
+                      <AppNavProvider>
+                        <AmountVisibilityProvider>
+                          <ConfirmDrawerProvider>
+                            <RecordTransactionModalProvider>
+                              {children}
+                              <ToastViewport />
+                            </RecordTransactionModalProvider>
+                          </ConfirmDrawerProvider>
+                        </AmountVisibilityProvider>
+                      </AppNavProvider>
+                    </ConnectivityProvider>
+                  </BusinessGate>
+                </SupabaseGate>
+              </ActiveMemberProvider>
             </BusinessProvider>
           </AuthProvider>
         </PwaInstallProvider>

@@ -15,6 +15,7 @@ import { isBrowserOnline } from "@/offline/pending-transaction";
 import { DEFAULT_BOOTSTRAP_BUSINESS } from "@/services/onboarding-defaults";
 import { useAuth } from "@/providers/auth-provider";
 import type { Business } from "@/types/database";
+import { canCreateBusiness, displayNameFromUser } from "@/utils/auth-metadata";
 import { isSupabaseConfigured } from "@/utils/env";
 
 type BusinessContextValue = {
@@ -36,19 +37,33 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
   const listQuery = useBusinessListQuery({ enabled });
   const createMutation = useCreateBusinessMutation();
 
+  const mayBootstrap = canCreateBusiness(session?.user ?? null);
+
   useEffect(() => {
     if (!enabled || listQuery.isLoading) return;
+    if (!mayBootstrap) return;
     if (!isBrowserOnline()) return;
     if (listQuery.data && listQuery.data.length > 0) return;
     if (bootstrapped.current || createMutation.isPending) return;
 
     bootstrapped.current = true;
-    createMutation.mutate(DEFAULT_BOOTSTRAP_BUSINESS, {
-      onError: () => {
-        bootstrapped.current = false;
+    const displayName = displayNameFromUser(session?.user ?? null) ?? "Admin";
+    createMutation.mutate(
+      { ...DEFAULT_BOOTSTRAP_BUSINESS, display_name: displayName },
+      {
+        onError: () => {
+          bootstrapped.current = false;
+        },
       },
-    });
-  }, [enabled, listQuery.isLoading, listQuery.data, createMutation]);
+    );
+  }, [
+    enabled,
+    listQuery.isLoading,
+    listQuery.data,
+    createMutation,
+    mayBootstrap,
+    session?.user,
+  ]);
 
   const businessFromList = useMemo(() => {
     const list = listQuery.data ?? [];
@@ -70,6 +85,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
   }, [businessFromList]);
 
   const bootstrapPending =
+    mayBootstrap &&
     enabled &&
     !listQuery.isLoading &&
     (listQuery.data?.length ?? 0) === 0 &&

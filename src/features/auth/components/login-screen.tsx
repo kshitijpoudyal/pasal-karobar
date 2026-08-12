@@ -57,7 +57,7 @@ export function LoginScreen() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                placeholder="name@firm.com"
+                placeholder={isSignUp ? "owner@shop.com" : "name@firm.com"}
                 className={cn(inputClassName, "login-input-delay-0")}
                 {...register("email")}
               />
@@ -67,6 +67,30 @@ export function LoginScreen() {
                 </p>
               ) : null}
             </div>
+
+            {isSignUp ? (
+              <div className="space-y-3">
+                <label
+                  className="text-label-sm ml-1 block uppercase tracking-widest text-on-surface-variant"
+                  htmlFor="displayName"
+                >
+                  Your name
+                </label>
+                <input
+                  id="displayName"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Shop owner name"
+                  className={cn(inputClassName, "login-input-delay-0")}
+                  {...register("displayName")}
+                />
+                {errors.displayName ? (
+                  <p className="text-xs text-error" role="alert">
+                    {errors.displayName.message}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="space-y-3">
               <label
@@ -142,7 +166,7 @@ export function LoginScreen() {
                   </>
                 ) : (
                   <>
-                    New here?{" "}
+                    Shop owner?{" "}
                     <button
                       type="button"
                       className="border-b border-primary/20 font-medium text-primary transition-all hover:border-primary"
@@ -153,6 +177,11 @@ export function LoginScreen() {
                   </>
                 )}
               </p>
+              {!isSignUp ? (
+                <p className="mt-3 text-xs text-on-surface-variant">
+                  Staff members sign in with credentials from your shop admin.
+                </p>
+              ) : null}
             </div>
           </form>
         </div>

@@ -9,6 +9,7 @@ import { removeTransactionFromListCaches } from "@/hooks/queries/transaction-que
 import { useDeleteTransactionMutation } from "@/hooks/queries/use-transaction-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
+import { useProfilesByIdsQuery } from "@/hooks/queries/use-profile-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
@@ -112,6 +113,16 @@ export function useActivityPage() {
     gcTime: Number.POSITIVE_INFINITY,
   });
 
+  const recorderIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const tx of transactionsQuery.data ?? []) {
+      if (tx.recorded_by_user_id) ids.add(tx.recorded_by_user_id);
+    }
+    return [...ids];
+  }, [transactionsQuery.data]);
+
+  const profilesQuery = useProfilesByIdsQuery(recorderIds);
+
   const serviceNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const s of servicesQuery.data ?? []) {
@@ -127,6 +138,14 @@ export function useActivityPage() {
     }
     return map;
   }, [categoriesQuery.data]);
+
+  const loggedByLabels = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const profile of profilesQuery.data ?? []) {
+      map.set(profile.id, profile.display_name);
+    }
+    return map;
+  }, [profilesQuery.data]);
 
   const customerLabels = useMemo(() => {
     const map = new Map<string, string>();
@@ -191,13 +210,15 @@ export function useActivityPage() {
     transactionsQuery.isLoading ||
     customersQuery.isLoading ||
     servicesQuery.isLoading ||
-    categoriesQuery.isLoading;
+    categoriesQuery.isLoading ||
+    (recorderIds.length > 0 && profilesQuery.isLoading);
 
   const error =
     transactionsQuery.error ??
     customersQuery.error ??
     servicesQuery.error ??
     categoriesQuery.error ??
+    profilesQuery.error ??
     null;
 
   function refetch() {
@@ -249,6 +270,7 @@ export function useActivityPage() {
     serviceNames,
     categoryNames,
     customerLabels,
+    loggedByLabels,
     isLoading,
     error,
     refetch,

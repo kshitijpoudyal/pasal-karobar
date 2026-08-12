@@ -45,6 +45,7 @@ export const createBusinessSchema = z.object({
   calendar_system: calendarSystemSchema.default("BS"),
   currency: z.string().trim().min(3).max(3).default("NPR"),
   timezone: z.string().trim().min(1).default("Asia/Kathmandu"),
+  display_name: z.string().trim().min(1).max(120).optional(),
 });
 
 export const updateBusinessSchema = createBusinessSchema.partial();

@@ -23,6 +23,7 @@ type TransactionTimelineProps = {
   serviceNames: Map<string, string>;
   categoryNames: Map<string, string>;
   customerLabels: Map<string, string>;
+  loggedByLabels: Map<string, string>;
   onDelete: (transactionId: string) => Promise<void>;
   isDeleting: boolean;
   timeZone: string;
@@ -52,6 +53,7 @@ export function TransactionTimeline({
   serviceNames,
   categoryNames,
   customerLabels,
+  loggedByLabels,
   onDelete,
   isDeleting,
   timeZone,
@@ -75,6 +77,10 @@ export function TransactionTimeline({
                 isIncome && tx.customer_id
                   ? customerLabels.get(tx.customer_id)
                   : undefined;
+              const loggedByName = tx.recorded_by_user_id
+                ? loggedByLabels.get(tx.recorded_by_user_id)
+                : undefined;
+              const loggedByLabel = loggedByName ? `Logged by ${loggedByName}` : undefined;
               logTimezoneFormatMismatch(
                 tx.transaction_date,
                 timeZone,
@@ -110,6 +116,7 @@ export function TransactionTimeline({
                   key={tx.id}
                   title={title}
                   customerLabel={customerLabel}
+                  loggedByLabel={loggedByLabel}
                   time={time}
                   paymentMethod={tx.payment_method}
                   isIncome={isIncome}

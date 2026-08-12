@@ -29,6 +29,8 @@ export type BusinessInsert = {
   calendar_system?: CalendarSystem;
   currency?: string;
   timezone?: string;
+  /** Owner display name stored in profiles during shop creation. */
+  display_name?: string;
 };
 
 export type BusinessUpdate = Partial<{
@@ -159,6 +161,21 @@ export type CustomerPhotoWithUrl = CustomerPhoto & {
   signed_url: string;
 };
 
+export type MemberRole = "OWNER" | "STAFF";
+
+export type Profile = {
+  id: string;
+  display_name: string;
+  email: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProfileInsert = Pick<Profile, "id" | "display_name"> &
+  Partial<Pick<Profile, "email">>;
+
+export type ProfileUpdate = Partial<Pick<Profile, "display_name" | "email">>;
+
 export type Transaction = {
   id: string;
   business_id: string;
@@ -166,6 +183,7 @@ export type Transaction = {
   service_id: string | null;
   expense_category_id: string | null;
   customer_id: string | null;
+  recorded_by_user_id: string | null;
   subtotal: number;
   tip: number;
   total: number;
@@ -206,6 +224,7 @@ export type TransactionRowInsert = {
   service_id?: string | null;
   expense_category_id?: string | null;
   customer_id?: string | null;
+  recorded_by_user_id?: string | null;
   subtotal: number;
   tip?: number;
   total: number;
@@ -241,7 +260,12 @@ export type BusinessMember = {
   id: string;
   business_id: string;
   user_id: string;
+  role: MemberRole;
   created_at: string;
+};
+
+export type StaffMemberRow = BusinessMember & {
+  profile: Profile | null;
 };
 
 export type Database = {
@@ -293,6 +317,12 @@ export type Database = {
         Update: TransactionUpdate;
         Relationships: [];
       };
+      profiles: {
+        Row: Profile;
+        Insert: ProfileInsert;
+        Update: ProfileUpdate;
+        Relationships: [];
+      };
       business_settings: {
         Row: BusinessSetting;
         Insert: BusinessSetting;
@@ -305,7 +335,7 @@ export type Database = {
           id?: string;
           created_at?: string;
         };
-        Update: never;
+        Update: Partial<Pick<BusinessMember, "role">>;
         Relationships: [];
       };
     };
@@ -321,14 +351,20 @@ export type Database = {
           p_business_type?: BusinessType;
           p_currency?: string;
           p_timezone?: string;
+          p_display_name?: string | null;
         };
         Returns: BusinessRecord;
+      };
+      is_business_owner: {
+        Args: { p_business_id: string };
+        Returns: boolean;
       };
     };
     Enums: {
       transaction_type: TransactionType;
       payment_method: PaymentMethod;
       business_type: BusinessType;
+      member_role: MemberRole;
     };
     CompositeTypes: Record<string, never>;
   };

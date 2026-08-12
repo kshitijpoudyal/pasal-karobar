@@ -42,4 +42,11 @@ describe("pending transaction helpers", () => {
     });
     expect(tx.customer_id).toBe("pending-customer:9801234567");
   });
+
+  it("preserves recorded-by user id for offline attribution", () => {
+    const tx = buildPendingTransaction("client-1", "biz-1", sampleIncome, {
+      recordedByUserId: "user-abc",
+    });
+    expect(tx.recorded_by_user_id).toBe("user-abc");
+  });
 });

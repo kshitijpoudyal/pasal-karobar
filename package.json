@@ -14,7 +14,9 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "seed:daily": "node --env-file=.env.local scripts/seed-daily-transactions.mjs"
+    "seed:daily": "node --env-file=.env.local scripts/seed-daily-transactions.mjs",
+    "verify:staff-migration": "node --env-file=.env.local scripts/verify-staff-migration.mjs",
+    "smoke:prod": "node --env-file=.env.local scripts/smoke-test-prod.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.5.7",

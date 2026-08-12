@@ -17,6 +17,8 @@ export type OutboxEntry = {
   customerName?: string;
   /** Resolved customer id (or pending-customer:* placeholder) for UI until sync. */
   optimisticCustomerId?: string | null;
+  /** User who queued this entry (for optimistic attribution). */
+  recordedByUserId?: string | null;
 };
 
 interface OutboxDbSchema extends DBSchema {

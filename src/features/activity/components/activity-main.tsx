@@ -71,6 +71,7 @@ function ActivityTimelineBody({
         serviceNames={activity.serviceNames}
         categoryNames={activity.categoryNames}
         customerLabels={activity.customerLabels}
+        loggedByLabels={activity.loggedByLabels}
         onDelete={activity.deleteTransaction}
         isDeleting={activity.isDeleting}
         timeZone={activity.timeZone}

@@ -56,4 +56,19 @@ export const queryKeys = {
     list: (customerId: string) =>
       [...queryKeys.customerPhotos.all, "list", customerId] as const,
   },
+  members: {
+    all: ["members"] as const,
+    active: (businessId: string, userId: string) =>
+      [...queryKeys.members.all, "active", businessId, userId] as const,
+  },
+  profiles: {
+    all: ["profiles"] as const,
+    byIds: (userIds: string[]) =>
+      [...queryKeys.profiles.all, "by-ids", ...userIds] as const,
+  },
+  staff: {
+    all: ["staff"] as const,
+    list: (businessId: string) =>
+      [...queryKeys.staff.all, "list", businessId] as const,
+  },
 } as const;

@@ -10,6 +10,7 @@ import { useAuth } from "@/providers/auth-provider";
 const loginFormSchema = z.object({
   email: z.string().trim().email("Enter a valid business email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  displayName: z.string().trim().optional(),
 });
 
 export type LoginFormValues = z.infer<typeof loginFormSchema>;
@@ -20,14 +21,19 @@ export function useLoginForm() {
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", displayName: "" },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (mode === "signIn") {
       await signIn(values.email, values.password);
     } else {
-      await signUp(values.email, values.password);
+      const displayName = values.displayName?.trim() ?? "";
+      if (!displayName) {
+        form.setError("displayName", { message: "Your name is required" });
+        return;
+      }
+      await signUp(values.email, values.password, displayName);
     }
   });
 

@@ -19,7 +19,7 @@ The long-term vision is to become the operating system for small businesses in N
 
 ## Primary
 
-- Solo Barber Shops
+- Solo Barber Shops (shop owner + optional staff with separate logins)
 
 ## Future
 
@@ -70,6 +70,17 @@ Record Transaction → Save → Return to Dashboard
 - Floating Action Button — Record Transaction
 
 Navigation should remain minimal.
+
+---
+
+# Accounts and staff (MVP)
+
+- **Shop owner** — creates an account via **Create account** on the login screen, owns the business, and can register staff in Settings.
+- **Staff** — sign in with email and temporary password provided by the owner; no self-sign-up or shop creation.
+- **Shared data** — all members of a shop see and edit the same transactions, customers, and settings.
+- **Attribution** — each transaction records who logged it (`recorded_by_user_id`); Activity shows **Logged by {name}** when available.
+
+Per-staff permissions (delete restrictions, feature visibility) are deferred to a later phase.
 
 ---
 

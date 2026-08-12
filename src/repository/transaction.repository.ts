@@ -35,7 +35,7 @@ export type IncomeSummaryFilters = {
 
 /** Columns needed for list views (avoids select("*") overhead on wide rows). */
 const TRANSACTION_LIST_COLUMNS =
-  "id, business_id, type, service_id, expense_category_id, customer_id, subtotal, tip, total, payment_method, note, transaction_date, created_at, updated_at" as const;
+  "id, business_id, type, service_id, expense_category_id, customer_id, recorded_by_user_id, subtotal, tip, total, payment_method, note, transaction_date, created_at, updated_at" as const;
 
 export class TransactionRepository {
   constructor(private readonly supabase: SupabaseClient<Database>) {}

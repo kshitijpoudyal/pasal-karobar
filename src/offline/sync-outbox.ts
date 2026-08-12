@@ -91,7 +91,10 @@ export async function mergeOutboxIntoTransactionCaches(
       entry.clientId,
       entry.businessId,
       entry.payload,
-      { customerId },
+      {
+        customerId,
+        recordedByUserId: entry.recordedByUserId ?? null,
+      },
     );
     upsertPendingInListCaches(queryClient, businessId, tx);
 

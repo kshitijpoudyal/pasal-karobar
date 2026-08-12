@@ -150,6 +150,7 @@ Files live in private bucket **`customer-photos`** at path `{business_id}/{custo
 | service_id          |                                              |
 | expense_category_id |                                              |
 | customer_id         | Optional; income only (links to `customers`) |
+| recorded_by_user_id | Optional; FK → `auth.users`; set by DB trigger on insert from `auth.uid()` |
 | subtotal            |                                              |
 | tip                 |                                              |
 | total               |                                              |
@@ -175,28 +176,47 @@ Files live in private bucket **`customer-photos`** at path `{business_id}/{custo
 
 ## `business_members` (tenancy / RLS)
 
-Links Supabase Auth users to a business for row-level isolation. Not a product domain table; required for policies.
+Links Supabase Auth users to a business for row-level isolation. Each member has a **role** (`OWNER` or `STAFF`). All members share the same shop data (transactions, customers, settings) via `is_business_member(business_id)` RLS.
 
-| Column      | Notes             |
-| ----------- | ----------------- |
-| id          | UUID primary key  |
-| business_id | FK → `business`   |
-| user_id     | FK → `auth.users` |
-| created_at  |                   |
+| Column      | Notes                                |
+| ----------- | ------------------------------------ |
+| id          | UUID primary key                     |
+| business_id | FK → `business`                      |
+| user_id     | FK → `auth.users`                    |
+| role        | `OWNER` or `STAFF` (default `STAFF`) |
+| created_at  |                                      |
 
-Unique `(business_id, user_id)`. On `business` insert, the creator is added via trigger when authenticated. The app creates businesses through `create_business_for_owner()` (see migration `20260730194500_create_business_for_owner.sql`) so membership and RLS stay consistent.
+Unique `(business_id, user_id)`. On `business` insert, the creator is added via trigger when authenticated. The app creates businesses through `create_business_for_owner(..., p_display_name)` so membership, owner profile, and RLS stay consistent.
 
-**Seeded data:** `supabase/seed.sql` does not insert `business_members`. After sign-in, either let the app bootstrap a new business or link your user in the SQL editor:
+Staff accounts are created by the owner in **Settings → Staff** using the Supabase Admin API (`SUPABASE_SERVICE_ROLE_KEY` on the server). Staff cannot self-sign-up or bootstrap a new business.
+
+**Seeded data:** `supabase/seed.sql` does not insert `business_members`. After sign-in, either let the app bootstrap a new business (owner sign-up only) or link your user in the SQL editor:
 
 ```sql
-INSERT INTO public.business_members (business_id, user_id)
-SELECT b.id, auth.uid()
+INSERT INTO public.business_members (business_id, user_id, role)
+SELECT b.id, auth.uid(), 'OWNER'
 FROM public.business b
 WHERE b.name = 'Royal Cuts Barber Shop'
 ON CONFLICT DO NOTHING;
 ```
 
 (Run while authenticated in the SQL editor, or substitute your user UUID for `auth.uid()`.)
+
+---
+
+## `profiles`
+
+Display names for auth users (owners and staff).
+
+| Column       | Notes                    |
+| ------------ | ------------------------ |
+| id           | PK → `auth.users`        |
+| display_name | Required                 |
+| email        | Optional cache from auth |
+| created_at   |                          |
+| updated_at   |                          |
+
+Members can read profiles of users in the same business. Used for **Logged by {name}** on activity entries.
 
 ---
 
@@ -212,6 +232,7 @@ SQL migrations live in `supabase/migrations/`.
 | `20260807153000_seed_default_catalog_on_create.sql` | Default services/categories on create; `seed_default_business_catalog` RPC |
 | `20260808120000_customers.sql`                      | `customers` table; `transactions.customer_id`; RLS                         |
 | `20260809140000_customer_profile_photos.sql`        | `profile_note`; `customer_photos`; Storage bucket `customer-photos`        |
+| `20260812120000_staff_profiles_and_attribution.sql` | `profiles`, `business_members.role`, `transactions.recorded_by_user_id`, attribution trigger |
 
 Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supabase dashboard.
 
@@ -231,7 +252,10 @@ Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supaba
    (or `supabase/sql/customers.sql` when present).
 7. Paste and run `supabase/migrations/20260809140000_customer_profile_photos.sql`
    (or `supabase/sql/customer_profile_photos.sql`).
-8. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+8. Paste and run `supabase/migrations/20260812120000_staff_profiles_and_attribution.sql`.
+9. Optional: run `supabase/seed.sql` for demo rows (then link your auth user in `business_members`; see above).
+
+Set `SUPABASE_SERVICE_ROLE_KEY` in `.env.local` for owner **Register staff** in Settings (server-only; never expose to the client).
 
 ### Daily mock transactions (dev / demo)
 

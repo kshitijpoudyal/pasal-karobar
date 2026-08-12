@@ -30,6 +30,7 @@ export class BusinessRepository {
       p_business_type: payload.business_type,
       p_currency: payload.currency,
       p_timezone: payload.timezone,
+      p_display_name: payload.display_name ?? null,
     });
 
     if (!rpc.error && rpc.data) {

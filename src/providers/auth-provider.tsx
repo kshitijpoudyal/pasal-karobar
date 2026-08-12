@@ -10,7 +10,7 @@ type AuthContextValue = {
   session: Session | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   authError: string | null;
 };
@@ -70,10 +70,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           throw error;
         }
       },
-      async signUp(email, password) {
+      async signUp(email, password, displayName) {
         setAuthError(null);
         const supabase = createSupabaseBrowserClient();
-        const { error } = await supabase.auth.signUp({ email, password });
+        const trimmedName = displayName.trim();
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              display_name: trimmedName,
+              can_create_business: true,
+            },
+          },
+        });
         if (error) {
           setAuthError(error.message);
           throw error;
