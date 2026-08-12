@@ -1,7 +1,6 @@
 "use client";
 
 import { CustomerFilters } from "@/features/customers/components/customer-filters";
-import { CustomerSummaryCard } from "@/features/customers/components/customer-summary-card";
 import { CustomerInsightsStrip } from "@/features/customers/components/customer-insights-strip";
 import type { useCustomersPage } from "@/features/customers/hooks/use-customers-page";
 
@@ -21,6 +20,7 @@ export function CustomerHeaderChrome({
       <div className="flex shrink-0 flex-col gap-6">
         <CustomerInsightsStrip
           insights={page.periodInsights}
+          totalCustomers={page.totalCustomers}
           onAddCustomer={onAddCustomer}
           layout="mobile"
         />
@@ -40,6 +40,7 @@ export function CustomerHeaderChrome({
     <div className="grid shrink-0 grid-cols-1 gap-6">
       <CustomerInsightsStrip
         insights={page.periodInsights}
+        totalCustomers={page.totalCustomers}
         onAddCustomer={onAddCustomer}
         layout="desktop"
       />
@@ -52,10 +53,6 @@ export function CustomerHeaderChrome({
         onSearchQueryChange={page.setSearchQuery}
         onAddCustomer={onAddCustomer}
         showDesktopAdd
-      />
-      <CustomerSummaryCard
-        trackedVisits={page.periodInsights.trackedVisits}
-        totalCustomers={page.totalCustomers}
       />
     </div>
   );

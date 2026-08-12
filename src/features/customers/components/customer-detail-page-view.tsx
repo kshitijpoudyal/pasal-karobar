@@ -164,6 +164,7 @@ export function CustomerDetailPageView({
 
                   <CustomerVisitsList
                     groupedVisits={page.groupedVisits}
+                    transactions={page.visitTransactions}
                     timeZone={page.timeZone}
                   />
                 </div>

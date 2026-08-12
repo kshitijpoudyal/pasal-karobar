@@ -1,20 +1,21 @@
 import { formatCompactNpr } from "@/utils/format";
 import { formatTimeInBusinessZone } from "@/utils/business-datetime";
+import { countDistinctVisits, toIncomeVisitRows } from "@/utils/customer-visits";
 import type { GroupedTransactionsDay } from "@/utils/group-transactions-by-day";
+import type { Transaction } from "@/types/database";
 
 type CustomerVisitsListProps = {
   groupedVisits: GroupedTransactionsDay[];
+  transactions: Transaction[];
   timeZone: string;
 };
 
 export function CustomerVisitsList({
   groupedVisits,
+  transactions,
   timeZone,
 }: CustomerVisitsListProps) {
-  const visitCount = groupedVisits.reduce(
-    (sum, group) => sum + group.transactions.length,
-    0,
-  );
+  const visitCount = countDistinctVisits(toIncomeVisitRows(transactions));
 
   return (
     <div>

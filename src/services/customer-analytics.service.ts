@@ -1,6 +1,11 @@
-import type { Customer } from "@/types/database";
 import type { Transaction } from "@/types/database";
 import type { IncomeSummaryRow } from "@/repository/transaction.repository";
+import {
+  countDistinctVisits,
+  countDistinctVisitsByCustomer,
+  toIncomeVisitRows,
+  type IncomeVisitRow,
+} from "@/utils/customer-visits";
 
 export type CustomerPeriodInsights = {
   newCustomers: number;
@@ -27,46 +32,54 @@ function isInstantInRange(
   return t >= periodStartMs && t <= periodEndMs;
 }
 
+function asIncomeVisitRows(
+  rows: IncomeSummaryRow[] | Transaction[] | IncomeVisitRow[],
+): IncomeVisitRow[] {
+  if (rows.length === 0) return [];
+  const first = rows[0]!;
+  if ("customer_id" in first && "transaction_date" in first && !("type" in first)) {
+    if ("total" in first) {
+      return toIncomeVisitRows(rows as IncomeSummaryRow[]);
+    }
+    return rows as IncomeVisitRow[];
+  }
+  return toIncomeVisitRows(rows as Transaction[]);
+}
+
 /** Pure metrics for dashboard / customers report (business-TZ bounds as ISO instants). */
 export function computeCustomerPeriodInsights(
-  incomeTransactions: Transaction[],
-  customersById: Map<string, Customer>,
+  periodIncomeTransactions: Transaction[],
+  allTimeIncomeRows: IncomeSummaryRow[] | IncomeVisitRow[],
   periodStartIso: string,
   periodEndIso: string,
 ): CustomerPeriodInsights {
   const periodStartMs = Date.parse(periodStartIso);
   const periodEndMs = Date.parse(periodEndIso);
 
-  let anonymousVisits = 0;
-  let trackedVisits = 0;
-  const customerIdsInPeriod = new Set<string>();
+  const periodRows = toIncomeVisitRows(periodIncomeTransactions);
+  const allTimeRows = asIncomeVisitRows(allTimeIncomeRows);
+  const lifetimeVisitCounts = countDistinctVisitsByCustomer(allTimeRows);
 
-  for (const tx of incomeTransactions) {
-    if (!tx.customer_id) {
-      anonymousVisits += 1;
-      continue;
-    }
-    trackedVisits += 1;
-    customerIdsInPeriod.add(tx.customer_id);
+  const periodTrackedRows = periodRows.filter((row) => row.customer_id);
+  const periodAnonymousRows = periodRows.filter((row) => !row.customer_id);
+
+  const trackedVisits = countDistinctVisits(periodTrackedRows);
+  const anonymousVisits = countDistinctVisits(periodAnonymousRows);
+
+  const customerIdsInPeriod = new Set<string>();
+  for (const row of periodTrackedRows) {
+    customerIdsInPeriod.add(row.customer_id!);
   }
 
   let newCustomers = 0;
   let returningCustomers = 0;
 
   for (const customerId of customerIdsInPeriod) {
-    const customer = customersById.get(customerId);
-    const firstVisit = customer?.first_visit_at;
-    if (!firstVisit) {
-      newCustomers += 1;
-      continue;
-    }
-    const firstMs = Date.parse(firstVisit);
-    if (firstMs < periodStartMs) {
+    const lifetimeVisits = lifetimeVisitCounts.get(customerId) ?? 0;
+    if (lifetimeVisits > 1) {
       returningCustomers += 1;
-    } else if (firstMs >= periodStartMs && firstMs <= periodEndMs) {
-      newCustomers += 1;
     } else {
-      returningCustomers += 1;
+      newCustomers += 1;
     }
   }
 
@@ -85,6 +98,8 @@ export function aggregateCustomerDirectoryStats(
   string,
   { visitCount: number; revenue: number; lastVisitAt: string | null }
 > {
+  const visitRows = asIncomeVisitRows(incomeRows);
+  const visitCounts = countDistinctVisitsByCustomer(visitRows);
   const stats = new Map<
     string,
     { visitCount: number; revenue: number; lastVisitAt: string | null }
@@ -93,11 +108,10 @@ export function aggregateCustomerDirectoryStats(
   for (const tx of incomeRows) {
     if (!tx.customer_id) continue;
     const bucket = stats.get(tx.customer_id) ?? {
-      visitCount: 0,
+      visitCount: visitCounts.get(tx.customer_id) ?? 0,
       revenue: 0,
       lastVisitAt: null,
     };
-    bucket.visitCount += 1;
     bucket.revenue += Number(tx.total);
     if (
       !bucket.lastVisitAt ||
@@ -106,6 +120,19 @@ export function aggregateCustomerDirectoryStats(
       bucket.lastVisitAt = tx.transaction_date;
     }
     stats.set(tx.customer_id, bucket);
+  }
+
+  for (const [customerId, visitCount] of visitCounts) {
+    const bucket = stats.get(customerId);
+    if (bucket) {
+      bucket.visitCount = visitCount;
+      continue;
+    }
+    stats.set(customerId, {
+      visitCount,
+      revenue: 0,
+      lastVisitAt: null,
+    });
   }
 
   return stats;

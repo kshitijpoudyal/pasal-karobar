@@ -694,13 +694,15 @@ export class DashboardService {
       parseISO(priorRange.from),
     ]).toISOString();
 
-    const [transactions, services, earliestTransactionDate] = await Promise.all([
+    const [transactions, services, earliestTransactionDate, allTimeIncomeSummary] =
+      await Promise.all([
       this.transactionService.listByBusinessId(businessId, {
         fromDate: fetchFromIso,
         toDate: periodToIso,
       }),
       this.serviceCatalogService.listByBusinessId(businessId),
       this.transactionService.findEarliestTransactionDate(businessId),
+      this.transactionService.listIncomeSummaryByBusinessId(businessId),
     ]);
 
     const periodTransactions = filterTransactionsInRange(
@@ -787,17 +789,9 @@ export class DashboardService {
         : null;
 
     const incomeInPeriod = periodTransactions.filter((tx) => tx.type === "INCOME");
-    const customerIds = [
-      ...new Set(
-        incomeInPeriod
-          .map((tx) => tx.customer_id)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ];
-    const customersById = await this.customerService.mapByIds(customerIds);
     const customerInsights = computeCustomerPeriodInsights(
       incomeInPeriod,
-      customersById,
+      allTimeIncomeSummary,
       periodFromIso,
       periodToIso,
     );

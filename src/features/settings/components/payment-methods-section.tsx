@@ -37,7 +37,6 @@ type PaymentMethodMoreMenuProps = {
   onDelete: () => void;
   deleteDisabled?: boolean;
   disabled?: boolean;
-  triggerClassName?: string;
 };
 
 function PaymentMethodMoreMenu({
@@ -45,7 +44,6 @@ function PaymentMethodMoreMenu({
   onDelete,
   deleteDisabled = false,
   disabled = false,
-  triggerClassName,
 }: PaymentMethodMoreMenuProps) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -78,18 +76,15 @@ function PaymentMethodMoreMenu({
         aria-label="More options"
         disabled={disabled}
         onClick={() => setOpen((value) => !value)}
-        className={cn(
-          "rounded-full p-2 text-on-surface-variant transition-all hover:bg-surface-container-high/40 disabled:opacity-50",
-          triggerClassName,
-        )}
+        className="rounded-full p-1.5 text-on-surface-variant transition-all hover:bg-surface-container-high/40 disabled:opacity-50"
       >
-        <MoreVertical className="size-5" strokeWidth={1.75} />
+        <MoreVertical className="size-4" strokeWidth={1.75} />
       </button>
       {open ? (
         <div
           id={menuId}
           role="menu"
-          className="absolute top-full right-0 z-20 mt-1 min-w-40 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
+          className="absolute top-full right-0 z-20 mt-1 min-w-36 overflow-hidden rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
         >
           <button
             type="button"
@@ -98,9 +93,9 @@ function PaymentMethodMoreMenu({
               setOpen(false);
               onEdit();
             }}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
-            <Pencil className="size-4 shrink-0" strokeWidth={1.75} />
+            <Pencil className="size-3.5 shrink-0" strokeWidth={1.75} />
             Edit
           </button>
           <button
@@ -111,9 +106,9 @@ function PaymentMethodMoreMenu({
               setOpen(false);
               onDelete();
             }}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-error transition-colors hover:bg-error-container/40 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-error transition-colors hover:bg-error-container/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            <Trash2 className="size-4 shrink-0" strokeWidth={1.75} />
+            <Trash2 className="size-3.5 shrink-0" strokeWidth={1.75} />
             Remove
           </button>
         </div>
@@ -122,13 +117,12 @@ function PaymentMethodMoreMenu({
   );
 }
 
-type PaymentMethodItemProps = {
+type PaymentMethodListItemProps = {
   row: BusinessPaymentMethodRecord;
   title: string;
   subtitle: string;
-  orderLabel: string;
-  orderClassName?: string;
   iconWrapClassName: string;
+  readOnly?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onMoveUp?: () => void;
@@ -145,6 +139,7 @@ function PaymentMethodListItem({
   title,
   subtitle,
   iconWrapClassName,
+  readOnly = false,
   onEdit,
   onDelete,
   onMoveUp,
@@ -154,101 +149,35 @@ function PaymentMethodListItem({
   isReordering = false,
   isRemoving,
   deleteDisabled = false,
-}: PaymentMethodItemProps) {
+}: PaymentMethodListItemProps) {
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-outline-variant bg-surface-container-lowest p-3">
+    <div className="flex items-center gap-2.5 rounded-xl border border-outline-variant/60 bg-surface-container-lowest px-3 py-2">
       <div
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-lg",
+          "flex size-8 shrink-0 items-center justify-center rounded-lg",
           iconWrapClassName,
         )}
       >
         <PaymentMethodVisual methodCode={row.method_code} size="sm" />
       </div>
       <div className="min-w-0 flex-1">
-        <h4 className="truncate text-body-md font-medium text-on-surface">{title}</h4>
-        <p className="truncate text-[11px] text-on-surface-variant">{subtitle}</p>
+        <h4 className="truncate text-sm font-medium text-on-surface">{title}</h4>
+        <p className="truncate text-[10px] text-on-surface-variant">{subtitle}</p>
       </div>
-      <div className="flex shrink-0 items-center gap-0.5">
-        {onMoveUp || onMoveDown ? (
-          <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={!canMoveUp || isReordering || isRemoving}
-              onClick={onMoveUp}
-              className="size-8 text-on-surface-variant"
-              aria-label={`Move ${title} earlier in list`}
-            >
-              <ChevronUp className="size-4" strokeWidth={1.75} />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              disabled={!canMoveDown || isReordering || isRemoving}
-              onClick={onMoveDown}
-              className="size-8 text-on-surface-variant"
-              aria-label={`Move ${title} later in list`}
-            >
-              <ChevronDown className="size-4" strokeWidth={1.75} />
-            </Button>
-          </>
-        ) : null}
-        <PaymentMethodMoreMenu
-          onEdit={onEdit}
-          onDelete={onDelete}
-          disabled={isRemoving}
-          deleteDisabled={deleteDisabled}
-          triggerClassName="size-8"
-        />
-      </div>
-    </div>
-  );
-}
-
-function PaymentMethodCard({
-  row,
-  title,
-  subtitle,
-  orderLabel,
-  orderClassName,
-  iconWrapClassName,
-  onEdit,
-  onDelete,
-  onMoveUp,
-  onMoveDown,
-  canMoveUp = false,
-  canMoveDown = false,
-  isReordering = false,
-  isRemoving,
-  deleteDisabled = false,
-}: PaymentMethodItemProps) {
-  return (
-    <div className="squircle group hidden min-w-0 bg-surface-container-low p-5 transition-all hover:bg-surface-container-high md:block sm:p-8">
-      <div className="mb-8 flex items-start justify-between">
-        <div
-          className={cn(
-            "squircle flex size-14 items-center justify-center",
-            iconWrapClassName,
-          )}
-        >
-          <PaymentMethodVisual methodCode={row.method_code} size="md" />
-        </div>
-        <div className="flex gap-2">
+      {!readOnly ? (
+        <div className="flex shrink-0 items-center gap-0.5">
           {onMoveUp || onMoveDown ? (
-            <div className="flex flex-col gap-0.5">
+            <>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 disabled={!canMoveUp || isReordering || isRemoving}
                 onClick={onMoveUp}
-                className="squircle size-9 text-on-surface-variant hover:bg-surface-container-highest"
+                className="size-7 text-on-surface-variant"
                 aria-label={`Move ${title} earlier in list`}
               >
-                <ChevronUp className="size-5" strokeWidth={1.75} />
+                <ChevronUp className="size-3.5" strokeWidth={1.75} />
               </Button>
               <Button
                 type="button"
@@ -256,12 +185,12 @@ function PaymentMethodCard({
                 size="icon"
                 disabled={!canMoveDown || isReordering || isRemoving}
                 onClick={onMoveDown}
-                className="squircle size-9 text-on-surface-variant hover:bg-surface-container-highest"
+                className="size-7 text-on-surface-variant"
                 aria-label={`Move ${title} later in list`}
               >
-                <ChevronDown className="size-5" strokeWidth={1.75} />
+                <ChevronDown className="size-3.5" strokeWidth={1.75} />
               </Button>
-            </div>
+            </>
           ) : null}
           <PaymentMethodMoreMenu
             onEdit={onEdit}
@@ -270,25 +199,15 @@ function PaymentMethodCard({
             deleteDisabled={deleteDisabled}
           />
         </div>
-      </div>
-      <h4 className="font-headline mb-1 truncate text-xl font-semibold">{title}</h4>
-      <p className="mb-8 line-clamp-2 text-sm text-on-surface-variant">{subtitle}</p>
-      <div className="squircle flex items-center justify-between bg-surface-container-high p-5">
-        <span className="text-xs font-semibold tracking-widest text-on-surface-variant uppercase">
-          Entry form
-        </span>
-        <span className={cn("font-headline text-xl font-semibold", orderClassName)}>
-          {orderLabel}
-        </span>
-      </div>
+      ) : null}
     </div>
   );
 }
 
 export function PaymentMethodsSection() {
   const { confirm } = useConfirmDrawer();
+  const [isEditing, setIsEditing] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
-  const [orderEditMode, setOrderEditMode] = useState(false);
   const [addMode, setAddMode] = useState<"preset" | "custom">("preset");
   const [presetCode, setPresetCode] = useState<PaymentMethodPresetCode>("CASH");
   const [customLabel, setCustomLabel] = useState("");
@@ -323,22 +242,15 @@ export function PaymentMethodsSection() {
     const iconWrapClassName: string =
       wrapClasses[index % wrapClasses.length] ??
       "bg-primary-container text-on-primary-container";
-    const orderClassName =
-      index % 3 === 0
-        ? "text-primary"
-        : index % 3 === 1
-          ? "text-on-secondary-container"
-          : "text-on-tertiary-container";
 
     return {
       row,
       title: row.label,
       subtitle: paymentMethodSubtitle(row.method_code),
-      orderLabel: `#${index + 1}`,
-      orderClassName,
       iconWrapClassName,
+      readOnly: !isEditing,
       onEdit: () => openEdit(row),
-      ...(orderEditMode
+      ...(isEditing
         ? {
             onMoveUp: () => void moveMethod(row.id, "up"),
             onMoveDown: () => void moveMethod(row.id, "down"),
@@ -383,52 +295,55 @@ export function PaymentMethodsSection() {
     setAddOpen(true);
   }
 
+  function cancelEditing() {
+    setIsEditing(false);
+    closeEdit();
+    setAddOpen(false);
+  }
+
   return (
     <QueryState isLoading={isLoading} error={error} onRetry={refetch}>
-      <section className="space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="squircle bg-primary-container p-3 text-on-primary-container">
+      <section className="squircle bg-surface-container-low p-5 lg:p-8">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="squircle shrink-0 bg-primary-container p-3 text-on-primary-container">
               <CreditCard className="size-6" strokeWidth={1.75} />
             </div>
             <h3 className="font-headline text-xl font-semibold">Payment Methods</h3>
           </div>
-          <Button
-            type="button"
-            variant={orderEditMode ? "primary" : "secondary"}
-            size="sm"
-            onClick={() => setOrderEditMode((value) => !value)}
-          >
-            {orderEditMode ? "Done reordering" : "Edit order"}
-          </Button>
-        </div>
-        <p className="text-sm text-on-surface-variant">
-          {orderEditMode ? (
-            <>
-              <span className="md:hidden">
-                Tap ↑↓ to move payment types. Changes save immediately.
-              </span>
-              <span className="hidden md:inline">
-                Use ↑↓ on each card to adjust order. Changes save immediately.
-              </span>
-            </>
+          {isEditing ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="cta"
+              className="shrink-0"
+              onClick={cancelEditing}
+            >
+              Cancel
+            </Button>
           ) : (
-            <>
-              <span className="md:hidden">
-                Edit a method to change its entry form position, or tap Edit order for
-                quick moves.
-              </span>
-              <span className="hidden md:inline">
-                Edit a method to set entry form position (1 = first), or use Edit order
-                for quick ↑↓ adjustments.
-              </span>
-            </>
+            <Button
+              type="button"
+              variant="secondary"
+              size="cta"
+              className="shrink-0"
+              onClick={() => setIsEditing(true)}
+            >
+              <Pencil className="size-4" strokeWidth={2} aria-hidden />
+              Edit
+            </Button>
           )}
-        </p>
+        </div>
+
+        {isEditing ? (
+          <p className="mb-4 text-xs text-on-surface-variant">
+            Use ↑↓ to reorder. Tap ⋮ to edit or remove a payment method.
+          </p>
+        ) : null}
 
         {deleteError ? (
           <div
-            className="squircle flex flex-wrap items-center justify-between gap-3 border border-error/30 bg-error-container/30 px-4 py-3"
+            className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-error/30 bg-error-container/30 px-3 py-2"
             role="alert"
           >
             <p className="text-sm text-on-surface">{deleteError}</p>
@@ -475,31 +390,22 @@ export function PaymentMethodsSection() {
           isSubmitting={isSavingEdit}
         />
 
-        <ul className="flex flex-col gap-2 md:hidden">
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {methods.map((row, index) => (
             <li key={row.id}>
               <PaymentMethodListItem {...buildItemProps(row, index)} />
             </li>
           ))}
-          <li>
-            <ServiceCatalogAddCard
-              onClick={openAddModal}
-              label="Add payment method"
-              className="min-h-0 flex-row gap-3 rounded-xl p-3"
-            />
-          </li>
+          {isEditing ? (
+            <li className="sm:col-span-2 lg:col-span-3">
+              <ServiceCatalogAddCard
+                onClick={openAddModal}
+                label="Add payment method"
+                className="min-h-0 flex-row gap-2.5 rounded-xl px-3 py-2"
+              />
+            </li>
+          ) : null}
         </ul>
-
-        <div className="hidden md:grid md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-          {methods.map((row, index) => (
-            <PaymentMethodCard key={row.id} {...buildItemProps(row, index)} />
-          ))}
-          <ServiceCatalogAddCard
-            onClick={openAddModal}
-            label="Add payment method"
-            className="h-full min-h-[16.5rem]"
-          />
-        </div>
       </section>
     </QueryState>
   );

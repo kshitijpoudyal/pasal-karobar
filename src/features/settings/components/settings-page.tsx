@@ -1,6 +1,5 @@
 import { AppShell } from "@/components/layout/app-shell";
 import { BusinessIdentitySection } from "@/features/settings/components/business-identity-section";
-import { ExpenseTaxonomySection } from "@/features/settings/components/expense-taxonomy-section";
 import { PaymentMethodsSection } from "@/features/settings/components/payment-methods-section";
 import { ServiceCatalogSection } from "@/features/settings/components/service-catalog-section";
 import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
@@ -26,7 +25,6 @@ export function SettingsPage() {
           <BusinessIdentitySection />
           <ServiceCatalogSection />
           <PaymentMethodsSection />
-          <ExpenseTaxonomySection />
         </div>
       </div>
     </AppShell>

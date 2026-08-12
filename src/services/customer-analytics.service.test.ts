@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { computeCustomerPeriodInsights } from "@/services/customer-analytics.service";
-import type { Customer, Transaction } from "@/types/database";
+import type { Transaction } from "@/types/database";
 
 function incomeTx(
   partial: Partial<Transaction> & { id: string; customer_id?: string | null },
@@ -24,36 +24,35 @@ function incomeTx(
   };
 }
 
-function customer(
-  id: string,
-  first_visit_at: string | null,
-): Customer {
-  return {
-    id,
-    business_id: "b1",
-    phone: "9841234567",
-    phone_normalized: "9841234567",
-    name: null,
-    profile_note: null,
-    first_visit_at,
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: "2026-01-01T00:00:00.000Z",
-  };
-}
-
 describe("computeCustomerPeriodInsights", () => {
   const periodStart = "2026-08-01T00:00:00.000Z";
   const periodEnd = "2026-08-31T23:59:59.999Z";
 
-  it("counts anonymous and tracked visits", () => {
-    const txs = [
+  it("counts anonymous and tracked visits by distinct sessions", () => {
+    const periodTxs = [
       incomeTx({ id: "1", customer_id: null }),
       incomeTx({ id: "2", customer_id: "c1" }),
+      incomeTx({
+        id: "3",
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:00:00.000Z",
+      }),
     ];
-    const map = new Map([["c1", customer("c1", periodStart)]]);
+    const allTimeRows = [
+      {
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:00:00.000Z",
+        total: 100,
+      },
+      {
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:00:00.000Z",
+        total: 100,
+      },
+    ];
     const result = computeCustomerPeriodInsights(
-      txs,
-      map,
+      periodTxs,
+      allTimeRows,
       periodStart,
       periodEnd,
     );
@@ -62,22 +61,83 @@ describe("computeCustomerPeriodInsights", () => {
     expect(result.uniqueTrackedCustomers).toBe(1);
   });
 
-  it("classifies new vs returning from first_visit_at", () => {
-    const txs = [
-      incomeTx({ id: "1", customer_id: "new1" }),
-      incomeTx({ id: "2", customer_id: "ret1" }),
+  it("classifies returning customers by lifetime visit count", () => {
+    const periodTxs = [
+      incomeTx({
+        id: "1",
+        customer_id: "repeat",
+        transaction_date: "2026-08-10T12:00:00.000Z",
+      }),
+      incomeTx({
+        id: "2",
+        customer_id: "once",
+        transaction_date: "2026-08-11T12:00:00.000Z",
+      }),
     ];
-    const map = new Map([
-      ["new1", customer("new1", "2026-08-10T12:00:00.000Z")],
-      ["ret1", customer("ret1", "2026-07-01T12:00:00.000Z")],
-    ]);
+    const allTimeRows = [
+      {
+        customer_id: "repeat",
+        transaction_date: "2026-07-01T12:00:00.000Z",
+        total: 100,
+      },
+      {
+        customer_id: "repeat",
+        transaction_date: "2026-08-10T12:00:00.000Z",
+        total: 100,
+      },
+      {
+        customer_id: "once",
+        transaction_date: "2026-08-11T12:00:00.000Z",
+        total: 100,
+      },
+    ];
     const result = computeCustomerPeriodInsights(
-      txs,
-      map,
+      periodTxs,
+      allTimeRows,
       periodStart,
       periodEnd,
     );
     expect(result.newCustomers).toBe(1);
     expect(result.returningCustomers).toBe(1);
+  });
+
+  it("treats duplicate same-timestamp rows as one visit for returning status", () => {
+    const periodTxs = [
+      incomeTx({
+        id: "1",
+        customer_id: "c1",
+        transaction_date: "2026-08-10T12:00:00.000Z",
+      }),
+      incomeTx({
+        id: "2",
+        customer_id: "c1",
+        transaction_date: "2026-08-10T12:00:00.000Z",
+      }),
+    ];
+    const allTimeRows = [
+      {
+        customer_id: "c1",
+        transaction_date: "2026-07-01T12:00:00.000Z",
+        total: 100,
+      },
+      {
+        customer_id: "c1",
+        transaction_date: "2026-08-10T12:00:00.000Z",
+        total: 100,
+      },
+      {
+        customer_id: "c1",
+        transaction_date: "2026-08-10T12:00:00.000Z",
+        total: 100,
+      },
+    ];
+    const result = computeCustomerPeriodInsights(
+      periodTxs,
+      allTimeRows,
+      periodStart,
+      periodEnd,
+    );
+    expect(result.returningCustomers).toBe(1);
+    expect(result.newCustomers).toBe(0);
   });
 });

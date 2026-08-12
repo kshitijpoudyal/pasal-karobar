@@ -51,24 +51,16 @@ export function useCustomersPage() {
     toDate: periodRange.to,
   });
 
-  const customersById = useMemo(() => {
-    const map = new Map<string, Customer>();
-    for (const row of customersQuery.data ?? []) {
-      map.set(row.id, row);
-    }
-    return map;
-  }, [customersQuery.data]);
-
   const periodInsights = useMemo(() => {
     return computeCustomerPeriodInsights(
       periodIncomeQuery.data ?? [],
-      customersById,
+      incomeSummaryQuery.data ?? [],
       periodRange.from,
       periodRange.to,
     );
   }, [
     periodIncomeQuery.data,
-    customersById,
+    incomeSummaryQuery.data,
     periodRange.from,
     periodRange.to,
   ]);

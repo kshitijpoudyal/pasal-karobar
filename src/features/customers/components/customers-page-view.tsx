@@ -6,7 +6,7 @@ export function CustomersPageView() {
     <AppShell
       desktopHeaderTitle="Customers"
       shellClassName="curator-activity text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed"
-      mainClassName="flex min-h-0 flex-col"
+      mainClassName="flex min-h-0 flex-col overflow-hidden"
     >
       <CustomersMain />
     </AppShell>

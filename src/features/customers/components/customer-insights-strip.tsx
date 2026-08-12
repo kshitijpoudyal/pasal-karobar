@@ -32,12 +32,14 @@ function StatTile({
 
 type CustomerInsightsStripProps = {
   insights: CustomerPeriodInsights;
+  totalCustomers: number;
   onAddCustomer: () => void;
   layout: "mobile" | "desktop";
 };
 
 export function CustomerInsightsStrip({
   insights,
+  totalCustomers,
   onAddCustomer,
   layout,
 }: CustomerInsightsStripProps) {
@@ -48,16 +50,16 @@ export function CustomerInsightsStrip({
           <StatTile label="New customers" value={insights.newCustomers} />
           <StatTile label="Returning" value={insights.returningCustomers} />
         </div>
-        <div className="grid grid-cols-[1fr_auto] items-stretch gap-3">
-          <StatTile
-            label="Anonymous visits"
-            value={insights.anonymousVisits}
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <StatTile label="Anonymous visits" value={insights.anonymousVisits} />
+          <StatTile label="Total customers" value={totalCustomers} />
+        </div>
+        <div className="flex justify-end">
           <Button
             type="button"
             variant="primary"
             size="icon-lg"
-            className="aspect-square h-full min-h-[4.5rem] w-full shrink-0 rounded-full"
+            className="aspect-square min-h-[3.5rem] min-w-[3.5rem] rounded-full"
             aria-label="Add customer"
             onClick={onAddCustomer}
           >
@@ -69,10 +71,11 @@ export function CustomerInsightsStrip({
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4 xl:gap-6">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 xl:gap-6">
       <StatTile label="New customers" value={insights.newCustomers} />
       <StatTile label="Returning" value={insights.returningCustomers} />
       <StatTile label="Anonymous visits" value={insights.anonymousVisits} />
+      <StatTile label="Total customers" value={totalCustomers} />
     </div>
   );
 }

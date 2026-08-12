@@ -53,14 +53,27 @@ export function useBusinessIdentityForm() {
     });
   }, [businessQuery.data, form]);
 
-  async function onSubmit(values: BusinessIdentityFormValues) {
+  async function save(values: BusinessIdentityFormValues) {
     const payload = updateBusinessSchema.parse(values);
     await updateMutation.mutateAsync(payload);
   }
 
+  function resetToSaved() {
+    const business = businessQuery.data;
+    if (!business) return;
+    form.reset({
+      name: business.name,
+      business_type: business.business_type,
+      calendar_system: business.calendar_system,
+      currency: business.currency,
+      timezone: business.timezone?.trim() || DEFAULT_BUSINESS_TIMEZONE,
+    });
+  }
+
   return {
     form,
-    onSubmit: form.handleSubmit(onSubmit),
+    save,
+    resetToSaved,
     isLoading: businessQuery.isLoading,
     error: businessQuery.error ?? updateMutation.error,
     isSaving: updateMutation.isPending,

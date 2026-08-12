@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { QueryState } from "@/components/layout/query-state";
 import { AddCustomerModal } from "@/features/customers/components/add-customer-modal";
 import { CustomerFilters } from "@/features/customers/components/customer-filters";
-import { CustomerSummaryCard } from "@/features/customers/components/customer-summary-card";
 import { CustomerHeaderChrome } from "@/features/customers/components/customer-header-chrome";
 import { CustomerInsightsStrip } from "@/features/customers/components/customer-insights-strip";
 import { CustomerTimeline } from "@/features/customers/components/customer-timeline";
@@ -31,10 +30,10 @@ export function CustomersMain() {
   return (
     <>
       <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-8 overflow-hidden p-6 xl:flex xl:gap-10 xl:p-12">
-        <div className="grid shrink-0 grid-cols-1 gap-6 xl:grid-cols-12 xl:gap-10">
-          <div className="col-span-12 flex min-w-0 flex-col gap-4 xl:col-span-8">
+        <div className="flex shrink-0 flex-col gap-4">
             <CustomerInsightsStrip
               insights={page.periodInsights}
+              totalCustomers={page.totalCustomers}
               onAddCustomer={openAddCustomer}
               layout="desktop"
             />
@@ -48,17 +47,14 @@ export function CustomersMain() {
               onAddCustomer={openAddCustomer}
               showDesktopAdd
             />
-          </div>
-          <CustomerSummaryCard
-            trackedVisits={page.periodInsights.trackedVisits}
-            totalCustomers={page.totalCustomers}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <CustomerListBody
+            page={page}
+            onSelect={(phone) => router.push(customerDetailPath(phone))}
+            onRecordForPhone={openRecordForPhone}
           />
         </div>
-        <CustomerListBody
-          page={page}
-          onSelect={(phone) => router.push(customerDetailPath(phone))}
-          onRecordForPhone={openRecordForPhone}
-        />
       </section>
 
       <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-6 overflow-hidden p-6 lg:flex xl:hidden">

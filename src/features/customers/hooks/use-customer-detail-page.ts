@@ -6,6 +6,7 @@ import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
+import { countDistinctVisits, toIncomeVisitRows } from "@/utils/customer-visits";
 import { parseCustomerPhoneRouteParam } from "@/utils/customer-routes";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 import { groupTransactionsByDayWithLabels } from "@/utils/group-transactions-by-day";
@@ -45,7 +46,7 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
     }
     const rows = customerIncomeQuery.data ?? [];
     return {
-      visitCount: rows.length,
+      visitCount: countDistinctVisits(toIncomeVisitRows(rows)),
       revenue: rows.reduce((sum, tx) => sum + Number(tx.total), 0),
     };
   }, [customer, customerIncomeQuery.data]);
@@ -75,6 +76,7 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
     visitCount: stats.visitCount,
     revenue: stats.revenue,
     groupedVisits,
+    visitTransactions: customerIncomeQuery.data ?? [],
     isLoading: customersQuery.isLoading || customerIncomeQuery.isLoading,
     error: customersQuery.error ?? customerIncomeQuery.error ?? null,
     refetch: async () => {

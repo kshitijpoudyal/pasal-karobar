@@ -5,8 +5,12 @@ import { Camera, ImagePlus, Images, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export const CUSTOMER_PHOTO_ACCEPT =
+/** Gallery picker — specific types help desktop file dialogs. */
+export const CUSTOMER_PHOTO_GALLERY_ACCEPT =
   "image/jpeg,image/png,image/webp,image/*";
+
+/** Camera capture — image/* is required for reliable mobile camera on iOS/Android. */
+export const CUSTOMER_PHOTO_CAMERA_ACCEPT = "image/*";
 
 type CustomerPhotoAddControlsProps = {
   disabled?: boolean;
@@ -23,10 +27,10 @@ export function CustomerPhotoAddControls({
   tileClassName,
   label = "Add photo",
 }: CustomerPhotoAddControlsProps) {
-  const galleryInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const galleryInputId = useId();
+  const cameraInputId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -51,18 +55,9 @@ export function CustomerPhotoAddControls({
   ) {
     const file = event.target.files?.[0];
     event.target.value = "";
+    setMenuOpen(false);
     if (!file || disabled || busy) return;
     await onFile(file);
-  }
-
-  function openGallery() {
-    setMenuOpen(false);
-    galleryInputRef.current?.click();
-  }
-
-  function openCamera() {
-    setMenuOpen(false);
-    cameraInputRef.current?.click();
   }
 
   const inactive = disabled || busy;
@@ -99,40 +94,42 @@ export function CustomerPhotoAddControls({
           role="menu"
           className="absolute top-full right-0 z-30 mt-2 w-[min(calc(100vw-2rem),14rem)] overflow-hidden rounded-2xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
         >
-          <button
-            type="button"
+          <label
+            htmlFor={cameraInputId}
             role="menuitem"
-            onClick={openCamera}
-            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+            className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
             <Camera className="size-5 shrink-0 text-on-surface-variant" strokeWidth={1.75} />
             Take photo
-          </button>
-          <button
-            type="button"
+          </label>
+          <label
+            htmlFor={galleryInputId}
             role="menuitem"
-            onClick={openGallery}
-            className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
+            className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
             <Images className="size-5 shrink-0 text-on-surface-variant" strokeWidth={1.75} />
             Choose from library
-          </button>
+          </label>
         </div>
       ) : null}
 
       <input
-        ref={galleryInputRef}
+        id={galleryInputId}
         type="file"
-        accept={CUSTOMER_PHOTO_ACCEPT}
-        className="sr-only"
+        accept={CUSTOMER_PHOTO_GALLERY_ACCEPT}
+        className="pointer-events-none fixed -left-[9999px] top-auto h-px w-px opacity-0"
+        tabIndex={-1}
+        aria-hidden
         onChange={(event) => void handleInputChange(event)}
       />
       <input
-        ref={cameraInputRef}
+        id={cameraInputId}
         type="file"
-        accept={CUSTOMER_PHOTO_ACCEPT}
+        accept={CUSTOMER_PHOTO_CAMERA_ACCEPT}
         capture="environment"
-        className="sr-only"
+        className="pointer-events-none fixed -left-[9999px] top-auto h-px w-px opacity-0"
+        tabIndex={-1}
+        aria-hidden
         onChange={(event) => void handleInputChange(event)}
       />
     </div>
