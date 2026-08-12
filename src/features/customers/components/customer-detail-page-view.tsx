@@ -29,7 +29,10 @@ export function CustomerDetailPageView({
 
   function openRecord() {
     if (!page.customer) return;
-    openModal({ customerPhone: page.customer.phone_normalized });
+    openModal({
+      customerPhone: page.customer.phone_normalized,
+      customerName: page.customer.name?.trim() || undefined,
+    });
   }
 
   return (

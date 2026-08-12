@@ -34,6 +34,7 @@ type RecordTransactionModalProps = {
   open: boolean;
   onClose: () => void;
   initialCustomerPhone?: string | null;
+  initialCustomerName?: string | null;
 };
 
 type Tab = "income" | "expense";
@@ -51,6 +52,7 @@ export function RecordTransactionModal({
   open,
   onClose,
   initialCustomerPhone,
+  initialCustomerName,
 }: RecordTransactionModalProps) {
   const titleId = useId();
   const typeSelectId = useId();
@@ -130,9 +132,9 @@ export function RecordTransactionModal({
     if (initialCustomerPhone) {
       setTab("income");
       setCustomerPhone(initialCustomerPhone);
-      setCustomerName("");
+      setCustomerName(initialCustomerName ?? "");
     }
-  }, [open, initialCustomerPhone, resetFormState]);
+  }, [open, initialCustomerPhone, initialCustomerName, resetFormState]);
 
   if (!open) return null;
 
