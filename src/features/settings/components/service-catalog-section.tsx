@@ -21,6 +21,7 @@ import {
 import { ServiceCatalogAddCard } from "@/features/settings/components/service-catalog-add-card";
 import { RegisterServiceModal } from "@/features/settings/components/register-service-modal";
 import { useServiceCatalogSection } from "@/features/settings/hooks/use-service-catalog-section";
+import { useActiveMember } from "@/providers/active-member-provider";
 import { cn } from "@/lib/utils";
 import { formatNpr } from "@/utils/format";
 
@@ -31,8 +32,8 @@ const wrapClasses = [
 ];
 
 type ServiceCatalogMoreMenuProps = {
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   disabled?: boolean;
 };
 
@@ -87,8 +88,9 @@ function ServiceCatalogMoreMenu({
             role="menuitem"
             onClick={() => {
               setOpen(false);
-              onEdit();
+              if (onEdit) onEdit();
             }}
+            disabled={!onEdit}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
             <Pencil className="size-3.5 shrink-0" strokeWidth={1.75} />
@@ -97,10 +99,10 @@ function ServiceCatalogMoreMenu({
           <button
             type="button"
             role="menuitem"
-            disabled={disabled}
+            disabled={disabled || !onDelete}
             onClick={() => {
               setOpen(false);
-              onDelete();
+              if (onDelete) onDelete();
             }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-error transition-colors hover:bg-error-container/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -119,8 +121,8 @@ type ServiceCatalogListItemProps = {
   icon: LucideIcon;
   iconWrapClassName: string;
   readOnly?: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   canMoveUp?: boolean;
@@ -198,9 +200,17 @@ function ServiceCatalogListItem({
 }
 
 export function ServiceCatalogSection() {
+  const { canEditSettings } = useActiveMember();
   const [isEditing, setIsEditing] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const { confirm } = useConfirmDrawer();
+
+  useEffect(() => {
+    if (!canEditSettings) {
+      setIsEditing(false);
+      setRegisterOpen(false);
+    }
+  }, [canEditSettings]);
   const {
     services,
     serviceCount,
@@ -251,28 +261,30 @@ export function ServiceCatalogSection() {
             </div>
             <h3 className="font-headline text-xl font-semibold">Service Catalog</h3>
           </div>
-          {isEditing ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="cta"
-              className="shrink-0"
-              onClick={cancelEditing}
-            >
-              Cancel
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="secondary"
-              size="cta"
-              className="shrink-0"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="size-4" strokeWidth={2} aria-hidden />
-              Edit
-            </Button>
-          )}
+          {canEditSettings ? (
+            isEditing ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="cta"
+                className="shrink-0"
+                onClick={cancelEditing}
+              >
+                Cancel
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                size="cta"
+                className="shrink-0"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="size-4" strokeWidth={2} aria-hidden />
+                Edit
+              </Button>
+            )
+          ) : null}
         </div>
 
         {isEditing ? (
@@ -329,9 +341,9 @@ export function ServiceCatalogSection() {
               rate: formatNpr(Number(service.default_price)),
               icon: Icon,
               iconWrapClassName,
-              readOnly: !isEditing,
-              onEdit: () => openEdit(service),
-              ...(isEditing
+              readOnly: !canEditSettings || !isEditing,
+              onEdit: canEditSettings ? () => openEdit(service) : undefined,
+              ...(canEditSettings && isEditing
                 ? {
                     onMoveUp: () => void moveService(service.id, "up"),
                     onMoveDown: () => void moveService(service.id, "down"),
@@ -340,19 +352,21 @@ export function ServiceCatalogSection() {
                     isReordering,
                   }
                 : {}),
-              onDelete: () => {
-                void runConfirmedAction(
-                  confirm,
-                  {
-                    title: "Remove service?",
-                    description: `"${service.name}" will be removed from your catalog. Past income entries will still reference this service for reporting.`,
-                    confirmLabel: "Delete",
-                    cancelLabel: "Keep",
-                    tone: "destructive",
-                  },
-                  () => removeService(service.id, service.name),
-                );
-              },
+              onDelete: canEditSettings
+                ? () => {
+                    void runConfirmedAction(
+                      confirm,
+                      {
+                        title: "Remove service?",
+                        description: `"${service.name}" will be removed from your catalog. Past income entries will still reference this service for reporting.`,
+                        confirmLabel: "Delete",
+                        cancelLabel: "Keep",
+                        tone: "destructive",
+                      },
+                      () => removeService(service.id, service.name),
+                    );
+                  }
+                : undefined,
               isRemoving: removingServiceId === service.id,
             };
             return (
@@ -361,7 +375,7 @@ export function ServiceCatalogSection() {
               </li>
             );
           })}
-          {isEditing ? (
+          {canEditSettings && isEditing ? (
             <li className="sm:col-span-2 lg:col-span-3">
               <ServiceCatalogAddCard
                 onClick={() => setRegisterOpen(true)}

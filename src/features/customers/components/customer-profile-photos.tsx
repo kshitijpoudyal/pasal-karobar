@@ -12,6 +12,7 @@ import {
   useUpdateCustomerPhotoCaptionMutation,
   useUploadCustomerPhotoMutation,
 } from "@/hooks/queries/use-customer-photo-queries";
+import { useActiveMember } from "@/providers/active-member-provider";
 import {
   CustomerPhotoLimitError,
   CustomerPhotoValidationError,
@@ -33,6 +34,7 @@ export function CustomerProfilePhotos({
   isOnline,
 }: CustomerProfilePhotosProps) {
   const { confirm } = useConfirmDrawer();
+  const { canDelete } = useActiveMember();
   const photosQuery = useCustomerPhotosQuery(customerId);
   const uploadMutation = useUploadCustomerPhotoMutation(businessId);
   const captionMutation = useUpdateCustomerPhotoCaptionMutation(businessId, customerId);
@@ -149,28 +151,30 @@ export function CustomerProfilePhotos({
                   }}
                   className="font-body w-full rounded-lg border border-outline-variant/50 bg-surface-container-low px-2 py-1.5 text-xs"
                 />
-                <button
-                  type="button"
-                  disabled={!isOnline || busy}
-                  onClick={() => {
-                    void runConfirmedAction(
-                      confirm,
-                      {
-                        title: "Remove photo?",
-                        description:
-                          "This reference image will be deleted from the customer profile.",
-                        confirmLabel: "Remove",
-                        cancelLabel: "Keep",
-                        tone: "destructive",
-                      },
-                      () => deleteMutation.mutateAsync(photo.id),
-                    );
-                  }}
-                  className="flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-medium text-error hover:bg-error-container/30 disabled:opacity-50"
-                >
-                  <Trash2 className="size-3.5" strokeWidth={1.75} aria-hidden />
-                  Remove
-                </button>
+                {canDelete ? (
+                  <button
+                    type="button"
+                    disabled={!isOnline || busy}
+                    onClick={() => {
+                      void runConfirmedAction(
+                        confirm,
+                        {
+                          title: "Remove photo?",
+                          description:
+                            "This reference image will be deleted from the customer profile.",
+                          confirmLabel: "Remove",
+                          cancelLabel: "Keep",
+                          tone: "destructive",
+                        },
+                        () => deleteMutation.mutateAsync(photo.id),
+                      );
+                    }}
+                    className="flex w-full items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-medium text-error hover:bg-error-container/30 disabled:opacity-50"
+                  >
+                    <Trash2 className="size-3.5" strokeWidth={1.75} aria-hidden />
+                    Remove
+                  </button>
+                ) : null}
               </div>
             </li>
           ))}

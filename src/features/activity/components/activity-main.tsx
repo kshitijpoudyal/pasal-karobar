@@ -74,6 +74,7 @@ function ActivityTimelineBody({
         loggedByLabels={activity.loggedByLabels}
         onDelete={activity.deleteTransaction}
         isDeleting={activity.isDeleting}
+        canDelete={activity.canDelete}
         timeZone={activity.timeZone}
       />
     </QueryState>

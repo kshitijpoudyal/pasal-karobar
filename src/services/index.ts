@@ -8,6 +8,7 @@ import { CustomerPhotoService } from "@/services/customer-photo.service";
 import { CustomerService } from "@/services/customer.service";
 import { DashboardService } from "@/services/dashboard.service";
 import { ExpenseCategoryService } from "@/services/expense-category.service";
+import { OwnerGuard } from "@/services/owner-guard";
 import { ServiceCatalogService } from "@/services/service-catalog.service";
 import { TransactionService } from "@/services/transaction.service";
 import type { Database } from "@/types/database";
@@ -25,30 +26,48 @@ export type AppServices = {
 };
 
 export function createServices(repositories: Repositories): AppServices {
+  const ownerGuard = new OwnerGuard(repositories.businessMember);
   const customer = new CustomerService(repositories.customer);
+  const expenseCategory = new ExpenseCategoryService(
+    repositories.expenseCategory,
+    ownerGuard,
+  );
+  const serviceCatalog = new ServiceCatalogService(
+    repositories.serviceCatalog,
+    ownerGuard,
+  );
+  const businessPaymentMethod = new BusinessPaymentMethodService(
+    repositories.businessPaymentMethod,
+    ownerGuard,
+  );
+  const businessSetting = new BusinessSettingService(
+    repositories.businessSetting,
+    ownerGuard,
+  );
   const customerPhoto = new CustomerPhotoService(
     repositories.customerPhoto,
     repositories.customer,
+    ownerGuard,
   );
-  const transaction = new TransactionService(repositories.transaction, customer);
-  const serviceCatalog = new ServiceCatalogService(repositories.serviceCatalog);
-  const businessPaymentMethod = new BusinessPaymentMethodService(
-    repositories.businessPaymentMethod,
+  const transaction = new TransactionService(
+    repositories.transaction,
+    customer,
+    ownerGuard,
   );
-
   const business = new BusinessService(
     repositories.business,
     repositories.businessSetting,
     serviceCatalog,
-    new ExpenseCategoryService(repositories.expenseCategory),
+    expenseCategory,
+    ownerGuard,
   );
 
   return {
     business,
     serviceCatalog,
-    expenseCategory: new ExpenseCategoryService(repositories.expenseCategory),
+    expenseCategory,
     transaction,
-    businessSetting: new BusinessSettingService(repositories.businessSetting),
+    businessSetting,
     businessPaymentMethod,
     customer,
     customerPhoto,
@@ -71,3 +90,4 @@ export {
   TransactionService,
   DashboardService,
 };
+export { OwnerGuard, OwnerPermissionError } from "@/services/owner-guard";

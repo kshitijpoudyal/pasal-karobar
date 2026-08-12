@@ -1,4 +1,5 @@
 import type { BusinessSettingRepository } from "@/repository/business-setting.repository";
+import type { OwnerGuard } from "@/services/owner-guard";
 import {
   upsertBusinessSettingSchema,
   type UpsertBusinessSettingInput,
@@ -6,7 +7,10 @@ import {
 import type { BusinessSetting } from "@/types/database";
 
 export class BusinessSettingService {
-  constructor(private readonly businessSettingRepository: BusinessSettingRepository) {}
+  constructor(
+    private readonly businessSettingRepository: BusinessSettingRepository,
+    private readonly ownerGuard: OwnerGuard,
+  ) {}
 
   async listByBusinessId(businessId: string): Promise<BusinessSetting[]> {
     return this.businessSettingRepository.listByBusinessId(businessId);
@@ -18,6 +22,7 @@ export class BusinessSettingService {
 
   async upsert(input: UpsertBusinessSettingInput): Promise<BusinessSetting> {
     const payload = upsertBusinessSettingSchema.parse(input);
+    await this.ownerGuard.requireOwner(payload.business_id);
     return this.businessSettingRepository.upsert(
       payload.business_id,
       payload.setting_key,
@@ -26,6 +31,7 @@ export class BusinessSettingService {
   }
 
   async delete(businessId: string, settingKey: string): Promise<void> {
+    await this.ownerGuard.requireOwner(businessId);
     await this.businessSettingRepository.delete(businessId, settingKey);
   }
 }

@@ -4,6 +4,7 @@ import type { ExpenseCategoryService } from "@/services/expense-category.service
 import { applyNewBusinessOnboarding } from "@/services/business-onboarding";
 import { hydrateBusiness } from "@/services/business-profile-settings";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
+import type { OwnerGuard } from "@/services/owner-guard";
 import {
   createBusinessSchema,
   updateBusinessSchema,
@@ -19,6 +20,7 @@ export class BusinessService {
     private readonly businessSettingRepository: BusinessSettingRepository,
     private readonly serviceCatalog: ServiceCatalogService,
     private readonly expenseCategory: ExpenseCategoryService,
+    private readonly ownerGuard: OwnerGuard,
   ) {}
 
   async getById(id: string): Promise<Business | null> {
@@ -51,6 +53,7 @@ export class BusinessService {
   }
 
   async update(id: string, input: UpdateBusinessInput): Promise<Business> {
+    await this.ownerGuard.requireOwner(id);
     const payload = updateBusinessSchema.parse(input);
     const { name, business_type, calendar_system, currency, timezone } = payload;
 
@@ -72,6 +75,7 @@ export class BusinessService {
   }
 
   async delete(id: string): Promise<void> {
+    await this.ownerGuard.requireOwner(id);
     await this.businessRepository.delete(id);
   }
 }

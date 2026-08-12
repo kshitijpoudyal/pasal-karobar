@@ -5,6 +5,7 @@ import {
   CustomerPhotoService,
   CustomerPhotoValidationError,
 } from "@/services/customer-photo.service";
+import type { OwnerGuard } from "@/services/owner-guard";
 import type { CustomerPhotoRepository } from "@/repository/customer-photo.repository";
 import type { CustomerRepository } from "@/repository/customer.repository";
 import type { Customer } from "@/types/database";
@@ -41,12 +42,17 @@ function createMocks(photoCount: number) {
   return { customerPhotoRepository, customerRepository };
 }
 
+const ownerGuard = {
+  requireOwner: vi.fn().mockResolvedValue(undefined),
+} as unknown as OwnerGuard;
+
 describe("CustomerPhotoService", () => {
   it("rejects more than five photos", async () => {
     const { customerPhotoRepository, customerRepository } = createMocks(5);
     const service = new CustomerPhotoService(
       customerPhotoRepository as unknown as CustomerPhotoRepository,
       customerRepository,
+      ownerGuard,
     );
 
     await expect(
@@ -65,6 +71,7 @@ describe("CustomerPhotoService", () => {
     const service = new CustomerPhotoService(
       customerPhotoRepository as unknown as CustomerPhotoRepository,
       customerRepository,
+      ownerGuard,
     );
 
     await expect(
@@ -95,6 +102,7 @@ describe("CustomerPhotoService", () => {
     const service = new CustomerPhotoService(
       customerPhotoRepository as unknown as CustomerPhotoRepository,
       customerRepository,
+      ownerGuard,
     );
 
     await service.upload({

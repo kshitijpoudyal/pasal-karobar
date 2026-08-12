@@ -1,5 +1,6 @@
 import type { CustomerRepository } from "@/repository/customer.repository";
 import type { CustomerPhotoRepository } from "@/repository/customer-photo.repository";
+import type { OwnerGuard } from "@/services/owner-guard";
 import {
   ALLOWED_CUSTOMER_PHOTO_MIME_TYPES,
   buildCustomerPhotoStoragePath,
@@ -44,6 +45,7 @@ export class CustomerPhotoService {
   constructor(
     private readonly customerPhotoRepository: CustomerPhotoRepository,
     private readonly customerRepository: CustomerRepository,
+    private readonly ownerGuard: OwnerGuard,
   ) {}
 
   async listWithSignedUrls(customerId: string): Promise<CustomerPhotoWithUrl[]> {
@@ -142,6 +144,7 @@ export class CustomerPhotoService {
   }
 
   async delete(businessId: string, photoId: string): Promise<void> {
+    await this.ownerGuard.requireOwner(businessId);
     const row = await this.customerPhotoRepository.findById(photoId);
     if (!row || row.business_id !== businessId) {
       throw new CustomerPhotoNotFoundError();

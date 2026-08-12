@@ -12,6 +12,7 @@ import {
   Receipt,
   Scissors,
   Settings,
+  UserCog,
   Users,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ import { useRecordTransactionModal } from "@/features/transactions";
 import { cn } from "@/lib/utils";
 import { appShellTransitionClass, useAppNav } from "@/providers/app-nav-provider";
 import { useAuth } from "@/providers/auth-provider";
+import { useActiveMember } from "@/providers/active-member-provider";
 
 const APP_LEFT_NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutGrid },
@@ -29,6 +31,12 @@ const APP_LEFT_NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
+const OWNER_LEFT_NAV_ITEM = {
+  href: "/staff-manager",
+  label: "Staff Manager",
+  icon: UserCog,
+} as const;
+
 const NEW_ENTRY_LABEL = "NEW ENTRY";
 
 /** Fixed left navigation — single layout used on every app screen (Dashboard reference). */
@@ -36,8 +44,17 @@ export function AppLeftNav() {
   const pathname = usePathname();
   const { openModal } = useRecordTransactionModal();
   const { signOut } = useAuth();
+  const { isOwner } = useActiveMember();
   const { collapsed, toggleCollapsed, navWidthClass } = useAppNav();
   const [signingOut, setSigningOut] = useState(false);
+
+  const navItems = isOwner
+    ? [
+        ...APP_LEFT_NAV_ITEMS.slice(0, 3),
+        OWNER_LEFT_NAV_ITEM,
+        ...APP_LEFT_NAV_ITEMS.slice(3),
+      ]
+    : APP_LEFT_NAV_ITEMS;
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -103,7 +120,7 @@ export function AppLeftNav() {
         className={cn("flex flex-1 flex-col gap-2", collapsed ? "px-2" : "px-4")}
         aria-label="Main"
       >
-        {APP_LEFT_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link

@@ -6,7 +6,7 @@ import { MoreVertical, Trash2, UserPlus, Users } from "lucide-react";
 import { QueryState } from "@/components/layout/query-state";
 import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
 import { Button } from "@/components/ui/button";
-import { RegisterStaffModal } from "@/features/settings/components/register-staff-modal";
+import { RegisterStaffModal } from "@/features/staff-manager/components/register-staff-modal";
 import {
   useCreateStaffMemberMutation,
   useRemoveStaffMemberMutation,
@@ -156,8 +156,6 @@ export function StaffSection() {
     );
   }
 
-  if (!isOwner) return null;
-
   const staff = staffQuery.data ?? [];
 
   return (
@@ -169,7 +167,7 @@ export function StaffSection() {
           </div>
           <div>
             <h3 className="font-headline text-xl font-semibold text-on-surface">
-              Staff
+              Team members
             </h3>
             <p className="mt-1 text-sm text-on-surface-variant">
               Register staff with their own login. They share shop data; each entry
@@ -177,8 +175,14 @@ export function StaffSection() {
             </p>
           </div>
         </div>
-        <Button type="button" variant="primary" size="sm" onClick={openModal}>
-          <UserPlus className="size-4" strokeWidth={1.75} />
+        <Button
+          type="button"
+          variant="primary"
+          size="cta"
+          className="shrink-0"
+          onClick={openModal}
+        >
+          <UserPlus className="size-5" strokeWidth={2.25} aria-hidden />
           Register staff
         </Button>
       </div>

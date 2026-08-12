@@ -1,4 +1,5 @@
 import type { BusinessPaymentMethodRepository } from "@/repository/business-payment-method.repository";
+import type { OwnerGuard } from "@/services/owner-guard";
 import {
   createBusinessPaymentMethodSchema,
   updateBusinessPaymentMethodSchema,
@@ -15,7 +16,10 @@ export class BusinessPaymentMethodMinimumError extends Error {
 }
 
 export class BusinessPaymentMethodService {
-  constructor(private readonly repository: BusinessPaymentMethodRepository) {}
+  constructor(
+    private readonly repository: BusinessPaymentMethodRepository,
+    private readonly ownerGuard: OwnerGuard,
+  ) {}
 
   async listByBusinessId(businessId: string): Promise<BusinessPaymentMethodRecord[]> {
     return this.repository.listByBusinessId(businessId);
@@ -38,6 +42,7 @@ export class BusinessPaymentMethodService {
     input: CreateBusinessPaymentMethodInput,
   ): Promise<BusinessPaymentMethodRecord> {
     const payload = createBusinessPaymentMethodSchema.parse(input);
+    await this.ownerGuard.requireOwner(payload.business_id);
     return this.repository.create(payload);
   }
 
@@ -46,10 +51,13 @@ export class BusinessPaymentMethodService {
     input: UpdateBusinessPaymentMethodInput,
   ): Promise<BusinessPaymentMethodRecord> {
     const payload = updateBusinessPaymentMethodSchema.parse(input);
+    const existing = await this.repository.findById(id);
+    if (existing) await this.ownerGuard.requireOwner(existing.business_id);
     return this.repository.update(id, payload);
   }
 
   async deactivate(id: string, businessId: string): Promise<void> {
+    await this.ownerGuard.requireOwner(businessId);
     const rows = await this.listActiveByBusinessId(businessId);
     if (rows.length <= 1 && rows.some((row) => row.id === id)) {
       throw new BusinessPaymentMethodMinimumError();

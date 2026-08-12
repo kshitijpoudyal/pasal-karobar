@@ -26,6 +26,7 @@ type TransactionTimelineProps = {
   loggedByLabels: Map<string, string>;
   onDelete: (transactionId: string) => Promise<void>;
   isDeleting: boolean;
+  canDelete: boolean;
   timeZone: string;
 };
 
@@ -56,6 +57,7 @@ export function TransactionTimeline({
   loggedByLabels,
   onDelete,
   isDeleting,
+  canDelete,
   timeZone,
 }: TransactionTimelineProps) {
   const { confirm } = useConfirmDrawer();
@@ -90,9 +92,9 @@ export function TransactionTimeline({
 
               const pendingSync = isPendingSyncTransactionId(tx.id);
 
-              const deleteHandler = isDeleting
-                ? undefined
-                : () => {
+              const deleteHandler =
+                canDelete && !isDeleting
+                  ? () => {
                     const entryKind = isIncome ? "income entry" : "expense";
                     void runConfirmedAction(
                       confirm,
@@ -109,7 +111,8 @@ export function TransactionTimeline({
                       },
                       () => onDelete(tx.id),
                     );
-                  };
+                  }
+                  : undefined;
 
               return (
                 <TransactionActivityCard

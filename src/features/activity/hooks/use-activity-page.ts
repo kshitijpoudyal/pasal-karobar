@@ -13,6 +13,7 @@ import { useProfilesByIdsQuery } from "@/hooks/queries/use-profile-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
+import { useActiveMember } from "@/providers/active-member-provider";
 import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 import { groupTransactionsByDayWithLabels } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
@@ -77,6 +78,7 @@ function transactionMatchesSearch(
 export function useActivityPage() {
   const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
+  const { canDelete } = useActiveMember();
   const { timeZone, calendarSystem } = useBusinessDateSettings();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("Today");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
@@ -229,6 +231,8 @@ export function useActivityPage() {
   }
 
   async function deleteTransaction(transactionId: string) {
+    if (!canDelete) return;
+
     if (transactionId.startsWith("optimistic-")) {
       toast({
         title: "Still saving",
@@ -277,6 +281,7 @@ export function useActivityPage() {
     deleteTransaction,
     isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error,
+    canDelete,
     timeZone,
     calendarSystem,
   };

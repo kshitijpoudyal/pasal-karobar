@@ -5,6 +5,7 @@ import type {
   IncomeSummaryFilters,
   TransactionListFilters,
 } from "@/repository/transaction.repository";
+import type { OwnerGuard } from "@/services/owner-guard";
 import {
   createTransactionSchema,
   updateTransactionSchema,
@@ -17,6 +18,7 @@ export class TransactionService {
   constructor(
     private readonly transactionRepository: TransactionRepository,
     private readonly customerService: CustomerService,
+    private readonly ownerGuard: OwnerGuard,
   ) {}
 
   async listByBusinessId(
@@ -93,6 +95,8 @@ export class TransactionService {
 
   async delete(id: string): Promise<void> {
     const existing = await this.transactionRepository.findById(id);
+    if (!existing) return;
+    await this.ownerGuard.requireOwner(existing.business_id);
     await this.transactionRepository.delete(id);
 
     const customerId = existing?.customer_id;

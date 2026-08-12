@@ -18,6 +18,7 @@ import type { PaymentMethodPresetCode } from "@/constants/payment-method-presets
 import { RegisterPaymentMethodModal } from "@/features/settings/components/register-payment-method-modal";
 import { ServiceCatalogAddCard } from "@/features/settings/components/service-catalog-add-card";
 import { usePaymentMethodsSection } from "@/features/settings/hooks/use-payment-methods-section";
+import { useActiveMember } from "@/providers/active-member-provider";
 import { cn } from "@/lib/utils";
 import type { BusinessPaymentMethodRecord, PaymentMethod } from "@/types/database";
 
@@ -33,8 +34,8 @@ function paymentMethodSubtitle(methodCode: PaymentMethod): string {
 }
 
 type PaymentMethodMoreMenuProps = {
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   deleteDisabled?: boolean;
   disabled?: boolean;
 };
@@ -91,8 +92,9 @@ function PaymentMethodMoreMenu({
             role="menuitem"
             onClick={() => {
               setOpen(false);
-              onEdit();
+              if (onEdit) onEdit();
             }}
+            disabled={!onEdit}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
             <Pencil className="size-3.5 shrink-0" strokeWidth={1.75} />
@@ -101,10 +103,10 @@ function PaymentMethodMoreMenu({
           <button
             type="button"
             role="menuitem"
-            disabled={disabled || deleteDisabled}
+            disabled={disabled || deleteDisabled || !onDelete}
             onClick={() => {
               setOpen(false);
-              onDelete();
+              if (onDelete) onDelete();
             }}
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-error transition-colors hover:bg-error-container/40 disabled:cursor-not-allowed disabled:opacity-40"
           >
@@ -123,8 +125,8 @@ type PaymentMethodListItemProps = {
   subtitle: string;
   iconWrapClassName: string;
   readOnly?: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   canMoveUp?: boolean;
@@ -205,6 +207,7 @@ function PaymentMethodListItem({
 }
 
 export function PaymentMethodsSection() {
+  const { canEditSettings } = useActiveMember();
   const { confirm } = useConfirmDrawer();
   const [isEditing, setIsEditing] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -238,6 +241,13 @@ export function PaymentMethodsSection() {
     isSavingEdit,
   } = usePaymentMethodsSection();
 
+  useEffect(() => {
+    if (!canEditSettings) {
+      setIsEditing(false);
+      setAddOpen(false);
+    }
+  }, [canEditSettings]);
+
   function buildItemProps(row: BusinessPaymentMethodRecord, index: number) {
     const iconWrapClassName: string =
       wrapClasses[index % wrapClasses.length] ??
@@ -248,9 +258,9 @@ export function PaymentMethodsSection() {
       title: row.label,
       subtitle: paymentMethodSubtitle(row.method_code),
       iconWrapClassName,
-      readOnly: !isEditing,
-      onEdit: () => openEdit(row),
-      ...(isEditing
+      readOnly: !canEditSettings || !isEditing,
+      onEdit: canEditSettings ? () => openEdit(row) : undefined,
+      ...(canEditSettings && isEditing
         ? {
             onMoveUp: () => void moveMethod(row.id, "up"),
             onMoveDown: () => void moveMethod(row.id, "down"),
@@ -259,19 +269,21 @@ export function PaymentMethodsSection() {
             isReordering,
           }
         : {}),
-      onDelete: () => {
-        void runConfirmedAction(
-          confirm,
-          {
-            title: "Remove payment method?",
-            description: `"${row.label}" will be hidden from new entries. Past transactions are unchanged.`,
-            confirmLabel: "Remove",
-            cancelLabel: "Keep",
-            tone: "destructive",
-          },
-          () => removeMethod(row),
-        );
-      },
+      onDelete: canEditSettings
+        ? () => {
+            void runConfirmedAction(
+              confirm,
+              {
+                title: "Remove payment method?",
+                description: `"${row.label}" will be hidden from new entries. Past transactions are unchanged.`,
+                confirmLabel: "Remove",
+                cancelLabel: "Keep",
+                tone: "destructive",
+              },
+              () => removeMethod(row),
+            );
+          }
+        : undefined,
       isRemoving: removingId === row.id,
       deleteDisabled: methods.length <= 1,
     };
@@ -311,31 +323,33 @@ export function PaymentMethodsSection() {
             </div>
             <h3 className="font-headline text-xl font-semibold">Payment Methods</h3>
           </div>
-          {isEditing ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="cta"
-              className="shrink-0"
-              onClick={cancelEditing}
-            >
-              Cancel
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="secondary"
-              size="cta"
-              className="shrink-0"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil className="size-4" strokeWidth={2} aria-hidden />
-              Edit
-            </Button>
-          )}
+          {canEditSettings ? (
+            isEditing ? (
+              <Button
+                type="button"
+                variant="secondary"
+                size="cta"
+                className="shrink-0"
+                onClick={cancelEditing}
+              >
+                Cancel
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                size="cta"
+                className="shrink-0"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="size-4" strokeWidth={2} aria-hidden />
+                Edit
+              </Button>
+            )
+          ) : null}
         </div>
 
-        {isEditing ? (
+        {canEditSettings && isEditing ? (
           <p className="mb-4 text-xs text-on-surface-variant">
             Use ↑↓ to reorder. Tap ⋮ to edit or remove a payment method.
           </p>
@@ -401,7 +415,7 @@ export function PaymentMethodsSection() {
               <PaymentMethodListItem {...buildItemProps(row, index)} />
             </li>
           ))}
-          {isEditing ? (
+          {canEditSettings && isEditing ? (
             <li className="sm:col-span-2 lg:col-span-3">
               <ServiceCatalogAddCard
                 onClick={openAddModal}

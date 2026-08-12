@@ -1,11 +1,15 @@
+"use client";
+
 import { AppShell } from "@/components/layout/app-shell";
 import { BusinessIdentitySection } from "@/features/settings/components/business-identity-section";
 import { PaymentMethodsSection } from "@/features/settings/components/payment-methods-section";
 import { ServiceCatalogSection } from "@/features/settings/components/service-catalog-section";
-import { StaffSection } from "@/features/settings/components/staff-section";
 import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
+import { useActiveMember } from "@/providers/active-member-provider";
 
 export function SettingsPage() {
+  const { canEditSettings } = useActiveMember();
+
   return (
     <AppShell
       desktopHeaderTitle="Settings"
@@ -18,13 +22,14 @@ export function SettingsPage() {
             Settings
           </h2>
           <p className="font-body-md mt-2 text-on-surface-variant">
-            Manage your business configuration and service offerings.
+            {canEditSettings
+              ? "Manage your business configuration and service offerings."
+              : "View-only access. Ask your shop owner to change settings."}
           </p>
         </section>
         <div className="space-y-8 lg:space-y-12">
           <PwaInstallCard />
           <BusinessIdentitySection />
-          <StaffSection />
           <ServiceCatalogSection />
           <PaymentMethodsSection />
         </div>

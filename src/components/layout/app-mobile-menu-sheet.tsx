@@ -1,12 +1,15 @@
 "use client";
 
-import { LogOut, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LogOut, UserCog, X } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { PwaInstallCard } from "@/components/pwa/pwa-install-card";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth-provider";
+import { useActiveMember } from "@/providers/active-member-provider";
 
 type AppMobileMenuSheetProps = {
   open: boolean;
@@ -14,7 +17,9 @@ type AppMobileMenuSheetProps = {
 };
 
 export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
+  const pathname = usePathname();
   const { signOut } = useAuth();
+  const { isOwner } = useActiveMember();
   const [signingOut, setSigningOut] = useState(false);
 
   if (!open) return null;
@@ -61,6 +66,21 @@ export function AppMobileMenuSheet({ open, onClose }: AppMobileMenuSheetProps) {
         </div>
         <div className="flex flex-col gap-2 p-4">
           <PwaInstallCard variant="compact" />
+          {isOwner ? (
+            <Link
+              href="/staff-manager"
+              onClick={onClose}
+              className={cn(
+                "squircle flex h-12 w-full items-center gap-3 px-4 text-sm font-medium transition-colors",
+                pathname.startsWith("/staff-manager")
+                  ? "bg-primary-container text-on-primary-container"
+                  : "text-on-surface-variant hover:bg-surface-container-high",
+              )}
+            >
+              <UserCog className="size-5 shrink-0" strokeWidth={1.75} />
+              Staff Manager
+            </Link>
+          ) : null}
           <Button
             type="button"
             variant="ghost"

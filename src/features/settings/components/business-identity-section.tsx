@@ -11,6 +11,7 @@ import {
   timezoneOptionsIncludingCurrent,
 } from "@/constants/business-timezones";
 import { useBusinessIdentityForm } from "@/features/settings/hooks/use-business-identity-form";
+import { useActiveMember } from "@/providers/active-member-provider";
 import { cn } from "@/lib/utils";
 
 const fieldClassName =
@@ -29,6 +30,7 @@ const BUSINESS_TYPES = [
 ] as const;
 
 export function BusinessIdentitySection() {
+  const { canEditSettings } = useActiveMember();
   const [isEditing, setIsEditing] = useState(false);
   const {
     form,
@@ -50,9 +52,10 @@ export function BusinessIdentitySection() {
 
   const timezoneValue = watch("timezone") || DEFAULT_BUSINESS_TIMEZONE;
   const timezoneOptions = timezoneOptionsIncludingCurrent(timezoneValue);
-  const fieldsDisabled = !isEditing || isSaving;
+  const fieldsDisabled = !canEditSettings || !isEditing || isSaving;
 
   function startEditing() {
+    if (!canEditSettings) return;
     setIsEditing(true);
   }
 
@@ -81,29 +84,31 @@ export function BusinessIdentitySection() {
               </div>
               <h3 className="font-headline text-xl font-semibold">Business Identity</h3>
             </div>
-            {isEditing ? (
-              <Button
-                type="button"
-                variant="secondary"
-                size="cta"
-                className="shrink-0"
-                disabled={isSaving}
-                onClick={cancelEditing}
-              >
-                Cancel
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="secondary"
-                size="cta"
-                className="shrink-0"
-                onClick={startEditing}
-              >
-                <Pencil className="size-4" strokeWidth={2} aria-hidden />
-                Edit
-              </Button>
-            )}
+            {canEditSettings ? (
+              isEditing ? (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="cta"
+                  className="shrink-0"
+                  disabled={isSaving}
+                  onClick={cancelEditing}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="cta"
+                  className="shrink-0"
+                  onClick={startEditing}
+                >
+                  <Pencil className="size-4" strokeWidth={2} aria-hidden />
+                  Edit
+                </Button>
+              )
+            ) : null}
           </div>
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
             <div className="space-y-3">

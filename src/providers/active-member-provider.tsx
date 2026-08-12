@@ -13,6 +13,10 @@ type ActiveMemberContextValue = {
   displayName: string;
   role: MemberRole | null;
   isOwner: boolean;
+  /** Owner-only: change business configuration in Settings. */
+  canEditSettings: boolean;
+  /** Owner-only: delete transactions, photos, catalog rows, etc. */
+  canDelete: boolean;
   isLoading: boolean;
 };
 
@@ -36,6 +40,8 @@ export function ActiveMemberProvider({ children }: { children: React.ReactNode }
       displayName,
       role,
       isOwner: role === "OWNER",
+      canEditSettings: role === "OWNER",
+      canDelete: role === "OWNER",
       isLoading: Boolean(userId && businessId) && memberQuery.isLoading,
     };
   }, [businessId, memberQuery.data, memberQuery.isLoading, session?.user, userId]);
