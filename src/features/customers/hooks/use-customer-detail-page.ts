@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
+import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
@@ -39,6 +40,13 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
     },
     { enabled: Boolean(customer?.id) },
   );
+  const servicesQuery = useServiceCatalogQuery(businessId);
+
+  const serviceNames = useMemo(() => {
+    return new Map(
+      (servicesQuery.data ?? []).map((service) => [service.id, service.name]),
+    );
+  }, [servicesQuery.data]);
 
   const stats = useMemo(() => {
     if (!customer) {
@@ -77,10 +85,22 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
     revenue: stats.revenue,
     groupedVisits,
     visitTransactions: customerIncomeQuery.data ?? [],
-    isLoading: customersQuery.isLoading || customerIncomeQuery.isLoading,
-    error: customersQuery.error ?? customerIncomeQuery.error ?? null,
+    serviceNames,
+    isLoading:
+      customersQuery.isLoading ||
+      customerIncomeQuery.isLoading ||
+      servicesQuery.isLoading,
+    error:
+      customersQuery.error ??
+      customerIncomeQuery.error ??
+      servicesQuery.error ??
+      null,
     refetch: async () => {
-      await Promise.all([customersQuery.refetch(), customerIncomeQuery.refetch()]);
+      await Promise.all([
+        customersQuery.refetch(),
+        customerIncomeQuery.refetch(),
+        servicesQuery.refetch(),
+      ]);
     },
   };
 }

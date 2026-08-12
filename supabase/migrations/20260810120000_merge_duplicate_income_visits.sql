@@ -6,7 +6,7 @@ SELECT
   customer_id,
   payment_method,
   transaction_date,
-  MIN(id) AS keep_id,
+  (ARRAY_AGG(id ORDER BY created_at, id))[1] AS keep_id,
   ARRAY_AGG(id ORDER BY created_at, id) AS all_ids,
   SUM(subtotal) AS merged_subtotal,
   SUM(tip) AS merged_tip,

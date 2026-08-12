@@ -48,7 +48,6 @@ function asIncomeVisitRows(
 
 /** Pure metrics for dashboard / customers report (business-TZ bounds as ISO instants). */
 export function computeCustomerPeriodInsights(
-  periodIncomeTransactions: Transaction[],
   allTimeIncomeRows: IncomeSummaryRow[] | IncomeVisitRow[],
   periodStartIso: string,
   periodEndIso: string,
@@ -56,9 +55,16 @@ export function computeCustomerPeriodInsights(
   const periodStartMs = Date.parse(periodStartIso);
   const periodEndMs = Date.parse(periodEndIso);
 
-  const periodRows = toIncomeVisitRows(periodIncomeTransactions);
-  const allTimeRows = asIncomeVisitRows(allTimeIncomeRows);
-  const lifetimeVisitCounts = countDistinctVisitsByCustomer(allTimeRows);
+  const allRows = asIncomeVisitRows(allTimeIncomeRows);
+  const periodRows = allRows.filter((row) => {
+    const t = Date.parse(row.transaction_date);
+    return t >= periodStartMs && t <= periodEndMs;
+  });
+
+  const lifetimeVisitCounts = countDistinctVisitsByCustomer(allRows);
+  const periodVisitCounts = countDistinctVisitsByCustomer(
+    periodRows.filter((row) => row.customer_id),
+  );
 
   const periodTrackedRows = periodRows.filter((row) => row.customer_id);
   const periodAnonymousRows = periodRows.filter((row) => !row.customer_id);
@@ -76,7 +82,8 @@ export function computeCustomerPeriodInsights(
 
   for (const customerId of customerIdsInPeriod) {
     const lifetimeVisits = lifetimeVisitCounts.get(customerId) ?? 0;
-    if (lifetimeVisits > 1) {
+    const periodVisits = periodVisitCounts.get(customerId) ?? 0;
+    if (lifetimeVisits > 1 || periodVisits > 1) {
       returningCustomers += 1;
     } else {
       newCustomers += 1;

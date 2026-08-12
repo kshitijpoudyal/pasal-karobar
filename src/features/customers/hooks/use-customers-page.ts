@@ -13,7 +13,6 @@ import {
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import {
   useIncomeSummaryQuery,
-  useTransactionsQuery,
 } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
@@ -45,25 +44,13 @@ export function useCustomersPage() {
     [timeframe, timeZone, calendarSystem],
   );
 
-  const periodIncomeQuery = useTransactionsQuery(businessId, {
-    type: "INCOME",
-    fromDate: periodRange.from,
-    toDate: periodRange.to,
-  });
-
   const periodInsights = useMemo(() => {
     return computeCustomerPeriodInsights(
-      periodIncomeQuery.data ?? [],
       incomeSummaryQuery.data ?? [],
       periodRange.from,
       periodRange.to,
     );
-  }, [
-    periodIncomeQuery.data,
-    incomeSummaryQuery.data,
-    periodRange.from,
-    periodRange.to,
-  ]);
+  }, [incomeSummaryQuery.data, periodRange.from, periodRange.to]);
 
   const directoryRows = useMemo(() => {
     const stats = aggregateCustomerDirectoryStats(incomeSummaryQuery.data ?? []);
@@ -144,18 +131,15 @@ export function useCustomersPage() {
     hasActiveSearch,
     isLoading:
       customersQuery.isLoading ||
-      incomeSummaryQuery.isLoading ||
-      periodIncomeQuery.isLoading,
+      incomeSummaryQuery.isLoading,
     error:
       customersQuery.error ??
       incomeSummaryQuery.error ??
-      periodIncomeQuery.error ??
       null,
     refetch: async () => {
       await Promise.all([
         customersQuery.refetch(),
         incomeSummaryQuery.refetch(),
-        periodIncomeQuery.refetch(),
       ]);
     },
   };

@@ -19,6 +19,7 @@ export type TransactionListFilters = {
 };
 
 export type IncomeSummaryRow = {
+  id: string;
   customer_id: string | null;
   total: number;
   transaction_date: string;
@@ -67,7 +68,7 @@ export class TransactionRepository {
   ): Promise<IncomeSummaryRow[]> {
     const { data, error } = await this.supabase
       .from("transactions")
-      .select("customer_id, total, transaction_date")
+      .select("id, customer_id, total, transaction_date")
       .eq("business_id", businessId)
       .eq("type", "INCOME")
       .order("transaction_date", { ascending: false });

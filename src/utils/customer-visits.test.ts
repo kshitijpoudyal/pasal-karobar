@@ -6,7 +6,23 @@ import {
 } from "@/utils/customer-visits";
 
 describe("countDistinctVisits", () => {
-  it("treats duplicate same-timestamp income rows as one visit", () => {
+  it("counts separate entries with different ids even at the same timestamp", () => {
+    const rows = [
+      {
+        id: "tx-1",
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:00:00.000Z",
+      },
+      {
+        id: "tx-2",
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:00:00.000Z",
+      },
+    ];
+    expect(countDistinctVisits(rows)).toBe(2);
+  });
+
+  it("treats legacy duplicate rows without ids and same timestamp as one visit", () => {
     const rows = [
       {
         customer_id: "c1",
@@ -20,7 +36,21 @@ describe("countDistinctVisits", () => {
     expect(countDistinctVisits(rows)).toBe(1);
   });
 
-  it("counts separate visits when entries are far enough apart", () => {
+  it("counts separate manual entries even when recorded minutes apart", () => {
+    const rows = [
+      {
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:00:00.000Z",
+      },
+      {
+        customer_id: "c1",
+        transaction_date: "2026-08-07T10:02:00.000Z",
+      },
+    ];
+    expect(countDistinctVisits(rows)).toBe(2);
+  });
+
+  it("counts separate visits on different hours", () => {
     const rows = [
       {
         customer_id: "c1",

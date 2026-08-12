@@ -788,9 +788,7 @@ export class DashboardService {
         ? buildMonthDayHeatmap(transactions, heatmapAnchor, timeZone, calendarSystem)
         : null;
 
-    const incomeInPeriod = periodTransactions.filter((tx) => tx.type === "INCOME");
     const customerInsights = computeCustomerPeriodInsights(
-      incomeInPeriod,
       allTimeIncomeSummary,
       periodFromIso,
       periodToIso,
