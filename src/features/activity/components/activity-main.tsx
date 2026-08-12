@@ -73,6 +73,7 @@ function ActivityTimelineBody({
         customerLabels={activity.customerLabels}
         loggedByLabels={activity.loggedByLabels}
         onDelete={activity.deleteTransaction}
+        onEdit={activity.editTransaction}
         isDeleting={activity.isDeleting}
         canDelete={activity.canDelete}
         timeZone={activity.timeZone}

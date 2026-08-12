@@ -2,4 +2,6 @@ export { RecordTransactionModal } from "@/features/transactions/components/recor
 export {
   RecordTransactionModalProvider,
   useRecordTransactionModal,
+  type EditTransactionPrefill,
+  type OpenRecordTransactionOptions,
 } from "@/features/transactions/providers/record-transaction-modal-provider";

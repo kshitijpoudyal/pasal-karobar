@@ -25,6 +25,7 @@ type TransactionTimelineProps = {
   customerLabels: Map<string, string>;
   loggedByLabels: Map<string, string>;
   onDelete: (transactionId: string) => Promise<void>;
+  onEdit?: (transaction: Transaction) => void;
   isDeleting: boolean;
   canDelete: boolean;
   timeZone: string;
@@ -56,6 +57,7 @@ export function TransactionTimeline({
   customerLabels,
   loggedByLabels,
   onDelete,
+  onEdit,
   isDeleting,
   canDelete,
   timeZone,
@@ -114,6 +116,11 @@ export function TransactionTimeline({
                   }
                   : undefined;
 
+              const editHandler =
+                canDelete && !isDeleting && onEdit
+                  ? () => onEdit(tx)
+                  : undefined;
+
               return (
                 <TransactionActivityCard
                   key={tx.id}
@@ -153,6 +160,7 @@ export function TransactionTimeline({
                     isIncome ? "border-l-secondary" : "border-l-tertiary"
                   }
                   pendingSync={pendingSync}
+                  onEdit={editHandler}
                   onDelete={deleteHandler}
                 />
               );

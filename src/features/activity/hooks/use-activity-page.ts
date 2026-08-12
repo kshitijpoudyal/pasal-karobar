@@ -18,6 +18,7 @@ import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 import { groupTransactionsByDayWithLabels } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
 import { incomeTransactionTitle } from "@/features/transactions/utils/income-entry-title";
+import { useRecordTransactionModal } from "@/features/transactions";
 import type { Transaction } from "@/types/database";
 import { dbPaymentToLabel } from "@/utils/payment-method";
 import {
@@ -79,6 +80,7 @@ export function useActivityPage() {
   const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
   const { canDelete } = useActiveMember();
+  const { openModal } = useRecordTransactionModal();
   const { timeZone, calendarSystem } = useBusinessDateSettings();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("Today");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
@@ -258,6 +260,29 @@ export function useActivityPage() {
     await deleteMutation.mutateAsync(transactionId);
   }
 
+  function editTransaction(tx: Transaction) {
+    if (!canDelete) return;
+    if (isPendingSyncTransactionId(tx.id) || tx.id.startsWith("optimistic-")) {
+      toast({
+        title: "Cannot edit yet",
+        description: "Wait until this entry finishes saving before editing.",
+      });
+      return;
+    }
+
+    const customer = tx.customer_id
+      ? (customersQuery.data ?? []).find((row) => row.id === tx.customer_id)
+      : undefined;
+
+    openModal({
+      edit: {
+        transaction: tx,
+        customerPhone: customer?.phone ?? null,
+        customerName: customer?.name ?? null,
+      },
+    });
+  }
+
   return {
     timeframe,
     setTimeframe,
@@ -279,6 +304,7 @@ export function useActivityPage() {
     error,
     refetch,
     deleteTransaction,
+    editTransaction,
     isDeleting: deleteMutation.isPending,
     deleteError: deleteMutation.error,
     canDelete,

@@ -4,7 +4,10 @@ import { z } from "zod";
 
 import { toast } from "@/components/toast";
 import { queryKeys } from "@/constants/query-keys";
-import { useCreateTransactionMutation } from "@/hooks/queries/use-transaction-queries";
+import {
+  useCreateTransactionMutation,
+  useUpdateTransactionMutation,
+} from "@/hooks/queries/use-transaction-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
@@ -14,6 +17,7 @@ import { getClientAppServices } from "@/services/client";
 import { buildCombinedServiceTitle } from "@/features/transactions/utils/income-entry-title";
 import {
   createTransactionSchema,
+  updateTransactionSchema,
   type CreateTransactionInput,
 } from "@/services/schemas";
 import type { PaymentMethod } from "@/types/database";
@@ -24,7 +28,10 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { parseOptionalNepalPhone } from "@/utils/phone-np";
 
-export function useRecordTransactionSubmit(onSuccess: () => void) {
+export function useRecordTransactionSubmit(
+  onSuccess: () => void,
+  editingTransactionId?: string | null,
+) {
   const { businessId } = useActiveBusiness();
   const { isOnline: appOnline } = useConnectivity();
   const queryClient = useQueryClient();
@@ -32,6 +39,8 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
   const categoriesQuery = useExpenseCategoriesQuery(businessId);
   const customersQuery = useCustomersQuery(businessId);
   const createMutation = useCreateTransactionMutation(businessId);
+  const updateMutation = useUpdateTransactionMutation(businessId);
+  const isEditing = Boolean(editingTransactionId);
 
   function resolveOptimisticCustomerId(phoneRaw?: string): string | null {
     const parsed = parseOptionalNepalPhone(phoneRaw);
@@ -152,6 +161,96 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
     onSuccess();
   }
 
+  async function submitIncomeUpdate(input: {
+    serviceIds: string[];
+    subtotal: number;
+    tip: number;
+    payment: PaymentMethod;
+    customerPhone?: string;
+    customerName?: string;
+    saveCustomerName?: boolean;
+  }) {
+    if (!editingTransactionId) return;
+    if (!appOnline) {
+      throw new Error("You're offline. Connect to the internet to save changes.");
+    }
+
+    const tip = input.tip || 0;
+    const combinedSubtotal = input.subtotal;
+    const serviceNames = new Map(
+      (servicesQuery.data ?? []).map((service) => [service.id, service.name]),
+    );
+    const primaryServiceId = input.serviceIds[0]!;
+    const combinedTitle =
+      input.serviceIds.length > 1
+        ? buildCombinedServiceTitle(input.serviceIds, serviceNames)
+        : null;
+    const customerPhone = input.customerPhone?.trim();
+
+    const payload = updateTransactionSchema.parse({
+      service_id: primaryServiceId,
+      subtotal: combinedSubtotal,
+      tip,
+      total: combinedSubtotal + tip,
+      payment_method: input.payment,
+      note: combinedTitle,
+      customer_phone: customerPhone ?? "",
+    });
+
+    await updateMutation.mutateAsync({
+      transactionId: editingTransactionId,
+      input: payload,
+    });
+
+    if (customerPhone && input.saveCustomerName && input.customerName?.trim()) {
+      await getClientAppServices().customer.applyNameForNormalizedPhone(
+        businessId,
+        customerPhone,
+        input.customerName,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.customers.list(businessId),
+      });
+    }
+
+    toast({
+      title: "Entry updated",
+      description: "Income entry saved successfully.",
+    });
+    onSuccess();
+  }
+
+  async function submitExpenseUpdate(input: {
+    expenseCategoryId: string;
+    amount: number;
+    note?: string;
+    payment: PaymentMethod;
+  }) {
+    if (!editingTransactionId) return;
+    if (!appOnline) {
+      throw new Error("You're offline. Connect to the internet to save changes.");
+    }
+
+    const payload = updateTransactionSchema.parse({
+      expense_category_id: input.expenseCategoryId,
+      subtotal: input.amount,
+      total: input.amount,
+      payment_method: input.payment,
+      note: input.note?.trim() ? input.note.trim() : null,
+    });
+
+    await updateMutation.mutateAsync({
+      transactionId: editingTransactionId,
+      input: payload,
+    });
+
+    toast({
+      title: "Entry updated",
+      description: "Expense entry saved successfully.",
+    });
+    onSuccess();
+  }
+
   function resolveCategoryIdByName(name: string): string | undefined {
     const normalized = name.toLowerCase();
     return categoriesQuery.data?.find((c) => c.name.toLowerCase() === normalized)?.id;
@@ -168,13 +267,20 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       .safeParse(input);
   }
 
+  const activeMutation = isEditing ? updateMutation : createMutation;
+
   return {
     businessId,
     servicesQuery,
     categoriesQuery,
     createMutation,
+    updateMutation,
+    activeMutation,
+    isEditing,
     submitIncome,
     submitExpense,
+    submitIncomeUpdate,
+    submitExpenseUpdate,
     resolveCategoryIdByName,
     validateIncome,
   };

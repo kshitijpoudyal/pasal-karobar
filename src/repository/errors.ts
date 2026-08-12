@@ -37,5 +37,12 @@ export function mapRepositoryError(error: PostgrestError): never {
         "Database function create_business_for_owner is not deployed. In Supabase → SQL Editor, run supabase/migrations/20260730194500_create_business_for_owner.sql (after the initial schema migration).",
     });
   }
+  if (isMissingRpcFunctionError(error, "is_business_owner")) {
+    throw new RepositoryError({
+      ...error,
+      message:
+        "Staff database migration is not applied. In Supabase → SQL Editor, run supabase/migrations/20260812120000_staff_profiles_and_attribution.sql.",
+    });
+  }
   throw new RepositoryError(error);
 }

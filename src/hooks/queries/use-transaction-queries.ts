@@ -211,15 +211,17 @@ export function useCreateTransactionMutation(businessId: string) {
   });
 }
 
-export function useUpdateTransactionMutation(
-  businessId: string,
-  transactionId: string,
-) {
+export function useUpdateTransactionMutation(businessId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: UpdateTransactionInput) =>
-      getClientAppServices().transaction.update(transactionId, input),
+    mutationFn: ({
+      transactionId,
+      input,
+    }: {
+      transactionId: string;
+      input: UpdateTransactionInput;
+    }) => getClientAppServices().transaction.update(transactionId, input),
     onSuccess: async () => {
       scheduleAfterTransactionChange(queryClient);
     },

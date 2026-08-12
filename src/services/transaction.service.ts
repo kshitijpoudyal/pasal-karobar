@@ -90,7 +90,26 @@ export class TransactionService {
 
   async update(id: string, input: UpdateTransactionInput): Promise<Transaction> {
     const payload = updateTransactionSchema.parse(input);
-    return this.transactionRepository.update(id, payload);
+    const existing = await this.transactionRepository.findById(id);
+    if (!existing) {
+      throw new Error("Transaction not found.");
+    }
+    await this.ownerGuard.requireOwner(existing.business_id);
+
+    const { customer_phone: customerPhone, ...rest } = payload;
+    const updatePayload: Parameters<TransactionRepository["update"]>[1] = {
+      ...rest,
+    };
+
+    if (existing.type === "INCOME" && customerPhone !== undefined) {
+      updatePayload.customer_id = await this.customerService.resolveCustomerForIncome(
+        existing.business_id,
+        customerPhone,
+        rest.transaction_date ?? existing.transaction_date,
+      );
+    }
+
+    return this.transactionRepository.update(id, updatePayload);
   }
 
   async delete(id: string): Promise<void> {

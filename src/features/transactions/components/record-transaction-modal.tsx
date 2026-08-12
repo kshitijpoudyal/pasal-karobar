@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import {
   Bolt,
+  Check,
   ChevronDown,
   CirclePlus,
   Home,
@@ -22,7 +23,9 @@ import { getServiceIconComponent } from "@/constants/service-icons";
 import { useConfirmDrawer } from "@/components/confirm-drawer";
 import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
 import { planCustomerNameSaveOnEntry } from "@/features/transactions/utils/customer-name-on-entry";
+import { resolveIncomeServiceIds } from "@/features/transactions/utils/resolve-income-service-ids";
 import { useRecordTransactionSubmit } from "@/features/transactions/hooks/use-record-transaction-submit";
+import type { EditTransactionPrefill } from "@/features/transactions/providers/record-transaction-modal-provider";
 import { useActiveBusinessPaymentMethodsQuery } from "@/hooks/queries/use-business-payment-method-queries";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { cn } from "@/lib/utils";
@@ -35,6 +38,7 @@ type RecordTransactionModalProps = {
   onClose: () => void;
   initialCustomerPhone?: string | null;
   initialCustomerName?: string | null;
+  editPrefill?: EditTransactionPrefill | null;
 };
 
 type Tab = "income" | "expense";
@@ -53,7 +57,10 @@ export function RecordTransactionModal({
   onClose,
   initialCustomerPhone,
   initialCustomerName,
+  editPrefill,
 }: RecordTransactionModalProps) {
+  const editingTransaction = editPrefill?.transaction ?? null;
+  const isEditing = Boolean(editingTransaction);
   const titleId = useId();
   const typeSelectId = useId();
   const [tab, setTab] = useState<Tab>("income");
@@ -71,12 +78,14 @@ export function RecordTransactionModal({
   const {
     servicesQuery,
     categoriesQuery,
-    createMutation,
+    activeMutation,
     submitIncome,
     submitExpense,
+    submitIncomeUpdate,
+    submitExpenseUpdate,
     resolveCategoryIdByName,
     businessId,
-  } = useRecordTransactionSubmit(onClose);
+  } = useRecordTransactionSubmit(onClose, editingTransaction?.id ?? null);
   const { confirm } = useConfirmDrawer();
   const customersQuery = useCustomersQuery(businessId);
   const paymentMethodsQuery = useActiveBusinessPaymentMethodsQuery(businessId);
@@ -128,13 +137,60 @@ export function RecordTransactionModal({
       resetFormState();
       return;
     }
+
+    if (editingTransaction) {
+      const services = servicesQuery.data ?? [];
+      if (editingTransaction.type === "INCOME") {
+        setTab("income");
+        setSelectedServiceIds(resolveIncomeServiceIds(editingTransaction, services));
+        setPrice(String(Number(editingTransaction.subtotal)));
+        setTip(Number(editingTransaction.tip) > 0 ? String(Number(editingTransaction.tip)) : "");
+        setCustomerPhone(editPrefill?.customerPhone?.trim() ?? "");
+        setCustomerName(editPrefill?.customerName?.trim() ?? "");
+        setExpenseAmount("");
+        setExpenseDesc("");
+        setExpenseCategoryId(null);
+      } else {
+        setTab("expense");
+        setSelectedServiceIds([]);
+        setPrice("");
+        setTip("");
+        setCustomerPhone("");
+        setCustomerName("");
+        setExpenseAmount(String(Number(editingTransaction.subtotal)));
+        setExpenseDesc(editingTransaction.note?.trim() ?? "");
+        setExpenseCategoryId(editingTransaction.expense_category_id);
+      }
+      setFormError(null);
+      return;
+    }
+
     resetFormState();
     if (initialCustomerPhone) {
       setTab("income");
       setCustomerPhone(initialCustomerPhone);
       setCustomerName(initialCustomerName ?? "");
     }
-  }, [open, initialCustomerPhone, initialCustomerName, resetFormState]);
+  }, [
+    open,
+    editingTransaction,
+    editPrefill?.customerPhone,
+    editPrefill?.customerName,
+    initialCustomerPhone,
+    initialCustomerName,
+    resetFormState,
+    servicesQuery.data,
+  ]);
+
+  useEffect(() => {
+    if (!open || !editingTransaction || paymentPickerOptions.length === 0) return;
+    const match = paymentPickerOptions.find(
+      (option) => option.methodCode === editingTransaction.payment_method,
+    );
+    if (match) {
+      setSelectedPaymentMethodId(match.id);
+    }
+  }, [open, editingTransaction, paymentPickerOptions]);
 
   if (!open) return null;
 
@@ -142,7 +198,13 @@ export function RecordTransactionModal({
   const tipNum = parseNprAmount(tip);
   const incomeTotal = priceNum + tipNum;
 
-  const submitLabel = tab === "income" ? `Add ${formatRs(incomeTotal)}` : "Add Expense";
+  const submitLabel = isEditing
+    ? tab === "income"
+      ? `Save ${formatRs(incomeTotal)}`
+      : "Save Expense"
+    : tab === "income"
+      ? `Add ${formatRs(incomeTotal)}`
+      : "Add Expense";
 
   function sumDefaultPricesForServices(serviceIds: string[]): number {
     const services = servicesQuery.data ?? [];
@@ -206,7 +268,7 @@ export function RecordTransactionModal({
           });
         }
 
-        await submitIncome({
+        const incomePayload = {
           serviceIds: selectedServiceIds,
           subtotal,
           tip: tipValue,
@@ -214,7 +276,13 @@ export function RecordTransactionModal({
           customerPhone,
           customerName: nameTrim || undefined,
           saveCustomerName,
-        });
+        };
+
+        if (isEditing) {
+          await submitIncomeUpdate(incomePayload);
+        } else {
+          await submitIncome(incomePayload);
+        }
         return;
       }
       const amount = parseNprAmount(expenseAmount);
@@ -226,12 +294,17 @@ export function RecordTransactionModal({
         setFormError("Select or match an expense category.");
         return;
       }
-      await submitExpense({
+      const expensePayload = {
         expenseCategoryId: categoryId,
         amount,
         note: expenseDesc,
         payment: selectedPaymentCode,
-      });
+      };
+      if (isEditing) {
+        await submitExpenseUpdate(expensePayload);
+      } else {
+        await submitExpense(expensePayload);
+      }
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Could not save transaction.",
@@ -277,7 +350,7 @@ export function RecordTransactionModal({
               id={titleId}
               className="font-headline text-2xl leading-relaxed font-medium tracking-tight text-on-surface lg:text-3xl"
             >
-              Record Transaction
+              {isEditing ? "Edit Transaction" : "Record Transaction"}
             </h2>
             <button
               type="button"
@@ -301,7 +374,8 @@ export function RecordTransactionModal({
                 id={typeSelectId}
                 value={tab}
                 onChange={(e) => setTab(e.target.value as Tab)}
-                className="font-body w-full cursor-pointer appearance-none rounded-lg border-none bg-surface-container-low py-2 pr-10 pl-4 text-sm font-medium text-on-surface outline-none focus:ring-0"
+                disabled={isEditing}
+                className="font-body w-full cursor-pointer appearance-none rounded-lg border-none bg-surface-container-low py-2 pr-10 pl-4 text-sm font-medium text-on-surface outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <option value="income">Income</option>
                 <option value="expense">Expense</option>
@@ -498,19 +572,23 @@ export function RecordTransactionModal({
         </div>
 
         <footer className="shrink-0 bg-surface-bright px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pt-6 lg:pb-8">
-          {formError || createMutation.isError ? (
+          {formError || activeMutation.isError ? (
             <p className="mb-3 text-center text-sm text-error" role="alert">
-              {formError ?? createMutation.error?.message}
+              {formError ?? activeMutation.error?.message}
             </p>
           ) : null}
           <button
             type="button"
-            disabled={createMutation.isPending}
+            disabled={activeMutation.isPending}
             onClick={() => void handleSubmit()}
             className="font-headline deep-indigo-gradient squircle flex h-16 w-full items-center justify-center gap-3 text-xl font-medium tracking-wide text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
           >
-            <CirclePlus className="size-6" strokeWidth={2} aria-hidden />
-            {createMutation.isPending ? "Saving…" : submitLabel}
+            {isEditing ? (
+              <Check className="size-6" strokeWidth={2} aria-hidden />
+            ) : (
+              <CirclePlus className="size-6" strokeWidth={2} aria-hidden />
+            )}
+            {activeMutation.isPending ? "Saving…" : submitLabel}
           </button>
         </footer>
       </div>

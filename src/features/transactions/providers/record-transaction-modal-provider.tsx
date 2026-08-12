@@ -10,10 +10,18 @@ import {
 } from "react";
 
 import { RecordTransactionModal } from "@/features/transactions/components/record-transaction-modal";
+import type { Transaction } from "@/types/database";
+
+export type EditTransactionPrefill = {
+  transaction: Transaction;
+  customerPhone?: string | null;
+  customerName?: string | null;
+};
 
 export type OpenRecordTransactionOptions = {
   customerPhone?: string;
   customerName?: string;
+  edit?: EditTransactionPrefill;
 };
 
 type RecordTransactionModalContextValue = {
@@ -29,10 +37,20 @@ export function RecordTransactionModalProvider({ children }: { children: ReactNo
   const [open, setOpen] = useState(false);
   const [initialCustomerPhone, setInitialCustomerPhone] = useState<string | null>(null);
   const [initialCustomerName, setInitialCustomerName] = useState<string | null>(null);
+  const [editPrefill, setEditPrefill] = useState<EditTransactionPrefill | null>(null);
 
   const openModal = useCallback((options?: OpenRecordTransactionOptions) => {
+    if (options?.edit) {
+      setEditPrefill(options.edit);
+      setInitialCustomerPhone(null);
+      setInitialCustomerName(null);
+      setOpen(true);
+      return;
+    }
+
     const phone = options?.customerPhone?.trim();
     const name = options?.customerName?.trim();
+    setEditPrefill(null);
     setInitialCustomerPhone(phone ? phone : null);
     setInitialCustomerName(name ? name : null);
     setOpen(true);
@@ -42,6 +60,7 @@ export function RecordTransactionModalProvider({ children }: { children: ReactNo
     setOpen(false);
     setInitialCustomerPhone(null);
     setInitialCustomerName(null);
+    setEditPrefill(null);
   }, []);
 
   const value = useMemo(
@@ -57,6 +76,7 @@ export function RecordTransactionModalProvider({ children }: { children: ReactNo
         onClose={closeModal}
         initialCustomerPhone={initialCustomerPhone}
         initialCustomerName={initialCustomerName}
+        editPrefill={editPrefill}
       />
     </RecordTransactionModalContext.Provider>
   );

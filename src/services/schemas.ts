@@ -153,6 +153,7 @@ export const updateTransactionSchema = z
   .object({
     service_id: z.string().uuid().nullable().optional(),
     expense_category_id: z.string().uuid().nullable().optional(),
+    customer_phone: z.string().trim().max(32).optional(),
     subtotal: z.coerce.number().nonnegative().optional(),
     tip: z.coerce.number().nonnegative().optional(),
     total: z.coerce.number().nonnegative().optional(),

@@ -27,8 +27,11 @@ export function useCreateStaffMemberMutation(businessId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: Omit<CreateStaffMemberInput, "businessId">) =>
-      createStaffMember({ ...input, businessId }),
+    mutationFn: async (input: Omit<CreateStaffMemberInput, "businessId">) => {
+      const result = await createStaffMember({ ...input, businessId });
+      if (!result.ok) throw new Error(result.error);
+      return result.data;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: queryKeys.staff.list(businessId),
@@ -41,7 +44,10 @@ export function useRemoveStaffMemberMutation(businessId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (memberId: string) => removeStaffMember(businessId, memberId),
+    mutationFn: async (memberId: string) => {
+      const result = await removeStaffMember(businessId, memberId);
+      if (!result.ok) throw new Error(result.error);
+    },
     onMutate: async (memberId) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.staff.list(businessId) });
       const previous = queryClient.getQueryData<StaffMemberView[]>(

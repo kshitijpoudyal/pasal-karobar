@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { PostgrestError } from "@supabase/supabase-js";
 
 import { BusinessMemberRepository, ProfileRepository } from "@/repository/business-member.repository";
+import { isMissingRpcFunctionError } from "@/repository/errors";
 import { createSupabaseAdminClient } from "@/supabase/admin";
 import { createSupabaseServerClient } from "@/supabase/server";
 import type { StaffMemberRow } from "@/types/database";
@@ -23,6 +25,10 @@ export type StaffMemberView = {
   createdAt: string;
 };
 
+export type StaffActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };
+
 function toStaffView(row: StaffMemberRow): StaffMemberView {
   return {
     id: row.id,
@@ -32,6 +38,44 @@ function toStaffView(row: StaffMemberRow): StaffMemberView {
     email: row.profile?.email ?? null,
     createdAt: row.created_at,
   };
+}
+
+function toActionError(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as PostgrestError).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return "Something went wrong. Try again.";
+}
+
+function staffMigrationHint(error: PostgrestError | null | undefined): string | null {
+  if (!error) return null;
+
+  const haystack =
+    `${error.code ?? ""} ${error.message} ${error.details ?? ""}`.toLowerCase();
+
+  if (
+    isMissingRpcFunctionError(error, "is_business_owner") ||
+    haystack.includes("member_role") ||
+    haystack.includes("profiles") ||
+    haystack.includes("recorded_by_user_id")
+  ) {
+    return "Staff database migration is not applied. Run supabase/migrations/20260812120000_staff_profiles_and_attribution.sql in Supabase SQL Editor.";
+  }
+
+  return null;
+}
+
+function revalidateStaffViews() {
+  try {
+    revalidatePath("/staff-manager");
+    revalidatePath("/settings");
+  } catch {
+    // Non-fatal when called outside a request context.
+  }
 }
 
 async function requireOwner(businessId: string) {
@@ -75,19 +119,39 @@ export async function listStaffMembers(
 
 export async function createStaffMember(
   input: CreateStaffMemberInput,
-): Promise<StaffMemberView> {
+): Promise<StaffActionResult<StaffMemberView>> {
   const displayName = input.displayName.trim();
   const email = input.email.trim().toLowerCase();
 
-  if (!displayName) throw new Error("Staff name is required.");
-  if (!email) throw new Error("Staff email is required.");
+  if (!displayName) {
+    return { ok: false, error: "Staff name is required." };
+  }
+  if (!email) {
+    return { ok: false, error: "Staff email is required." };
+  }
   if (input.password.length < 6) {
-    throw new Error("Temporary password must be at least 6 characters.");
+    return { ok: false, error: "Temporary password must be at least 6 characters." };
   }
 
-  await requireOwner(input.businessId);
+  try {
+    await requireOwner(input.businessId);
+  } catch (error) {
+    return { ok: false, error: toActionError(error) };
+  }
 
-  const admin = createSupabaseAdminClient();
+  let admin;
+  try {
+    admin = createSupabaseAdminClient();
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it to your deployment environment.",
+    };
+  }
+
   const { data: created, error: createError } = await admin.auth.admin.createUser({
     email,
     password: input.password,
@@ -96,19 +160,29 @@ export async function createStaffMember(
   });
 
   if (createError || !created.user) {
-    throw new Error(createError?.message ?? "Could not create staff account.");
+    const message = createError?.message ?? "Could not create staff account.";
+    if (message.toLowerCase().includes("already")) {
+      return { ok: false, error: "A user with this email already exists." };
+    }
+    return { ok: false, error: message };
   }
 
   const userId = created.user.id;
 
   try {
-    const { error: profileError } = await admin.from("profiles").upsert({
-      id: userId,
-      display_name: displayName,
-      email,
-    });
+    const { error: profileError } = await admin.from("profiles").upsert(
+      {
+        id: userId,
+        display_name: displayName,
+        email,
+      },
+      { onConflict: "id" },
+    );
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      const migrationHint = staffMigrationHint(profileError);
+      throw new Error(migrationHint ?? profileError.message);
+    }
 
     const { data: member, error: memberError } = await admin
       .from("business_members")
@@ -120,45 +194,73 @@ export async function createStaffMember(
       .select("*")
       .single();
 
-    if (memberError || !member) throw memberError ?? new Error("Could not link staff.");
+    if (memberError || !member) {
+      const migrationHint = staffMigrationHint(memberError);
+      throw new Error(
+        migrationHint ?? memberError?.message ?? "Could not link staff to this shop.",
+      );
+    }
 
-    revalidatePath("/settings");
+    revalidateStaffViews();
 
-    return toStaffView({
-      ...member,
-      profile: {
-        id: userId,
-        display_name: displayName,
-        email,
-        created_at: member.created_at,
-        updated_at: member.created_at,
-      },
-    });
+    return {
+      ok: true,
+      data: toStaffView({
+        ...member,
+        profile: {
+          id: userId,
+          display_name: displayName,
+          email,
+          created_at: member.created_at,
+          updated_at: member.created_at,
+        },
+      }),
+    };
   } catch (error) {
-    await admin.auth.admin.deleteUser(userId);
-    throw error instanceof Error ? error : new Error("Could not create staff member.");
+    try {
+      await admin.auth.admin.deleteUser(userId);
+    } catch {
+      // Best-effort cleanup after a partial create.
+    }
+    return { ok: false, error: toActionError(error) };
   }
 }
 
 export async function removeStaffMember(
   businessId: string,
   memberId: string,
-): Promise<void> {
-  const { supabase, user } = await requireOwner(businessId);
-  const membersRepo = new BusinessMemberRepository(supabase);
-  const members = await membersRepo.listByBusinessId(businessId);
-  const target = members.find((m) => m.id === memberId);
+): Promise<StaffActionResult<void>> {
+  try {
+    const { supabase, user } = await requireOwner(businessId);
+    const membersRepo = new BusinessMemberRepository(supabase);
+    const members = await membersRepo.listByBusinessId(businessId);
+    const target = members.find((m) => m.id === memberId);
 
-  if (!target) throw new Error("Staff member not found.");
-  if (target.role === "OWNER") throw new Error("Cannot remove the shop owner.");
-  if (target.user_id === user.id) {
-    throw new Error("You cannot remove your own owner account.");
+    if (!target) return { ok: false, error: "Staff member not found." };
+    if (target.role === "OWNER") {
+      return { ok: false, error: "Cannot remove the shop owner." };
+    }
+    if (target.user_id === user.id) {
+      return { ok: false, error: "You cannot remove your own owner account." };
+    }
+
+    await membersRepo.deleteById(memberId);
+
+    const admin = createSupabaseAdminClient();
+    const { error: deleteError } = await admin.auth.admin.deleteUser(target.user_id);
+    if (deleteError) {
+      return { ok: false, error: deleteError.message };
+    }
+
+    revalidateStaffViews();
+    return { ok: true, data: undefined };
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message.includes("SUPABASE_SERVICE_ROLE_KEY")
+    ) {
+      return { ok: false, error: error.message };
+    }
+    return { ok: false, error: toActionError(error) };
   }
-
-  await membersRepo.deleteById(memberId);
-
-  const admin = createSupabaseAdminClient();
-  await admin.auth.admin.deleteUser(target.user_id);
-
-  revalidatePath("/settings");
 }
