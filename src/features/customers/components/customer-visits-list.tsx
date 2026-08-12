@@ -12,7 +12,7 @@ import { formatTimeInBusinessZone } from "@/utils/business-datetime";
 import { countDistinctVisits, toIncomeVisitRows } from "@/utils/customer-visits";
 import type { GroupedTransactionsDay } from "@/utils/group-transactions-by-day";
 import type { Transaction } from "@/types/database";
-import { formatNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 
 type CustomerVisitsListProps = {
   groupedVisits: GroupedTransactionsDay[];
@@ -27,6 +27,7 @@ export function CustomerVisitsList({
   serviceNames,
   timeZone,
 }: CustomerVisitsListProps) {
+  const { formatNpr } = useAmountFormat();
   const visitCount = countDistinctVisits(toIncomeVisitRows(transactions));
 
   if (visitCount === 0) {

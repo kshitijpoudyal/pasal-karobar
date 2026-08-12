@@ -10,7 +10,7 @@ import {
   formatDayLabelForDateKey,
   formatTimeInBusinessZone,
 } from "@/utils/business-datetime";
-import { formatNprNumber } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 
 const NO_VISITS_KEY = "__no_visits__";
 
@@ -109,6 +109,7 @@ function CustomerActivityCard({
   onSelect: () => void;
   onRecordForPhone: () => void;
 }) {
+  const { formatNprNumber } = useAmountFormat();
   const title = row.customer.name?.trim() || row.displayPhone;
   const phoneLine = row.customer.name?.trim() ? row.displayPhone : null;
   const timeLabel = row.lastVisitAt

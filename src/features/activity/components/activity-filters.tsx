@@ -1,10 +1,9 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-
+import { AmountVisibilityToggle } from "@/components/amount-visibility-toggle";
 import { ActivitySearchBar } from "@/features/activity/components/activity-search-bar";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import { cn } from "@/lib/utils";
-import { formatNpr, formatNprNumber } from "@/utils/format";
 import {
   TIMEFRAMES,
   type ActivityCategoryFilter,
@@ -68,6 +67,8 @@ export function ActivityFilters({
 }
 
 export function DailyNetRevenueCard({ netRevenue }: { netRevenue: number }) {
+  const { formatNpr, formatNprNumber } = useAmountFormat();
+
   return (
     <>
       <section className="flex flex-col gap-1 rounded-2xl bg-primary px-6 py-4 text-on-primary shadow-lg lg:hidden">
@@ -75,11 +76,7 @@ export function DailyNetRevenueCard({ netRevenue }: { netRevenue: number }) {
           <span className="text-label-sm font-semibold tracking-[0.12em] text-on-primary-container uppercase">
             Net for period
           </span>
-          <TrendingUp
-            className="size-5 text-on-primary-container"
-            strokeWidth={2}
-            aria-hidden
-          />
+          <AmountVisibilityToggle variant="onPrimary" />
         </div>
         <div className="flex items-baseline gap-2">
           <span className="text-title-md font-bold">रू</span>
@@ -90,16 +87,18 @@ export function DailyNetRevenueCard({ netRevenue }: { netRevenue: number }) {
       </section>
 
       <div className="relative col-span-12 hidden min-w-0 flex-col justify-between overflow-hidden rounded-squircle bg-primary p-6 text-on-primary shadow-xl lg:flex xl:col-span-4 xl:p-8">
-        <div className="z-10">
-          <p className="text-label-sm font-bold tracking-[0.2em] uppercase opacity-70">
-            Net for period
-          </p>
-          <h3 className="font-headline mt-2 text-3xl font-bold xl:text-4xl">
-            {formatNpr(netRevenue)}
-          </h3>
+        <div className="z-10 flex items-start justify-between gap-3">
+          <div>
+            <p className="text-label-sm font-bold tracking-[0.2em] uppercase opacity-70">
+              Net for period
+            </p>
+            <h3 className="font-headline mt-2 text-3xl font-bold xl:text-4xl">
+              {formatNpr(netRevenue)}
+            </h3>
+          </div>
+          <AmountVisibilityToggle variant="onPrimary" />
         </div>
         <div className="z-10 mt-4 flex items-center gap-2 text-sm font-medium">
-          <TrendingUp className="size-[18px]" strokeWidth={2} />
           <span className="text-on-primary/90">Income minus expenses</span>
         </div>
         <div

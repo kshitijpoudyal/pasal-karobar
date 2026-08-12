@@ -1,3 +1,5 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { CalendarDays, Clock, Sparkles } from "lucide-react";
 
@@ -8,7 +10,7 @@ import {
   type PeakAnalysisInsights,
 } from "@/services/peak-analysis";
 import type { TrajectoryPoint } from "@/services/dashboard-summary";
-import { formatCompactNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import { cn } from "@/lib/utils";
 
 type InsightCardProps = {
@@ -80,6 +82,7 @@ type CuratedInsightsPanelProps = {
 };
 
 export function CuratedInsightsPanel(props: CuratedInsightsPanelProps) {
+  const { formatCompactNpr } = useAmountFormat();
   const peak = coalescePeakAnalysis(props.peakAnalysis) ?? EMPTY_PEAK_ANALYSIS;
   const busiestDayOfWeek = peak.busiestDayOfWeek;
   const busiestWeekOfMonth = peak.busiestWeekOfMonth;

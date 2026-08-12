@@ -7,7 +7,7 @@ import { Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PaymentMethodIcon } from "@/components/payment-method-icon";
 import { cn } from "@/lib/utils";
 import type { PaymentMethod } from "@/types/database";
-import { formatNprNumber } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 
 type TransactionActivityCardProps = {
   title: string;
@@ -134,6 +134,7 @@ export const TransactionActivityCard = memo(function TransactionActivityCard({
   onDelete,
   pendingSync = false,
 }: TransactionActivityCardProps) {
+  const { formatNprNumber } = useAmountFormat();
   const hasActions = Boolean(onEdit || onDelete) && !pendingSync;
   const mobileAmount = mobileTotal ?? 0;
 

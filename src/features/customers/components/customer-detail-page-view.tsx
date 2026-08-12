@@ -11,8 +11,8 @@ import { EditCustomerProfileModal } from "@/features/customers/components/edit-c
 import { CustomerProfilePhotoGallery } from "@/features/customers/components/customer-profile-photo-gallery";
 import { CustomerVisitsList } from "@/features/customers/components/customer-visits-list";
 import { useCustomerDetailPage } from "@/features/customers/hooks/use-customer-detail-page";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import { useRecordTransactionModal } from "@/features/transactions";
-import { formatNprNumber } from "@/utils/format";
 
 type CustomerDetailPageViewProps = {
   phoneRouteParam: string;
@@ -23,6 +23,7 @@ export function CustomerDetailPageView({
 }: CustomerDetailPageViewProps) {
   const page = useCustomerDetailPage(phoneRouteParam);
   const { openModal } = useRecordTransactionModal();
+  const { formatNprNumber } = useAmountFormat();
   const [editOpen, setEditOpen] = useState(false);
 
   const title = page.customer?.name?.trim() || page.displayPhone || "Customer";

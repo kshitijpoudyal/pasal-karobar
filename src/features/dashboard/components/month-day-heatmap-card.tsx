@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 
 import type { MonthDayHeatmap } from "@/services/dashboard-summary";
-import { formatCompactNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import { cn } from "@/lib/utils";
 
 type HeatmapMetric = "visits" | "revenue";
@@ -140,6 +140,8 @@ function HeatmapCell({
   maxValue: number;
   isPeak: boolean;
 }) {
+  const { formatCompactNpr } = useAmountFormat();
+
   if (!day.inMonth) {
     return <div className="aspect-square min-h-7" aria-hidden />;
   }

@@ -20,3 +20,8 @@ export function formatCompactNpr(amount: number, currency = "NPR"): string {
   }
   return formatNpr(amount, currency);
 }
+
+/** Preserve separators while hiding digits (e.g. 1,234 → X,XXX, 12.5k → XX.Xk). */
+export function maskFormattedAmount(formatted: string): string {
+  return formatted.replace(/\d/g, "X");
+}

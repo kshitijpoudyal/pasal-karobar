@@ -16,7 +16,7 @@ import {
 } from "@/utils/business-datetime";
 import type { GroupedTransactionsDay } from "@/utils/group-transactions-by-day";
 import { isPendingSyncTransactionId } from "@/offline/pending-transaction";
-import { formatNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 
 type TransactionTimelineProps = {
   grouped: GroupedTransactionsDay[];
@@ -57,6 +57,7 @@ export function TransactionTimeline({
   timeZone,
 }: TransactionTimelineProps) {
   const { confirm } = useConfirmDrawer();
+  const { formatNpr } = useAmountFormat();
 
   return (
     <div className="flex flex-col gap-4">

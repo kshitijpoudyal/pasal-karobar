@@ -1,7 +1,7 @@
 "use client";
 
 import type { TrajectoryPoint } from "@/services/dashboard-summary";
-import { formatCompactNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import { cn } from "@/lib/utils";
 
 type PerformanceTrajectoryCardProps = {
@@ -13,6 +13,7 @@ export function PerformanceTrajectoryCard({
   points = [],
   title = "Money in & out",
 }: PerformanceTrajectoryCardProps) {
+  const { formatCompactNpr } = useAmountFormat();
   const safePoints = points ?? [];
 
   const maxValue = Math.max(1, ...safePoints.flatMap((p) => [p.income, p.expense]));

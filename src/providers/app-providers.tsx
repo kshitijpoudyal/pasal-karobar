@@ -12,6 +12,7 @@ import { ToastViewport } from "@/components/toast";
 import { RecordTransactionModalProvider } from "@/features/transactions";
 import { ConnectivityProvider } from "@/providers/connectivity-provider";
 import { PwaInstallProvider } from "@/providers/pwa-install-provider";
+import { AmountVisibilityProvider } from "@/providers/amount-visibility-provider";
 
 type AppProvidersProps = {
   children: React.ReactNode;
@@ -28,12 +29,14 @@ export function AppProviders({ children }: AppProvidersProps) {
                 <BusinessGate>
                   <ConnectivityProvider>
                     <AppNavProvider>
-                      <ConfirmDrawerProvider>
-                        <RecordTransactionModalProvider>
-                          {children}
-                          <ToastViewport />
-                        </RecordTransactionModalProvider>
-                      </ConfirmDrawerProvider>
+                      <AmountVisibilityProvider>
+                        <ConfirmDrawerProvider>
+                          <RecordTransactionModalProvider>
+                            {children}
+                            <ToastViewport />
+                          </RecordTransactionModalProvider>
+                        </ConfirmDrawerProvider>
+                      </AmountVisibilityProvider>
                     </AppNavProvider>
                   </ConnectivityProvider>
                 </BusinessGate>

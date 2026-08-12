@@ -11,7 +11,7 @@ import {
   Users,
 } from "@/features/dashboard/components/dashboard-stat-icons";
 import type { DashboardSummary } from "@/services/dashboard-summary";
-import { formatCompactNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import {
   formatDashboardComparisonLabel,
   type DashboardGranularity,
@@ -52,6 +52,7 @@ function NetProfitFooter({
   summary: DashboardSummary;
   granularity: DashboardGranularity;
 }) {
+  const { formatCompactNpr } = useAmountFormat();
   const comparison = summary.periodComparison;
   const compareLabel = formatDashboardComparisonLabel(granularity);
   const showComparison =
@@ -92,6 +93,8 @@ type KpiGridProps = {
 };
 
 export function KpiGrid({ summary, granularity }: KpiGridProps) {
+  const { formatCompactNpr } = useAmountFormat();
+
   return (
     <section className="grid grid-cols-2 gap-4 lg:grid-cols-2 xl:grid-cols-4 xl:gap-6">
       <KpiCard

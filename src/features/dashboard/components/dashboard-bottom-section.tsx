@@ -1,6 +1,8 @@
+"use client";
+
 import { LineChart, Scissors, Sparkles, UserPlus, UserRound } from "lucide-react";
 
-import { formatCompactNpr } from "@/utils/format";
+import { useAmountFormat } from "@/hooks/use-amount-format";
 import { MonthDayHeatmapCard } from "@/features/dashboard/components/month-day-heatmap-card";
 import type { MonthDayHeatmap } from "@/services/dashboard-summary";
 
@@ -15,6 +17,7 @@ export function DashboardBottomSection({
   topServices = [],
   monthDayHeatmap = null,
 }: DashboardBottomSectionProps) {
+  const { formatCompactNpr } = useAmountFormat();
   const rows = topServices.slice(0, 3);
   const icons = [Scissors, UserRound, Sparkles];
 
