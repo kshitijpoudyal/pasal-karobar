@@ -1,7 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useEffect, useId, useRef, useState } from "react";
+import { memo, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { Clock, MoreVertical, Pencil, Trash2 } from "lucide-react";
 
@@ -118,7 +117,7 @@ function ActivityItemMoreMenu({
   );
 }
 
-export function TransactionActivityCard({
+export const TransactionActivityCard = memo(function TransactionActivityCard({
   title,
   customerLabel,
   time,
@@ -258,7 +257,7 @@ export function TransactionActivityCard({
       </div>
     </>
   );
-}
+});
 
 export function TimelineDateDivider({ label }: { label: string }) {
   return (

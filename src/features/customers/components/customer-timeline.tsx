@@ -40,10 +40,31 @@ export function groupCustomersByLastVisit(
   return dated;
 }
 
+export type GroupedCustomersDay = {
+  dayKey: string;
+  label: string;
+  rows: CustomerDirectoryRow[];
+};
+
+export function groupCustomersByLastVisitWithLabels(
+  rows: CustomerDirectoryRow[],
+  timeZone: string,
+  calendarSystem: CalendarSystem,
+  now: Date = new Date(),
+): GroupedCustomersDay[] {
+  return groupCustomersByLastVisit(rows, timeZone).map(([dayKey, dayRows]) => ({
+    dayKey,
+    label:
+      dayKey === NO_VISITS_KEY
+        ? "No visits yet"
+        : formatDayLabelForDateKey(dayKey, timeZone, now, calendarSystem),
+    rows: dayRows,
+  }));
+}
+
 type CustomerTimelineProps = {
-  grouped: [string, CustomerDirectoryRow[]][];
+  grouped: GroupedCustomersDay[];
   timeZone: string;
-  calendarSystem: CalendarSystem;
   onSelect: (phoneNormalized: string) => void;
   onRecordForPhone: (phoneNormalized: string) => void;
 };
@@ -51,21 +72,14 @@ type CustomerTimelineProps = {
 export function CustomerTimeline({
   grouped,
   timeZone,
-  calendarSystem,
   onSelect,
   onRecordForPhone,
 }: CustomerTimelineProps) {
   return (
     <div className="flex flex-col gap-4">
-      {grouped.map(([dayKey, rows]) => (
+      {grouped.map(({ dayKey, label, rows }) => (
         <div key={dayKey}>
-          <TimelineDateDivider
-            label={
-              dayKey === NO_VISITS_KEY
-                ? "No visits yet"
-                : formatDayLabelForDateKey(dayKey, timeZone, new Date(), calendarSystem)
-            }
-          />
+          <TimelineDateDivider label={label} />
           <div className="mb-2 flex flex-col gap-2 pt-4 lg:mb-4 lg:gap-3 lg:pt-3">
             {rows.map((row) => (
               <CustomerActivityCard

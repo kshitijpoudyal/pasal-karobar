@@ -26,8 +26,10 @@ import {
   bsMonthBounds,
   bsToAdDateKey,
   daysInBsMonth,
+  daysBetweenDateKeys,
   formatBsDayShort,
   formatBsMonthYear,
+  preloadNepaliCalendar,
 } from "@/utils/nepali-calendar";
 import {
   eachDayOfInterval,
@@ -442,9 +444,9 @@ export function buildPeakAnalysisInsights(
       for (const tx of incomeTx) {
         const txKey = dateKeyInTimeZone(tx.transaction_date, timeZone);
         if (txKey < bounds.fromKey || txKey > bounds.toKey) continue;
-        const txBs = adDateKeyToBs(txKey);
-        if (!txBs) continue;
-        const weekIndex = Math.floor((txBs.day - 1) / 7);
+        const dayOffset = daysBetweenDateKeys(bounds.fromKey, txKey);
+        if (dayOffset < 0) continue;
+        const weekIndex = Math.floor(dayOffset / 7);
         const bucket = weekStats[weekIndex];
         if (!bucket) continue;
         bucket.visits += 1;
@@ -666,6 +668,10 @@ export class DashboardService {
     const business = await this.businessService.getById(businessId);
     const timeZone = resolveBusinessTimeZone(business?.timezone);
     const calendarSystem = resolveCalendarSystem(business?.calendar_system);
+
+    if (calendarSystem === "BS") {
+      await preloadNepaliCalendar();
+    }
 
     const now = new Date();
     const defaultDay = zonedPeriodBounds("day", now, timeZone, now, calendarSystem);

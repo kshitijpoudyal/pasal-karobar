@@ -11,10 +11,17 @@ import type {
 
 export type TransactionListFilters = {
   type?: TransactionType;
+  customerId?: string;
   fromDate?: string;
   toDate?: string;
   paymentMethod?: Transaction["payment_method"];
   search?: string;
+};
+
+export type IncomeSummaryRow = {
+  customer_id: string | null;
+  total: number;
+  transaction_date: string;
 };
 
 export class TransactionRepository {
@@ -33,6 +40,9 @@ export class TransactionRepository {
     if (filters.type) {
       query = query.eq("type", filters.type);
     }
+    if (filters.customerId) {
+      query = query.eq("customer_id", filters.customerId);
+    }
     if (filters.fromDate) {
       query = query.gte("transaction_date", filters.fromDate);
     }
@@ -50,6 +60,20 @@ export class TransactionRepository {
 
     if (error) mapRepositoryError(error);
     return data ?? [];
+  }
+
+  async listIncomeSummaryByBusinessId(
+    businessId: string,
+  ): Promise<IncomeSummaryRow[]> {
+    const { data, error } = await this.supabase
+      .from("transactions")
+      .select("customer_id, total, transaction_date")
+      .eq("business_id", businessId)
+      .eq("type", "INCOME")
+      .order("transaction_date", { ascending: false });
+
+    if (error) mapRepositoryError(error);
+    return (data ?? []) as IncomeSummaryRow[];
   }
 
   async findEarliestTransactionDate(

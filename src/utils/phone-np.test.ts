@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   parseNepalPhone,
   parseOptionalNepalPhone,
+  phoneSearchDigits,
+  matchesCustomerNameOrPhone,
 } from "@/utils/phone-np";
 
 describe("phone-np", () => {
@@ -29,5 +31,23 @@ describe("phone-np", () => {
   it("treats empty as optional", () => {
     expect(parseOptionalNepalPhone("")).toEqual({ ok: true, empty: true });
     expect(parseOptionalNepalPhone(null)).toEqual({ ok: true, empty: true });
+  });
+
+  it("normalizes phone search digits with country code", () => {
+    expect(phoneSearchDigits("+977 9841234567")).toBe("9841234567");
+    expect(phoneSearchDigits("984-123")).toBe("984123");
+  });
+
+  it("matches customer by name or phone", () => {
+    const customer = {
+      name: "Ram Sharma",
+      phoneNormalized: "9841234567",
+      displayPhone: "984-123-4567",
+    };
+    expect(matchesCustomerNameOrPhone(customer, "ram")).toBe(true);
+    expect(matchesCustomerNameOrPhone(customer, "9841234567")).toBe(true);
+    expect(matchesCustomerNameOrPhone(customer, "+9779841234567")).toBe(true);
+    expect(matchesCustomerNameOrPhone(customer, "984-123")).toBe(true);
+    expect(matchesCustomerNameOrPhone(customer, "unknown")).toBe(false);
   });
 });

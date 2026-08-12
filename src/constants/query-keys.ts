@@ -29,6 +29,8 @@ export const queryKeys = {
     all: ["transactions"] as const,
     list: (businessId: string, filters?: TransactionListFilters) =>
       [...queryKeys.transactions.all, "list", businessId, filters ?? {}] as const,
+    incomeSummary: (businessId: string) =>
+      [...queryKeys.transactions.all, "income-summary", businessId] as const,
     detail: (id: string) =>
       [...queryKeys.transactions.all, "detail", id] as const,
   },

@@ -6,7 +6,6 @@ import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
 import {
   CALENDAR_SYSTEMS,
-  DEFAULT_CALENDAR_SYSTEM,
   calendarSystemLabel,
 } from "@/constants/calendar-system";
 import {

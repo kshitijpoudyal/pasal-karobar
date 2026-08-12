@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 
 import {
   adDateKeyToBs,
@@ -6,12 +6,18 @@ import {
   bsMonthLabel,
   bsToAdDateKey,
   bsYearBounds,
+  daysBetweenDateKeys,
   daysInBsMonth,
   formatBsDayLong,
   formatBsMonthYear,
+  loadNepaliModule,
 } from "@/utils/nepali-calendar";
 
 describe("nepali-calendar", () => {
+  beforeAll(async () => {
+    await loadNepaliModule();
+  });
+
   it("converts known AD date to BS", () => {
     expect(adDateKeyToBs("2023-04-14")).toEqual({
       year: 2080,
@@ -43,9 +49,19 @@ describe("nepali-calendar", () => {
     expect(daysInBsMonth(2080, 2)).toBe(32);
   });
 
+  it("computes day offsets between AD date keys", () => {
+    expect(daysBetweenDateKeys("2023-04-14", "2023-04-16")).toBe(2);
+  });
+
   it("formats BS labels", () => {
     expect(bsMonthLabel(4)).toBe("Shrawan");
     expect(formatBsDayLong("2023-04-14")).toContain("2080");
     expect(formatBsMonthYear("2023-04-14")).toContain("2080");
+  });
+
+  it("caches repeated AD to BS conversions", () => {
+    const first = adDateKeyToBs("2023-04-14");
+    const second = adDateKeyToBs("2023-04-14");
+    expect(first).toBe(second);
   });
 });

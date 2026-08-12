@@ -1,5 +1,3 @@
-import NepaliDate, { dateConfigMap } from "nepali-date-converter";
-
 import { BS_MONTH_LABELS } from "@/constants/calendar-system";
 import { parseDateKey, startOfZonedDay } from "@/utils/business-datetime";
 
@@ -18,9 +16,52 @@ const BS_MONTH_KEYS = [
   "Chaitra",
 ] as const;
 
+type NepaliDateInstance = {
+  getBS(): { year: number; month: number; date: number };
+  getAD(): { year: number; month: number; date: number };
+  getDay(): number;
+  getYear(): number;
+  format(formatString: string, language?: "en" | "np"): string;
+  toJsDate(): Date;
+};
+
+type NepaliDateClass = {
+  fromAD(date: Date): NepaliDateInstance;
+  new (year: number, monthIndex: number, date: number): NepaliDateInstance;
+};
+
+type DateConfigMap = Record<
+  string,
+  Record<
+    | "Baisakh"
+    | "Jestha"
+    | "Asar"
+    | "Shrawan"
+    | "Bhadra"
+    | "Aswin"
+    | "Kartik"
+    | "Mangsir"
+    | "Poush"
+    | "Magh"
+    | "Falgun"
+    | "Chaitra",
+    number
+  >
+>;
+
+type NepaliModule = {
+  NepaliDate: NepaliDateClass;
+  dateConfigMap: DateConfigMap;
+};
+
+let nepaliModule: NepaliModule | null = null;
+let loadPromise: Promise<NepaliModule> | null = null;
+
+const adToBsCache = new Map<string, BsDateParts | null>();
+const bsToAdCache = new Map<string, string | null>();
+
 export type BsDateParts = {
   year: number;
-  /** 1–12 (Baisakh = 1) */
   month: number;
   day: number;
 };
@@ -29,6 +70,29 @@ export type BsDateKeyBounds = {
   fromKey: string;
   toKey: string;
 };
+
+function loadNepaliModule(): Promise<NepaliModule> {
+  if (nepaliModule) return Promise.resolve(nepaliModule);
+  if (!loadPromise) {
+    loadPromise = import("nepali-date-converter").then((mod) => {
+      nepaliModule = {
+        NepaliDate: mod.default,
+        dateConfigMap: mod.dateConfigMap,
+      };
+      return nepaliModule;
+    });
+  }
+  return loadPromise;
+}
+
+/** Preload BS conversion library (call when calendar_system is BS). */
+export function preloadNepaliCalendar(): Promise<void> {
+  return loadNepaliModule().then(() => undefined);
+}
+
+function getNepaliModuleSync(): NepaliModule | null {
+  return nepaliModule;
+}
 
 function adPartsFromDateKey(dateKey: string): { year: number; month: number; day: number } {
   return parseDateKey(dateKey);
@@ -46,10 +110,16 @@ function toBsMonthOneIndexed(monthIndex: number): number {
   return monthIndex + 1;
 }
 
-function safeNepaliDateFromAd(dateKey: string): NepaliDate | null {
+function bsCacheKey(year: number, monthOneIndexed: number, day: number): string {
+  return `${year}-${monthOneIndexed}-${day}`;
+}
+
+function safeNepaliDateFromAd(dateKey: string): NepaliDateInstance | null {
+  const mod = getNepaliModuleSync();
+  if (!mod) return null;
   try {
     const { year, month, day } = adPartsFromDateKey(dateKey);
-    return NepaliDate.fromAD(new Date(year, month - 1, day));
+    return mod.NepaliDate.fromAD(new Date(year, month - 1, day));
   } catch {
     if (process.env.NODE_ENV === "development") {
       console.warn("[nepali-calendar] unsupported AD dateKey", dateKey);
@@ -62,9 +132,11 @@ function safeNepaliDateFromBs(
   year: number,
   monthOneIndexed: number,
   day: number,
-): NepaliDate | null {
+): NepaliDateInstance | null {
+  const mod = getNepaliModuleSync();
+  if (!mod) return null;
   try {
-    return new NepaliDate(year, toBsMonthIndex(monthOneIndexed), day);
+    return new mod.NepaliDate(year, toBsMonthIndex(monthOneIndexed), day);
   } catch {
     if (process.env.NODE_ENV === "development") {
       console.warn("[nepali-calendar] unsupported BS date", { year, monthOneIndexed, day });
@@ -73,15 +145,31 @@ function safeNepaliDateFromBs(
   }
 }
 
+export function daysBetweenDateKeys(fromKey: string, toKey: string): number {
+  const from = parseDateKey(fromKey);
+  const to = parseDateKey(toKey);
+  const fromUtc = Date.UTC(from.year, from.month - 1, from.day);
+  const toUtc = Date.UTC(to.year, to.month - 1, to.day);
+  return Math.round((toUtc - fromUtc) / (24 * 60 * 60 * 1000));
+}
+
 export function adDateKeyToBs(dateKey: string): BsDateParts | null {
+  if (adToBsCache.has(dateKey)) {
+    return adToBsCache.get(dateKey) ?? null;
+  }
   const nd = safeNepaliDateFromAd(dateKey);
-  if (!nd) return null;
+  if (!nd) {
+    adToBsCache.set(dateKey, null);
+    return null;
+  }
   const bs = nd.getBS();
-  return {
+  const result: BsDateParts = {
     year: bs.year,
     month: toBsMonthOneIndexed(bs.month),
     day: bs.date,
   };
+  adToBsCache.set(dateKey, result);
+  return result;
 }
 
 export function bsToAdDateKey(
@@ -89,14 +177,24 @@ export function bsToAdDateKey(
   monthOneIndexed: number,
   day: number,
 ): string | null {
+  const cacheKey = bsCacheKey(year, monthOneIndexed, day);
+  if (bsToAdCache.has(cacheKey)) {
+    return bsToAdCache.get(cacheKey) ?? null;
+  }
   const nd = safeNepaliDateFromBs(year, monthOneIndexed, day);
-  if (!nd) return null;
+  if (!nd) {
+    bsToAdCache.set(cacheKey, null);
+    return null;
+  }
   const ad = nd.getAD();
-  return adDateKeyFromParts(ad.year, ad.month + 1, ad.date);
+  const result = adDateKeyFromParts(ad.year, ad.month + 1, ad.date);
+  bsToAdCache.set(cacheKey, result);
+  return result;
 }
 
 export function daysInBsMonth(bsYear: number, monthOneIndexed: number): number {
-  const yearConfig = dateConfigMap[String(bsYear)];
+  const mod = getNepaliModuleSync();
+  const yearConfig = mod?.dateConfigMap[String(bsYear)];
   if (!yearConfig) {
     const nd = safeNepaliDateFromBs(bsYear, monthOneIndexed, 1);
     if (!nd) return 30;
@@ -187,16 +285,17 @@ export function bsDateToAnchorDate(
 export function calendarCellsForBsMonth(
   bsYear: number,
   monthOneIndexed: number,
-  timeZone: string,
 ): { adDateKey: string; bsDay: number; weekdayIndex: number }[] {
   const days = daysInBsMonth(bsYear, monthOneIndexed);
   const cells: { adDateKey: string; bsDay: number; weekdayIndex: number }[] = [];
 
   for (let day = 1; day <= days; day += 1) {
-    const adKey = bsToAdDateKey(bsYear, monthOneIndexed, day);
-    if (!adKey) continue;
-    const nd = safeNepaliDateFromAd(adKey);
+    const nd = safeNepaliDateFromBs(bsYear, monthOneIndexed, day);
     if (!nd) continue;
+    const ad = nd.getAD();
+    const adKey = adDateKeyFromParts(ad.year, ad.month + 1, ad.date);
+    adToBsCache.set(adKey, { year: bsYear, month: monthOneIndexed, day });
+    bsToAdCache.set(bsCacheKey(bsYear, monthOneIndexed, day), adKey);
     cells.push({
       adDateKey: adKey,
       bsDay: day,
@@ -223,7 +322,6 @@ export function calendarCellsForBsMonth(
     });
   }
 
-  void timeZone;
   return cells;
 }
 
@@ -234,4 +332,4 @@ export function bsMonthOptions(): { value: number; label: string }[] {
   }));
 }
 
-export { BS_MONTH_LABELS };
+export { BS_MONTH_LABELS, loadNepaliModule };

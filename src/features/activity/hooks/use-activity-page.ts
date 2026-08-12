@@ -8,9 +8,8 @@ import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
-import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
-import { useCalendarSystem } from "@/hooks/use-calendar-system";
-import { groupTransactionsByDay } from "@/utils/group-transactions-by-day";
+import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
+import { groupTransactionsByDayWithLabels } from "@/utils/group-transactions-by-day";
 import type { TransactionListFilters } from "@/repository";
 import { incomeTransactionTitle } from "@/features/transactions/utils/income-entry-title";
 import type { Transaction } from "@/types/database";
@@ -65,8 +64,7 @@ function transactionMatchesSearch(
 
 export function useActivityPage() {
   const { businessId } = useActiveBusiness();
-  const timeZone = useBusinessTimeZone();
-  const calendarSystem = useCalendarSystem();
+  const { timeZone, calendarSystem } = useBusinessDateSettings();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("Today");
   const [category, setCategory] = useState<ActivityCategoryFilter>("All");
   const [paymentMethod, setPaymentMethod] =
@@ -145,8 +143,13 @@ export function useActivityPage() {
   }, [visibleTransactions]);
 
   const groupedTransactions = useMemo(
-    () => groupTransactionsByDay(visibleTransactions, timeZone),
-    [visibleTransactions, timeZone],
+    () =>
+      groupTransactionsByDayWithLabels(
+        visibleTransactions,
+        timeZone,
+        calendarSystem,
+      ),
+    [visibleTransactions, timeZone, calendarSystem],
   );
 
   const isLoading =

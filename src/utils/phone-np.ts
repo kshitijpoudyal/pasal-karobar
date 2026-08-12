@@ -49,3 +49,38 @@ export function formatNepalPhoneDisplay(normalized: string): string {
   if (normalized.length !== 10) return normalized;
   return `${normalized.slice(0, 3)}-${normalized.slice(3, 6)}-${normalized.slice(6)}`;
 }
+
+/** Strip formatting and optional +977 / 977 prefix for search matching. */
+export function phoneSearchDigits(raw: string): string {
+  let digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("977") && digits.length > 10) {
+    digits = digits.slice(3);
+  }
+  return digits;
+}
+
+export function matchesCustomerNameOrPhone(
+  input: {
+    name?: string | null;
+    phoneNormalized: string;
+    displayPhone?: string;
+  },
+  query: string,
+): boolean {
+  const trimmed = query.trim();
+  if (!trimmed) return true;
+
+  const qLower = trimmed.toLowerCase();
+  const name = input.name?.toLowerCase() ?? "";
+  if (name.includes(qLower)) return true;
+
+  const display = input.displayPhone?.toLowerCase() ?? "";
+  if (display.includes(qLower)) return true;
+
+  const phoneDigits = phoneSearchDigits(trimmed);
+  if (phoneDigits.length > 0 && input.phoneNormalized.includes(phoneDigits)) {
+    return true;
+  }
+
+  return false;
+}

@@ -455,7 +455,7 @@ function BsDayWeekPickerBody({
   onSelect: (date: Date) => void;
 }) {
   const todayKey = businessTodayDateKey(timeZone);
-  const cells = calendarCellsForBsMonth(viewBsYear, viewBsMonth, timeZone);
+  const cells = calendarCellsForBsMonth(viewBsYear, viewBsMonth);
   const atEarliestMonth = isBeforeEarliestBsMonth(
     viewBsYear,
     viewBsMonth,

@@ -5,21 +5,22 @@ import { useMemo, useState } from "react";
 import {
   aggregateCustomerDirectoryStats,
   computeCustomerPeriodInsights,
-  filterIncomeInInstantRange,
 } from "@/services/customer-analytics.service";
 import {
   hasCustomerSecondaryFilters,
   type CustomerVisitFilter,
 } from "@/features/customers/constants";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
-import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
+import {
+  useIncomeSummaryQuery,
+  useTransactionsQuery,
+} from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
-import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
-import { useCalendarSystem } from "@/hooks/use-calendar-system";
+import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 import type { Customer } from "@/types/database";
 import { getActivityDateRange, type ActivityTimeframe } from "@/utils/date-ranges";
-import { formatNepalPhoneDisplay } from "@/utils/phone-np";
-import { groupCustomersByLastVisit } from "@/features/customers/components/customer-timeline";
+import { formatNepalPhoneDisplay, matchesCustomerNameOrPhone } from "@/utils/phone-np";
+import { groupCustomersByLastVisitWithLabels } from "@/features/customers/components/customer-timeline";
 
 export type CustomerDirectoryRow = {
   customer: Customer;
@@ -31,19 +32,24 @@ export type CustomerDirectoryRow = {
 
 export function useCustomersPage() {
   const { businessId } = useActiveBusiness();
-  const timeZone = useBusinessTimeZone();
-  const calendarSystem = useCalendarSystem();
+  const { timeZone, calendarSystem } = useBusinessDateSettings();
   const [searchQuery, setSearchQuery] = useState("");
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("This Week");
   const [visitFilter, setVisitFilter] = useState<CustomerVisitFilter>("All");
 
   const customersQuery = useCustomersQuery(businessId);
-  const allIncomeQuery = useTransactionsQuery(businessId, { type: "INCOME" });
+  const incomeSummaryQuery = useIncomeSummaryQuery(businessId);
 
   const periodRange = useMemo(
     () => getActivityDateRange(timeframe, timeZone, new Date(), calendarSystem),
     [timeframe, timeZone, calendarSystem],
   );
+
+  const periodIncomeQuery = useTransactionsQuery(businessId, {
+    type: "INCOME",
+    fromDate: periodRange.from,
+    toDate: periodRange.to,
+  });
 
   const customersById = useMemo(() => {
     const map = new Map<string, Customer>();
@@ -54,26 +60,21 @@ export function useCustomersPage() {
   }, [customersQuery.data]);
 
   const periodInsights = useMemo(() => {
-    const income = filterIncomeInInstantRange(
-      allIncomeQuery.data ?? [],
-      periodRange.from,
-      periodRange.to,
-    );
     return computeCustomerPeriodInsights(
-      income,
+      periodIncomeQuery.data ?? [],
       customersById,
       periodRange.from,
       periodRange.to,
     );
   }, [
-    allIncomeQuery.data,
+    periodIncomeQuery.data,
     customersById,
     periodRange.from,
     periodRange.to,
   ]);
 
   const directoryRows = useMemo(() => {
-    const stats = aggregateCustomerDirectoryStats(allIncomeQuery.data ?? []);
+    const stats = aggregateCustomerDirectoryStats(incomeSummaryQuery.data ?? []);
     const rows: CustomerDirectoryRow[] = (customersQuery.data ?? []).map(
       (customer) => {
         const bucket = stats.get(customer.id);
@@ -95,7 +96,7 @@ export function useCustomersPage() {
       );
     });
     return rows;
-  }, [allIncomeQuery.data, customersQuery.data]);
+  }, [incomeSummaryQuery.data, customersQuery.data]);
 
   const filteredDirectory = useMemo(() => {
     let rows = directoryRows;
@@ -105,18 +106,28 @@ export function useCustomersPage() {
       rows = rows.filter((row) => row.visitCount === 0);
     }
 
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     if (!q) return rows;
-    return rows.filter((row) => {
-      const name = row.customer.name?.toLowerCase() ?? "";
-      const phone = row.customer.phone_normalized;
-      return name.includes(q) || phone.includes(q.replace(/\D/g, ""));
-    });
+    return rows.filter((row) =>
+      matchesCustomerNameOrPhone(
+        {
+          name: row.customer.name,
+          phoneNormalized: row.customer.phone_normalized,
+          displayPhone: row.displayPhone,
+        },
+        q,
+      ),
+    );
   }, [directoryRows, searchQuery, visitFilter]);
 
   const groupedCustomers = useMemo(
-    () => groupCustomersByLastVisit(filteredDirectory, timeZone),
-    [filteredDirectory, timeZone],
+    () =>
+      groupCustomersByLastVisitWithLabels(
+        filteredDirectory,
+        timeZone,
+        calendarSystem,
+      ),
+    [filteredDirectory, timeZone, calendarSystem],
   );
 
   const totalCustomers = directoryRows.length;
@@ -139,10 +150,21 @@ export function useCustomersPage() {
     setSearchQuery,
     hasSecondaryFilters,
     hasActiveSearch,
-    isLoading: customersQuery.isLoading || allIncomeQuery.isLoading,
-    error: customersQuery.error ?? allIncomeQuery.error ?? null,
+    isLoading:
+      customersQuery.isLoading ||
+      incomeSummaryQuery.isLoading ||
+      periodIncomeQuery.isLoading,
+    error:
+      customersQuery.error ??
+      incomeSummaryQuery.error ??
+      periodIncomeQuery.error ??
+      null,
     refetch: async () => {
-      await Promise.all([customersQuery.refetch(), allIncomeQuery.refetch()]);
+      await Promise.all([
+        customersQuery.refetch(),
+        incomeSummaryQuery.refetch(),
+        periodIncomeQuery.refetch(),
+      ]);
     },
   };
 }

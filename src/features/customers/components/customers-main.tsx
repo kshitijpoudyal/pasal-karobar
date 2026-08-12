@@ -128,7 +128,6 @@ function CustomerListBody({
       <CustomerTimeline
         grouped={page.groupedCustomers}
         timeZone={page.timeZone}
-        calendarSystem={page.calendarSystem}
         onSelect={onSelect}
         onRecordForPhone={onRecordForPhone}
       />

@@ -17,8 +17,7 @@ import { useDashboardSummaryQuery } from "@/hooks/queries/use-dashboard-queries"
 import { refreshBusinessStats } from "@/hooks/queries/transaction-query-cache";
 import { normalizeDashboardSummary } from "@/services/dashboard-summary";
 import { useActiveBusiness } from "@/providers/business-provider";
-import { useBusinessTimeZone } from "@/hooks/use-business-timezone";
-import { useCalendarSystem } from "@/hooks/use-calendar-system";
+import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 import {
   clampAnchorToDataBounds,
   clampAnchorToToday,
@@ -42,8 +41,7 @@ function chartTitleFor(granularity: DashboardGranularity): string {
 export function DashboardContent() {
   const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
-  const timeZone = useBusinessTimeZone();
-  const calendarSystem = useCalendarSystem();
+  const { timeZone, calendarSystem } = useBusinessDateSettings();
   const [granularity, setGranularity] = useState<DashboardGranularity>("day");
   const [anchorDate, setAnchorDate] = useState(() =>
     clampAnchorToToday(new Date(), new Date(), timeZone),

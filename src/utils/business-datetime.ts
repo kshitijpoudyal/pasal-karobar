@@ -177,7 +177,6 @@ function zonedPeriodBoundsAd(
   granularity: DashboardGranularity,
   anchorKey: string,
   timeZone: string,
-  now: Date,
 ): { fromKey: string; toKey: string } {
   switch (granularity) {
     case "day":
@@ -244,8 +243,8 @@ export function zonedPeriodBounds(
   const bounds =
     calendarSystem === "BS"
       ? zonedPeriodBoundsBs(granularity, anchorKey, timeZone) ??
-        zonedPeriodBoundsAd(granularity, anchorKey, timeZone, now)
-      : zonedPeriodBoundsAd(granularity, anchorKey, timeZone, now);
+        zonedPeriodBoundsAd(granularity, anchorKey, timeZone)
+      : zonedPeriodBoundsAd(granularity, anchorKey, timeZone);
 
   let from = startOfZonedDay(bounds.fromKey, timeZone);
   let to = endOfZonedDay(bounds.toKey, timeZone);

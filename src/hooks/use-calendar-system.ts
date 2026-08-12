@@ -1,9 +1,8 @@
 "use client";
 
-import { resolveCalendarSystem, type CalendarSystem } from "@/constants/calendar-system";
-import { useActiveBusiness } from "@/providers/business-provider";
+import type { CalendarSystem } from "@/constants/calendar-system";
+import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 
 export function useCalendarSystem(): CalendarSystem {
-  const { business } = useActiveBusiness();
-  return resolveCalendarSystem(business?.calendar_system);
+  return useBusinessDateSettings().calendarSystem;
 }

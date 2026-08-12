@@ -1,9 +1,7 @@
 "use client";
 
-import { useActiveBusiness } from "@/providers/business-provider";
-import { resolveBusinessTimeZone } from "@/utils/business-datetime";
+import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 
 export function useBusinessTimeZone(): string {
-  const { business } = useActiveBusiness();
-  return resolveBusinessTimeZone(business?.timezone);
+  return useBusinessDateSettings().timeZone;
 }

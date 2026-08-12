@@ -26,6 +26,7 @@ import {
   isPendingSyncTransactionId,
   pendingSyncTransactionId,
 } from "@/offline/pending-transaction";
+import type { IncomeSummaryRow } from "@/repository/transaction.repository";
 import type { TransactionListFilters } from "@/repository";
 import { getClientAppServices } from "@/services/client";
 import type {
@@ -58,6 +59,22 @@ export function useTransactionsQuery(
     queryKey: queryKeys.transactions.list(businessId, filters),
     queryFn: () =>
       getClientAppServices().transaction.listByBusinessId(businessId, filters),
+    enabled: isSupabaseConfigured() && Boolean(businessId),
+    ...options,
+  });
+}
+
+export function useIncomeSummaryQuery(
+  businessId: string,
+  options?: Omit<
+    UseQueryOptions<IncomeSummaryRow[], Error>,
+    "queryKey" | "queryFn"
+  >,
+) {
+  return useQuery({
+    queryKey: queryKeys.transactions.incomeSummary(businessId),
+    queryFn: () =>
+      getClientAppServices().transaction.listIncomeSummaryByBusinessId(businessId),
     enabled: isSupabaseConfigured() && Boolean(businessId),
     ...options,
   });

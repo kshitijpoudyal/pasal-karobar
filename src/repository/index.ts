@@ -37,4 +37,4 @@ export function createRepositories(
 }
 
 export { RepositoryError } from "@/repository/errors";
-export type { TransactionListFilters } from "@/repository/transaction.repository";
+export type { IncomeSummaryRow, TransactionListFilters } from "@/repository/transaction.repository";

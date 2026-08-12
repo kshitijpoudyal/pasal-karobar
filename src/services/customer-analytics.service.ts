@@ -1,5 +1,6 @@
 import type { Customer } from "@/types/database";
 import type { Transaction } from "@/types/database";
+import type { IncomeSummaryRow } from "@/repository/transaction.repository";
 
 export type CustomerPeriodInsights = {
   newCustomers: number;
@@ -79,7 +80,7 @@ export function computeCustomerPeriodInsights(
 }
 
 export function aggregateCustomerDirectoryStats(
-  incomeTransactions: Transaction[],
+  incomeRows: IncomeSummaryRow[] | Transaction[],
 ): Map<
   string,
   { visitCount: number; revenue: number; lastVisitAt: string | null }
@@ -89,7 +90,7 @@ export function aggregateCustomerDirectoryStats(
     { visitCount: number; revenue: number; lastVisitAt: string | null }
   >();
 
-  for (const tx of incomeTransactions) {
+  for (const tx of incomeRows) {
     if (!tx.customer_id) continue;
     const bucket = stats.get(tx.customer_id) ?? {
       visitCount: 0,

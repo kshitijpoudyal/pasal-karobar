@@ -163,9 +163,8 @@ export function CustomerDetailPageView({
                   <CustomerProfilePhotoGallery customerId={page.customer.id} />
 
                   <CustomerVisitsList
-                    visits={page.visits}
+                    groupedVisits={page.groupedVisits}
                     timeZone={page.timeZone}
-                    calendarSystem={page.calendarSystem}
                   />
                 </div>
               )}

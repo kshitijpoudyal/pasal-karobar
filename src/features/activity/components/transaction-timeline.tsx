@@ -10,24 +10,22 @@ import {
 } from "@/features/activity/components/transaction-activity-card";
 import { incomeTransactionTitle } from "@/features/transactions/utils/income-entry-title";
 import type { Transaction } from "@/types/database";
-import type { CalendarSystem } from "@/constants/calendar-system";
 import {
-  formatDayLabelForDateKey,
   formatTimeInBusinessZone,
   logTimezoneFormatMismatch,
 } from "@/utils/business-datetime";
+import type { GroupedTransactionsDay } from "@/utils/group-transactions-by-day";
 import { isPendingSyncTransactionId } from "@/offline/pending-transaction";
 import { formatNpr } from "@/utils/format";
 
 type TransactionTimelineProps = {
-  grouped: [string, Transaction[]][];
+  grouped: GroupedTransactionsDay[];
   serviceNames: Map<string, string>;
   categoryNames: Map<string, string>;
   customerLabels: Map<string, string>;
   onDelete: (transactionId: string) => Promise<void>;
   isDeleting: boolean;
   timeZone: string;
-  calendarSystem: CalendarSystem;
 };
 
 function titleForTransaction(
@@ -57,17 +55,14 @@ export function TransactionTimeline({
   onDelete,
   isDeleting,
   timeZone,
-  calendarSystem,
 }: TransactionTimelineProps) {
   const { confirm } = useConfirmDrawer();
 
   return (
     <div className="flex flex-col gap-4">
-      {grouped.map(([dayKey, transactions]) => (
+      {grouped.map(({ dayKey, label, transactions }) => (
         <div key={dayKey}>
-          <TimelineDateDivider
-            label={formatDayLabelForDateKey(dayKey, timeZone, new Date(), calendarSystem)}
-          />
+          <TimelineDateDivider label={label} />
           <div className="mb-2 flex flex-col gap-2 pt-4 lg:mb-4 lg:gap-3 lg:pt-3">
             {transactions.map((tx) => {
               const isIncome = tx.type === "INCOME";
