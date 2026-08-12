@@ -27,6 +27,7 @@ import { useActiveBusinessPaymentMethodsQuery } from "@/hooks/queries/use-busine
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { cn } from "@/lib/utils";
 import { parseNepalPhone } from "@/utils/phone-np";
+import { parseNprAmount } from "@/utils/money";
 import type { PaymentMethod } from "@/types/database";
 
 type RecordTransactionModalProps = {
@@ -135,12 +136,11 @@ export function RecordTransactionModal({
 
   if (!open) return null;
 
-  const priceNum = parseFloat(price) || 0;
-  const tipNum = parseFloat(tip) || 0;
+  const priceNum = parseNprAmount(price);
+  const tipNum = parseNprAmount(tip);
   const incomeTotal = priceNum + tipNum;
 
-  const submitLabel =
-    tab === "income" ? `Add ${formatRs(incomeTotal)}` : "Add Expense";
+  const submitLabel = tab === "income" ? `Add ${formatRs(incomeTotal)}` : "Add Expense";
 
   function sumDefaultPricesForServices(serviceIds: string[]): number {
     const services = servicesQuery.data ?? [];
@@ -177,8 +177,8 @@ export function RecordTransactionModal({
     setFormError(null);
     try {
       if (tab === "income") {
-        const subtotal = parseFloat(price) || 0;
-        const tipValue = parseFloat(tip) || 0;
+        const subtotal = parseNprAmount(price);
+        const tipValue = parseNprAmount(tip);
         if (selectedServiceIds.length === 0) {
           setFormError("Select at least one service.");
           return;
@@ -187,11 +187,7 @@ export function RecordTransactionModal({
         const customers = customersQuery.data ?? [];
         const nameTrim = customerName.trim();
         const phoneTrim = customerPhone.trim();
-        const savePlan = planCustomerNameSaveOnEntry(
-          customers,
-          phoneTrim,
-          nameTrim,
-        );
+        const savePlan = planCustomerNameSaveOnEntry(customers, phoneTrim, nameTrim);
         let saveCustomerName = savePlan === "apply";
 
         if (savePlan === "needs_confirm") {
@@ -219,7 +215,7 @@ export function RecordTransactionModal({
         });
         return;
       }
-      const amount = parseFloat(expenseAmount) || 0;
+      const amount = parseNprAmount(expenseAmount);
       let categoryId = expenseCategoryId;
       if (!categoryId && expenseDesc) {
         categoryId = resolveCategoryIdByName(expenseDesc) ?? null;
@@ -417,50 +413,50 @@ export function RecordTransactionModal({
               <div>
                 <p className={`${FIELD_LABEL} mb-4`}>Quick Category</p>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
-                  {quickCategories.length > 0
-                    ? quickCategories.map((cat, i) => {
-                        const Icon =
-                          QUICK_CATEGORY_ICONS[i % QUICK_CATEGORY_ICONS.length] ?? Home;
-                        const isActive = expenseCategoryId === cat.id;
-                        return (
-                          <button
-                            key={cat.id}
-                            type="button"
-                            onClick={() => fillExpense(cat.name, cat.id)}
-                            className={cn(
-                              "service-card group squircle flex flex-col items-center justify-center bg-surface-container-lowest p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-95 sm:p-6",
-                              isActive && "active",
-                            )}
-                          >
-                            <Icon
-                              className="mb-3 size-9 text-outline transition-colors group-hover:text-primary sm:size-10"
-                              strokeWidth={1.75}
-                            />
-                            <span className="font-headline text-center text-base font-medium text-on-surface">
-                              {cat.name}
-                            </span>
-                          </button>
-                        );
-                      })
-                    : (
-                      <>
-                        <CategoryFallback
-                          label="Rent"
-                          icon={Home}
-                          onClick={() => fillExpense("Rent")}
-                        />
-                        <CategoryFallback
-                          label="Power"
-                          icon={Bolt}
-                          onClick={() => fillExpense("Electricity")}
-                        />
-                        <CategoryFallback
-                          label="Supplies"
-                          icon={Package}
-                          onClick={() => fillExpense("Supplies")}
-                        />
-                      </>
-                    )}
+                  {quickCategories.length > 0 ? (
+                    quickCategories.map((cat, i) => {
+                      const Icon =
+                        QUICK_CATEGORY_ICONS[i % QUICK_CATEGORY_ICONS.length] ?? Home;
+                      const isActive = expenseCategoryId === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          type="button"
+                          onClick={() => fillExpense(cat.name, cat.id)}
+                          className={cn(
+                            "service-card group squircle flex flex-col items-center justify-center bg-surface-container-lowest p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-95 sm:p-6",
+                            isActive && "active",
+                          )}
+                        >
+                          <Icon
+                            className="mb-3 size-9 text-outline transition-colors group-hover:text-primary sm:size-10"
+                            strokeWidth={1.75}
+                          />
+                          <span className="font-headline text-center text-base font-medium text-on-surface">
+                            {cat.name}
+                          </span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <CategoryFallback
+                        label="Rent"
+                        icon={Home}
+                        onClick={() => fillExpense("Rent")}
+                      />
+                      <CategoryFallback
+                        label="Power"
+                        icon={Bolt}
+                        onClick={() => fillExpense("Electricity")}
+                      />
+                      <CategoryFallback
+                        label="Supplies"
+                        icon={Package}
+                        onClick={() => fillExpense("Supplies")}
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -542,7 +538,10 @@ function AmountCard({
         compact ? "min-w-0 p-3 sm:p-5" : "p-5",
       )}
     >
-      <label className={cn(FIELD_LABEL, compact && "text-[10px] tracking-[0.1em]")} htmlFor={id}>
+      <label
+        className={cn(FIELD_LABEL, compact && "text-[10px] tracking-[0.1em]")}
+        htmlFor={id}
+      >
         {label}
       </label>
       <div className="relative flex min-w-0 items-center">
@@ -590,7 +589,9 @@ function CategoryFallback({
         className="mb-3 size-9 text-outline transition-colors group-hover:text-primary sm:size-10"
         strokeWidth={1.75}
       />
-      <span className="font-headline text-base font-medium text-on-surface">{label}</span>
+      <span className="font-headline text-base font-medium text-on-surface">
+        {label}
+      </span>
     </button>
   );
 }

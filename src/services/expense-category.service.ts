@@ -8,9 +8,7 @@ import {
 import type { ExpenseCategory } from "@/types/database";
 
 export class ExpenseCategoryService {
-  constructor(
-    private readonly expenseCategoryRepository: ExpenseCategoryRepository,
-  ) {}
+  constructor(private readonly expenseCategoryRepository: ExpenseCategoryRepository) {}
 
   async listByBusinessId(businessId: string): Promise<ExpenseCategory[]> {
     return this.expenseCategoryRepository.listByBusinessId(businessId);

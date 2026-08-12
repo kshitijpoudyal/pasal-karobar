@@ -16,10 +16,7 @@ import {
   CustomerPhotoLimitError,
   CustomerPhotoValidationError,
 } from "@/services/customer-photo.service";
-import {
-  fileToArrayBuffer,
-  resizeImageFileForUpload,
-} from "@/utils/image-resize";
+import { fileToArrayBuffer, resizeImageFileForUpload } from "@/utils/image-resize";
 
 const FIELD_LABEL =
   "font-body block text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase";
@@ -38,22 +35,15 @@ export function CustomerProfilePhotos({
   const { confirm } = useConfirmDrawer();
   const photosQuery = useCustomerPhotosQuery(customerId);
   const uploadMutation = useUploadCustomerPhotoMutation(businessId);
-  const captionMutation = useUpdateCustomerPhotoCaptionMutation(
-    businessId,
-    customerId,
-  );
+  const captionMutation = useUpdateCustomerPhotoCaptionMutation(businessId, customerId);
   const deleteMutation = useDeleteCustomerPhotoMutation(businessId, customerId);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>(
-    {},
-  );
+  const [captionDrafts, setCaptionDrafts] = useState<Record<string, string>>({});
 
   const photos = photosQuery.data ?? [];
   const canAddMore = isOnline && photos.length < MAX_CUSTOMER_PHOTOS;
   const busy =
-    uploadMutation.isPending ||
-    deleteMutation.isPending ||
-    captionMutation.isPending;
+    uploadMutation.isPending || deleteMutation.isPending || captionMutation.isPending;
 
   function captionForPhoto(photoId: string, serverCaption: string | null) {
     if (photoId in captionDrafts) return captionDrafts[photoId]!;

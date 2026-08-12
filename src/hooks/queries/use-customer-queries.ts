@@ -28,10 +28,7 @@ export function useCustomersQuery(
 
 export function useCustomerQuery(
   customerId: string,
-  options?: Omit<
-    UseQueryOptions<Customer | null, Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<Customer | null, Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: queryKeys.customers.detail(customerId),

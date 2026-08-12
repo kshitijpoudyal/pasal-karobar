@@ -116,10 +116,7 @@ export function CustomerPhoneAutocomplete({
   const rootRef = useRef<HTMLDivElement>(null);
   const { businessId } = useActiveBusiness();
   const customersQuery = useCustomersQuery(businessId);
-  const customers = useMemo(
-    () => customersQuery.data ?? [],
-    [customersQuery.data],
-  );
+  const customers = useMemo(() => customersQuery.data ?? [], [customersQuery.data]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [nameQuery, setNameQuery] = useState("");
@@ -180,9 +177,7 @@ export function CustomerPhoneAutocomplete({
 
   const phoneField = (
     <div
-      className={cn(
-        variant === "embedded" ? "space-y-3" : DEFAULT_FIELD_WRAP_CLASS,
-      )}
+      className={cn(variant === "embedded" ? "space-y-3" : DEFAULT_FIELD_WRAP_CLASS)}
     >
       <label htmlFor={id} className={labelClassName}>
         {label}
@@ -207,9 +202,7 @@ export function CustomerPhoneAutocomplete({
             setActiveIndex((i) => (i + 1) % suggestions.length);
           } else if (event.key === "ArrowUp") {
             event.preventDefault();
-            setActiveIndex(
-              (i) => (i - 1 + suggestions.length) % suggestions.length,
-            );
+            setActiveIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
           } else if (event.key === "Enter" && suggestions[activeIndex]) {
             event.preventDefault();
             applyCustomer(suggestions[activeIndex]!);
@@ -254,9 +247,7 @@ export function CustomerPhoneAutocomplete({
               setActiveIndex((i) => (i + 1) % suggestions.length);
             } else if (event.key === "ArrowUp") {
               event.preventDefault();
-              setActiveIndex(
-                (i) => (i - 1 + suggestions.length) % suggestions.length,
-              );
+              setActiveIndex((i) => (i - 1 + suggestions.length) % suggestions.length);
             } else if (event.key === "Enter" && suggestions[activeIndex]) {
               event.preventDefault();
               applyCustomer(suggestions[activeIndex]!);
@@ -274,8 +265,7 @@ export function CustomerPhoneAutocomplete({
       ref={rootRef}
       className={cn(
         "relative",
-        variant === "embedded" &&
-          "squircle bg-surface-container-lowest p-5 shadow-sm",
+        variant === "embedded" && "squircle bg-surface-container-lowest p-5 shadow-sm",
         !linkedPair && variant !== "embedded" && "flex flex-col gap-4",
       )}
     >
@@ -295,9 +285,7 @@ export function CustomerPhoneAutocomplete({
           className="absolute top-full z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-outline-variant bg-surface-container-lowest py-1 shadow-lg"
         >
           {suggestions.map((customer, index) => {
-            const phoneLabel = formatNepalPhoneDisplay(
-              customer.phone_normalized,
-            );
+            const phoneLabel = formatNepalPhoneDisplay(customer.phone_normalized);
             const displayName = customer.name?.trim();
             return (
               <li key={customer.id} role="presentation">

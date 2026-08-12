@@ -17,9 +17,7 @@ type AppMobileMenuContextValue = {
   closeMenu: () => void;
 };
 
-const AppMobileMenuContext = createContext<AppMobileMenuContextValue | null>(
-  null,
-);
+const AppMobileMenuContext = createContext<AppMobileMenuContextValue | null>(null);
 
 export function AppMobileMenuProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);

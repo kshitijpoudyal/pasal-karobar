@@ -1,20 +1,10 @@
 export type TransactionType = "INCOME" | "EXPENSE";
 
 export type PaymentMethod =
-  | "CASH"
-  | "ESEWA"
-  | "KHALTI"
-  | "FONEPAY"
-  | "BANK_TRANSFER"
-  | "OTHER";
+  "CASH" | "ESEWA" | "KHALTI" | "FONEPAY" | "BANK_TRANSFER" | "OTHER";
 
 export type BusinessType =
-  | "BARBER"
-  | "SALON"
-  | "GROCERY"
-  | "PHARMACY"
-  | "RESTAURANT"
-  | "OTHER";
+  "BARBER" | "SALON" | "GROCERY" | "PHARMACY" | "RESTAURANT" | "OTHER";
 
 export type CalendarSystem = "AD" | "BS";
 
@@ -66,9 +56,7 @@ export type ServiceInsert = Pick<
   ServiceRecord,
   "business_id" | "name" | "default_price"
 > &
-  Partial<
-    Pick<ServiceRecord, "icon" | "color" | "display_order" | "is_active">
-  >;
+  Partial<Pick<ServiceRecord, "icon" | "color" | "display_order" | "is_active">>;
 
 export type ServiceUpdate = Partial<
   Pick<
@@ -89,22 +77,11 @@ export type ExpenseCategory = {
   updated_at: string;
 };
 
-export type ExpenseCategoryInsert = Pick<
-  ExpenseCategory,
-  "business_id" | "name"
-> &
-  Partial<
-    Pick<
-      ExpenseCategory,
-      "icon" | "color" | "display_order" | "is_active"
-    >
-  >;
+export type ExpenseCategoryInsert = Pick<ExpenseCategory, "business_id" | "name"> &
+  Partial<Pick<ExpenseCategory, "icon" | "color" | "display_order" | "is_active">>;
 
 export type ExpenseCategoryUpdate = Partial<
-  Pick<
-    ExpenseCategory,
-    "name" | "icon" | "color" | "display_order" | "is_active"
-  >
+  Pick<ExpenseCategory, "name" | "icon" | "color" | "display_order" | "is_active">
 >;
 
 export type BusinessPaymentMethodRecord = {
@@ -122,9 +99,7 @@ export type BusinessPaymentMethodInsert = Pick<
   BusinessPaymentMethodRecord,
   "business_id" | "method_code" | "label"
 > &
-  Partial<
-    Pick<BusinessPaymentMethodRecord, "display_order" | "is_active">
-  >;
+  Partial<Pick<BusinessPaymentMethodRecord, "display_order" | "is_active">>;
 
 export type BusinessPaymentMethodUpdate = Partial<
   Pick<
@@ -239,9 +214,7 @@ export type TransactionRowInsert = {
   transaction_date: string;
 };
 
-export type TransactionInsert =
-  | IncomeTransactionInsert
-  | ExpenseTransactionInsert;
+export type TransactionInsert = IncomeTransactionInsert | ExpenseTransactionInsert;
 
 export type TransactionUpdate = Partial<
   Pick<

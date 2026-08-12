@@ -8,6 +8,7 @@ import type {
   TransactionType,
   TransactionUpdate,
 } from "@/types/database";
+import { escapeIlikePattern } from "@/utils/escape-ilike";
 
 export type TransactionListFilters = {
   type?: TransactionType;
@@ -25,6 +26,17 @@ export type IncomeSummaryRow = {
   transaction_date: string;
 };
 
+export type IncomeSummaryFilters = {
+  /** Inclusive upper bound (ISO instant). */
+  toDate?: string;
+  /** Exclusive upper bound (ISO instant). */
+  toDateExclusive?: string;
+};
+
+/** Columns needed for list views (avoids select("*") overhead on wide rows). */
+const TRANSACTION_LIST_COLUMNS =
+  "id, business_id, type, service_id, expense_category_id, customer_id, subtotal, tip, total, payment_method, note, transaction_date, created_at, updated_at" as const;
+
 export class TransactionRepository {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
@@ -34,7 +46,7 @@ export class TransactionRepository {
   ): Promise<Transaction[]> {
     let query = this.supabase
       .from("transactions")
-      .select("*")
+      .select(TRANSACTION_LIST_COLUMNS)
       .eq("business_id", businessId)
       .order("transaction_date", { ascending: false });
 
@@ -54,32 +66,40 @@ export class TransactionRepository {
       query = query.eq("payment_method", filters.paymentMethod);
     }
     if (filters.search) {
-      query = query.ilike("note", `%${filters.search}%`);
+      const pattern = `%${escapeIlikePattern(filters.search)}%`;
+      query = query.ilike("note", pattern);
     }
 
     const { data, error } = await query;
 
     if (error) mapRepositoryError(error);
-    return data ?? [];
+    return (data ?? []) as Transaction[];
   }
 
   async listIncomeSummaryByBusinessId(
     businessId: string,
+    filters: IncomeSummaryFilters = {},
   ): Promise<IncomeSummaryRow[]> {
-    const { data, error } = await this.supabase
+    let query = this.supabase
       .from("transactions")
       .select("id, customer_id, total, transaction_date")
       .eq("business_id", businessId)
       .eq("type", "INCOME")
       .order("transaction_date", { ascending: false });
 
+    if (filters.toDateExclusive) {
+      query = query.lt("transaction_date", filters.toDateExclusive);
+    } else if (filters.toDate) {
+      query = query.lte("transaction_date", filters.toDate);
+    }
+
+    const { data, error } = await query;
+
     if (error) mapRepositoryError(error);
     return (data ?? []) as IncomeSummaryRow[];
   }
 
-  async findEarliestTransactionDate(
-    businessId: string,
-  ): Promise<string | null> {
+  async findEarliestTransactionDate(businessId: string): Promise<string | null> {
     const { data, error } = await this.supabase
       .from("transactions")
       .select("transaction_date")
@@ -127,10 +147,7 @@ export class TransactionRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const { error } = await this.supabase
-      .from("transactions")
-      .delete()
-      .eq("id", id);
+    const { error } = await this.supabase.from("transactions").delete().eq("id", id);
 
     if (error) mapRepositoryError(error);
   }

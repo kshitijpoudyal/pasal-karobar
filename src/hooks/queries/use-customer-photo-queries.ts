@@ -25,8 +25,7 @@ export function useCustomerPhotosQuery(
 ) {
   return useQuery({
     queryKey: queryKeys.customerPhotos.list(customerId),
-    queryFn: () =>
-      getClientAppServices().customerPhoto.listWithSignedUrls(customerId),
+    queryFn: () => getClientAppServices().customerPhoto.listWithSignedUrls(customerId),
     enabled: isSupabaseConfigured() && Boolean(customerId),
     ...options,
   });
@@ -64,11 +63,7 @@ export function useUpdateCustomerPhotoCaptionMutation(
       photoId: string;
       input: UpdateCustomerPhotoCaptionInput;
     }) =>
-      getClientAppServices().customerPhoto.updateCaption(
-        businessId,
-        photoId,
-        input,
-      ),
+      getClientAppServices().customerPhoto.updateCaption(businessId, photoId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.customerPhotos.list(customerId),
@@ -77,10 +72,7 @@ export function useUpdateCustomerPhotoCaptionMutation(
   });
 }
 
-export function useDeleteCustomerPhotoMutation(
-  businessId: string,
-  customerId: string,
-) {
+export function useDeleteCustomerPhotoMutation(businessId: string, customerId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({

@@ -209,7 +209,10 @@ export const TransactionActivityCard = memo(function TransactionActivityCard({
               iconWrapClassName,
             )}
           >
-            <Icon className={cn("size-6 lg:size-7", iconClassName)} strokeWidth={1.75} />
+            <Icon
+              className={cn("size-6 lg:size-7", iconClassName)}
+              strokeWidth={1.75}
+            />
           </div>
           <div className="min-w-0">
             <h4 className="font-headline truncate text-base font-bold text-primary lg:text-lg">

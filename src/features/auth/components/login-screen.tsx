@@ -26,15 +26,8 @@ const inputClassName =
   "login-input w-full rounded-xl border-none bg-surface-container-highest px-6 py-4 font-body-md text-on-surface outline-none transition-all duration-300 placeholder:text-outline-variant focus:ring-1 focus:ring-primary login-input-ink-focus";
 
 export function LoginScreen() {
-  const {
-    register,
-    onSubmit,
-    errors,
-    isSubmitting,
-    authError,
-    mode,
-    setMode,
-  } = useLoginForm();
+  const { register, onSubmit, errors, isSubmitting, authError, mode, setMode } =
+    useLoginForm();
   const [showPassword, setShowPassword] = useState(false);
   const isSignUp = mode === "signUp";
 
@@ -193,9 +186,7 @@ export function LoginLoadingScreen() {
     <div className="login-screen font-body-md flex min-h-screen flex-col items-center justify-center bg-[#faf9fc] text-on-surface-variant">
       <div className="flex flex-col items-center gap-4">
         <AppLogoMark className="opacity-60" />
-        <p className="text-label-sm uppercase tracking-widest">
-          Checking session…
-        </p>
+        <p className="text-label-sm uppercase tracking-widest">Checking session…</p>
       </div>
     </div>
   );

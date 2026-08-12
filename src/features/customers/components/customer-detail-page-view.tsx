@@ -7,7 +7,7 @@ import { ArrowLeft, Pencil, Plus } from "lucide-react";
 import { AppShell } from "@/components/layout/app-shell";
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
-import { CustomerProfileEditor } from "@/features/customers/components/customer-profile-editor";
+import { EditCustomerProfileModal } from "@/features/customers/components/edit-customer-profile-modal";
 import { CustomerProfilePhotoGallery } from "@/features/customers/components/customer-profile-photo-gallery";
 import { CustomerVisitsList } from "@/features/customers/components/customer-visits-list";
 import { useCustomerDetailPage } from "@/features/customers/hooks/use-customer-detail-page";
@@ -23,12 +23,9 @@ export function CustomerDetailPageView({
 }: CustomerDetailPageViewProps) {
   const page = useCustomerDetailPage(phoneRouteParam);
   const { openModal } = useRecordTransactionModal();
-  const [editing, setEditing] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
-  const title =
-    page.customer?.name?.trim() ||
-    page.displayPhone ||
-    "Customer";
+  const title = page.customer?.name?.trim() || page.displayPhone || "Customer";
 
   function openRecord() {
     if (!page.customer) return;
@@ -64,10 +61,10 @@ export function CustomerDetailPageView({
                 variant="secondary"
                 size="cta"
                 className="w-full sm:w-auto"
-                onClick={() => setEditing((value) => !value)}
+                onClick={() => setEditOpen(true)}
               >
                 <Pencil className="size-4" strokeWidth={2} aria-hidden />
-                {editing ? "View profile" : "Edit profile"}
+                Edit profile
               </Button>
               <Button
                 type="button"
@@ -89,9 +86,7 @@ export function CustomerDetailPageView({
           onRetry={() => void page.refetch()}
         >
           {!page.parsedPhone.ok ? (
-            <p className="text-sm text-on-surface-variant">
-              {page.parsedPhone.reason}
-            </p>
+            <p className="text-sm text-on-surface-variant">{page.parsedPhone.reason}</p>
           ) : !page.customer && !page.isLoading ? (
             <div className="rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-8 text-center">
               <p className="text-sm text-on-surface-variant">
@@ -141,35 +136,35 @@ export function CustomerDetailPageView({
                 </div>
               </div>
 
-              {editing ? (
-                <CustomerProfileEditor
-                  businessId={page.businessId}
-                  customer={page.customer}
-                  onDone={() => setEditing(false)}
+              <div className="space-y-6">
+                {page.customer.profile_note?.trim() ? (
+                  <div className="squircle bg-surface-container-lowest p-5 shadow-sm">
+                    <p className="font-body text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase">
+                      Note
+                    </p>
+                    <p className="mt-3 whitespace-pre-wrap text-sm text-on-surface">
+                      {page.customer.profile_note}
+                    </p>
+                  </div>
+                ) : null}
+
+                <CustomerProfilePhotoGallery customerId={page.customer.id} />
+
+                <CustomerVisitsList
+                  groupedVisits={page.groupedVisits}
+                  transactions={page.visitTransactions}
+                  serviceNames={page.serviceNames}
+                  timeZone={page.timeZone}
                 />
-              ) : (
-                <div className="space-y-6">
-                  {page.customer.profile_note?.trim() ? (
-                    <div className="squircle bg-surface-container-lowest p-5 shadow-sm">
-                      <p className="font-body text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase">
-                        Note
-                      </p>
-                      <p className="mt-3 whitespace-pre-wrap text-sm text-on-surface">
-                        {page.customer.profile_note}
-                      </p>
-                    </div>
-                  ) : null}
+              </div>
 
-                  <CustomerProfilePhotoGallery customerId={page.customer.id} />
-
-                  <CustomerVisitsList
-                    groupedVisits={page.groupedVisits}
-                    transactions={page.visitTransactions}
-                    serviceNames={page.serviceNames}
-                    timeZone={page.timeZone}
-                  />
-                </div>
-              )}
+              <EditCustomerProfileModal
+                open={editOpen}
+                businessId={page.businessId}
+                customer={page.customer}
+                onClose={() => setEditOpen(false)}
+                onSaved={() => void page.refetch()}
+              />
             </>
           ) : null}
         </QueryState>

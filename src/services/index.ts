@@ -56,9 +56,7 @@ export function createServices(repositories: Repositories): AppServices {
   };
 }
 
-export function createAppServices(
-  supabase: SupabaseClient<Database>,
-): AppServices {
+export function createAppServices(supabase: SupabaseClient<Database>): AppServices {
   return createServices(createRepositories(supabase));
 }
 

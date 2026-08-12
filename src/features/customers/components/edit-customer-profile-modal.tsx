@@ -1,23 +1,14 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { CirclePlus, Loader2, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 
-import {
-  CustomerPhotoDraftPicker,
-  revokePendingPhotoUrls,
-  type PendingCustomerPhoto,
-} from "@/features/customers/components/customer-photo-draft-picker";
-import { CustomerPhoneAutocomplete } from "@/features/transactions/components/customer-phone-autocomplete";
-import { useUploadCustomerPhotoMutation } from "@/hooks/queries/use-customer-photo-queries";
-import { useCreateCustomerMutation } from "@/hooks/queries/use-customer-queries";
+import { CustomerProfilePhotos } from "@/features/customers/components/customer-profile-photos";
+import { useUpdateCustomerMutation } from "@/hooks/queries/use-customer-queries";
 import { useConnectivity } from "@/providers/connectivity-provider";
-import {
-  CustomerDuplicateError,
-  CustomerPhoneError,
-} from "@/services/customer.service";
 import { cn } from "@/lib/utils";
 import type { Customer } from "@/types/database";
+import { formatNepalPhoneDisplay } from "@/utils/phone-np";
 
 const FIELD_LABEL =
   "font-body block text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase";
@@ -25,53 +16,36 @@ const FIELD_LABEL =
 const SQUIRCLE_FIELD_INPUT =
   "font-body w-full border-none bg-transparent p-0 text-lg font-medium text-on-surface outline-none placeholder:text-outline-variant focus:ring-0";
 
-type AddCustomerModalProps = {
+type EditCustomerProfileModalProps = {
   open: boolean;
   businessId: string;
+  customer: Customer;
   onClose: () => void;
-  onCreated?: (customer: Customer) => void;
+  onSaved?: () => void;
 };
 
-export function AddCustomerModal({
+export function EditCustomerProfileModal({
   open,
   businessId,
+  customer,
   onClose,
-  onCreated,
-}: AddCustomerModalProps) {
+  onSaved,
+}: EditCustomerProfileModalProps) {
   const titleId = useId();
   const nameInputId = useId();
   const noteInputId = useId();
-  const [phone, setPhone] = useState("");
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  const [pendingPhotos, setPendingPhotos] = useState<PendingCustomerPhoto[]>([]);
+  const [name, setName] = useState(customer.name ?? "");
+  const [note, setNote] = useState(customer.profile_note ?? "");
   const [formError, setFormError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const createMutation = useCreateCustomerMutation(businessId);
-  const uploadPhotoMutation = useUploadCustomerPhotoMutation(businessId);
+  const updateMutation = useUpdateCustomerMutation(businessId);
   const { isOnline } = useConnectivity();
 
   useEffect(() => {
-    if (!open) {
-      setPhone("");
-      setName("");
-      setNote("");
-      setFormError(null);
-      setPendingPhotos((prev) => {
-        revokePendingPhotoUrls(prev);
-        return [];
-      });
-      return;
-    }
-    setPhone("");
-    setName("");
-    setNote("");
+    if (!open) return;
+    setName(customer.name ?? "");
+    setNote(customer.profile_note ?? "");
     setFormError(null);
-    setPendingPhotos((prev) => {
-      revokePendingPhotoUrls(prev);
-      return [];
-    });
-  }, [open]);
+  }, [open, customer.id, customer.name, customer.profile_note]);
 
   useEffect(() => {
     if (!open) return;
@@ -84,54 +58,42 @@ export function AddCustomerModal({
 
   if (!open) return null;
 
+  const displayPhone = formatNepalPhoneDisplay(customer.phone_normalized);
+  const nameTrim = name.trim();
+  const noteTrim = note.trim();
+  const initialName = customer.name?.trim() ?? "";
+  const initialNote = customer.profile_note?.trim() ?? "";
+  const hasChanges = nameTrim !== initialName || noteTrim !== initialNote;
+
   async function handleSubmit() {
     if (!isOnline) {
-      setFormError("You're offline. Connect to the internet to add a customer.");
+      setFormError("You're offline. Connect to the internet to save changes.");
       return;
     }
+    if (!hasChanges) {
+      onClose();
+      return;
+    }
+
     setFormError(null);
-    setIsSaving(true);
     try {
-      const customer = await createMutation.mutateAsync({
-        phone: phone.trim(),
-        ...(name.trim() ? { name: name.trim() } : {}),
-        ...(note.trim() ? { profile_note: note.trim() } : {}),
+      await updateMutation.mutateAsync({
+        customerId: customer.id,
+        input: {
+          name: nameTrim || null,
+          profile_note: noteTrim || null,
+        },
       });
-
-      for (const photo of pendingPhotos) {
-        await uploadPhotoMutation.mutateAsync({
-          business_id: businessId,
-          customer_id: customer.id,
-          content_type: photo.contentType,
-          byte_length: photo.byteLength,
-          data: photo.data,
-          caption: photo.caption.trim() || null,
-        });
-      }
-
-      revokePendingPhotoUrls(pendingPhotos);
-      setPendingPhotos([]);
-      setPhone("");
-      setName("");
-      setNote("");
-      onCreated?.(customer);
+      onSaved?.();
       onClose();
     } catch (error) {
-      if (
-        error instanceof CustomerPhoneError ||
-        error instanceof CustomerDuplicateError
-      ) {
-        setFormError(error.message);
-        return;
-      }
-      setFormError(error instanceof Error ? error.message : "Could not save customer.");
-    } finally {
-      setIsSaving(false);
+      setFormError(
+        error instanceof Error ? error.message : "Could not save profile.",
+      );
     }
   }
 
-  const canSubmit =
-    phone.trim().length > 0 && !isSaving && !createMutation.isPending && isOnline;
+  const canSubmit = !updateMutation.isPending && (!hasChanges || isOnline);
 
   return (
     <div
@@ -160,7 +122,7 @@ export function AddCustomerModal({
               id={titleId}
               className="font-headline text-2xl leading-relaxed font-medium tracking-tight text-on-surface lg:text-3xl"
             >
-              Add customer
+              Edit profile
             </h2>
             <button
               type="button"
@@ -174,14 +136,10 @@ export function AddCustomerModal({
         </div>
 
         <div className="hide-scrollbar flex-1 space-y-10 overflow-y-auto px-6 py-6 lg:px-8 lg:py-8">
-          <CustomerPhoneAutocomplete
-            id="add-customer-phone"
-            label="Phone number"
-            labelClassName={FIELD_LABEL}
-            value={phone}
-            onChange={setPhone}
-            variant="embedded"
-          />
+          <div className="squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm">
+            <p className={FIELD_LABEL}>Phone number</p>
+            <p className="font-body text-lg font-medium text-on-surface">{displayPhone}</p>
+          </div>
 
           <div className="squircle space-y-3 bg-surface-container-lowest p-5 shadow-sm">
             <label className={FIELD_LABEL} htmlFor={nameInputId}>
@@ -212,17 +170,17 @@ export function AddCustomerModal({
             />
           </div>
 
-          <CustomerPhotoDraftPicker
-            photos={pendingPhotos}
-            onChange={setPendingPhotos}
-            disabled={!isOnline || isSaving}
+          <CustomerProfilePhotos
+            businessId={businessId}
+            customerId={customer.id}
+            isOnline={isOnline}
           />
         </div>
 
         <footer className="shrink-0 bg-surface-bright px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:px-8 lg:pt-6 lg:pb-8">
-          {formError ? (
+          {formError || updateMutation.isError ? (
             <p className="mb-3 text-center text-sm text-error" role="alert">
-              {formError}
+              {formError ?? updateMutation.error?.message}
             </p>
           ) : null}
           <button
@@ -231,15 +189,15 @@ export function AddCustomerModal({
             onClick={() => void handleSubmit()}
             className="font-headline deep-indigo-gradient squircle flex h-16 w-full items-center justify-center gap-3 text-xl font-medium tracking-wide text-white shadow-lg transition-all hover:brightness-110 hover:shadow-xl active:scale-[0.98] disabled:opacity-60"
           >
-            {isSaving || createMutation.isPending ? (
+            {updateMutation.isPending ? (
               <>
                 <Loader2 className="size-6 animate-spin" aria-hidden />
                 Saving…
               </>
             ) : (
               <>
-                <CirclePlus className="size-6" strokeWidth={2} aria-hidden />
-                Add customer
+                <Check className="size-6" strokeWidth={2} aria-hidden />
+                {hasChanges ? "Save changes" : "Done"}
               </>
             )}
           </button>

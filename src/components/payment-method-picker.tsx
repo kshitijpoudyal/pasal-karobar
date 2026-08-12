@@ -42,7 +42,10 @@ export function PaymentMethodVisual({
   );
 }
 
-function renderPickerIcon(methodCode: PaymentMethod, size: "sm" | "md" = "md"): ReactNode {
+function renderPickerIcon(
+  methodCode: PaymentMethod,
+  size: "sm" | "md" = "md",
+): ReactNode {
   const iconSize = size === "sm" ? "size-5" : "size-7";
   const badgeSize = size === "sm" ? "size-5 text-[7px]" : "size-7 text-[10px]";
   if (methodCode === "OTHER") {
@@ -83,12 +86,20 @@ function renderPickerIcon(methodCode: PaymentMethod, size: "sm" | "md" = "md"): 
   }
   if (methodCode === "CASH") {
     return (
-      <Banknote className={cn(iconSize, "text-secondary")} strokeWidth={1.75} aria-hidden />
+      <Banknote
+        className={cn(iconSize, "text-secondary")}
+        strokeWidth={1.75}
+        aria-hidden
+      />
     );
   }
   if (methodCode === "BANK_TRANSFER") {
     return (
-      <Landmark className={cn(iconSize, "text-primary")} strokeWidth={1.75} aria-hidden />
+      <Landmark
+        className={cn(iconSize, "text-primary")}
+        strokeWidth={1.75}
+        aria-hidden
+      />
     );
   }
   if (methodCode === "FONEPAY") {

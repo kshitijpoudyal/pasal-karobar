@@ -5,9 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 import { getRequiredSupabasePublicEnv } from "@/utils/env";
 
-export async function createSupabaseServerClient(): Promise<
-  SupabaseClient<Database>
-> {
+export async function createSupabaseServerClient(): Promise<SupabaseClient<Database>> {
   const { url, anonKey } = getRequiredSupabasePublicEnv();
   const cookieStore = await cookies();
 

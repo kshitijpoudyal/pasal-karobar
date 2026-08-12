@@ -12,7 +12,10 @@ import {
 } from "@/features/dashboard/components/dashboard-stat-icons";
 import type { DashboardSummary } from "@/services/dashboard-summary";
 import { formatCompactNpr } from "@/utils/format";
-import { formatDashboardComparisonLabel, type DashboardGranularity } from "@/utils/date-ranges";
+import {
+  formatDashboardComparisonLabel,
+  type DashboardGranularity,
+} from "@/utils/date-ranges";
 import { cn } from "@/lib/utils";
 
 type KpiCardProps = {
@@ -23,13 +26,7 @@ type KpiCardProps = {
   footer: ReactNode | null;
 };
 
-function KpiCard({
-  icon: Icon,
-  iconClassName,
-  label,
-  value,
-  footer,
-}: KpiCardProps) {
+function KpiCard({ icon: Icon, iconClassName, label, value, footer }: KpiCardProps) {
   return (
     <div className="squircle flex flex-col gap-3 bg-surface-container-low p-6 shadow-natural-ink lg:gap-4 lg:p-8 lg:shadow-none">
       <div className="flex size-10 items-center justify-center rounded-full bg-surface-container-highest lg:hidden">
@@ -59,9 +56,7 @@ function NetProfitFooter({
   const compareLabel = formatDashboardComparisonLabel(granularity);
   const showComparison =
     comparison &&
-    (comparison.priorNet !== 0 ||
-      comparison.netDelta !== 0 ||
-      summary.profit !== 0);
+    (comparison.priorNet !== 0 || comparison.netDelta !== 0 || summary.profit !== 0);
 
   if (!showComparison || !comparison) return null;
 

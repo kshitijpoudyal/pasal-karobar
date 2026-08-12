@@ -27,12 +27,18 @@ function ToastCard({ item }: { item: ToastItem }) {
       {isSuccess ? (
         <CheckCircle2 className="mt-0.5 size-5 shrink-0" strokeWidth={2} aria-hidden />
       ) : (
-        <XCircle className="mt-0.5 size-5 shrink-0 text-error" strokeWidth={2} aria-hidden />
+        <XCircle
+          className="mt-0.5 size-5 shrink-0 text-error"
+          strokeWidth={2}
+          aria-hidden
+        />
       )}
       <div className="min-w-0 flex-1">
         <p className="font-semibold text-sm leading-snug">{item.title}</p>
         {item.description ? (
-          <p className="mt-0.5 text-xs leading-relaxed opacity-90">{item.description}</p>
+          <p className="mt-0.5 text-xs leading-relaxed opacity-90">
+            {item.description}
+          </p>
         ) : null}
       </div>
       <button

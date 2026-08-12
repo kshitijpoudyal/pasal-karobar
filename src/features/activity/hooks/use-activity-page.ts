@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { toast } from "@/components/toast";
+import { queryKeys } from "@/constants/query-keys";
+import { removeTransactionFromListCaches } from "@/hooks/queries/transaction-query-cache";
 import { useDeleteTransactionMutation } from "@/hooks/queries/use-transaction-queries";
 import { useTransactionsQuery } from "@/hooks/queries/use-transaction-queries";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
@@ -24,7 +28,14 @@ import {
   type ActivityPaymentFilter,
 } from "@/features/activity/constants";
 import { formatNepalPhoneDisplay } from "@/utils/phone-np";
-import { isPendingSyncTransactionId } from "@/offline/pending-transaction";
+import { notifyOutboxChanged } from "@/offline/outbox-events";
+import { removeOutboxEntry } from "@/offline/outbox-store";
+import {
+  isPendingCustomerId,
+  isPendingSyncTransactionId,
+  pendingCustomerPhoneFromId,
+  pendingSyncClientId,
+} from "@/offline/pending-transaction";
 
 function titleForSearch(
   tx: Transaction,
@@ -63,6 +74,7 @@ function transactionMatchesSearch(
 }
 
 export function useActivityPage() {
+  const queryClient = useQueryClient();
   const { businessId } = useActiveBusiness();
   const { timeZone, calendarSystem } = useBusinessDateSettings();
   const [timeframe, setTimeframe] = useState<ActivityTimeframe>("Today");
@@ -93,6 +105,12 @@ export function useActivityPage() {
   const servicesQuery = useServiceCatalogQuery(businessId);
   const categoriesQuery = useExpenseCategoriesQuery(businessId);
   const deleteMutation = useDeleteTransactionMutation(businessId);
+  const pendingCustomerLabelsQuery = useQuery<Record<string, string>>({
+    queryKey: queryKeys.customers.pendingLabels(businessId),
+    queryFn: () => ({}),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: Number.POSITIVE_INFINITY,
+  });
 
   const serviceNames = useMemo(() => {
     const map = new Map<string, string>();
@@ -118,8 +136,25 @@ export function useActivityPage() {
         customer.name ?? formatNepalPhoneDisplay(customer.phone_normalized),
       );
     }
+    for (const [customerId, label] of Object.entries(
+      pendingCustomerLabelsQuery.data ?? {},
+    )) {
+      map.set(customerId, label);
+    }
+    for (const tx of transactionsQuery.data ?? []) {
+      if (!tx.customer_id || !isPendingCustomerId(tx.customer_id)) continue;
+      if (map.has(tx.customer_id)) continue;
+      const phone = pendingCustomerPhoneFromId(tx.customer_id);
+      if (phone) {
+        map.set(tx.customer_id, formatNepalPhoneDisplay(phone));
+      }
+    }
     return map;
-  }, [customersQuery.data]);
+  }, [
+    customersQuery.data,
+    pendingCustomerLabelsQuery.data,
+    transactionsQuery.data,
+  ]);
 
   const visibleTransactions = useMemo(() => {
     const list = transactionsQuery.data ?? [];
@@ -173,12 +208,28 @@ export function useActivityPage() {
   }
 
   async function deleteTransaction(transactionId: string) {
-    if (
-      transactionId.startsWith("optimistic-") ||
-      isPendingSyncTransactionId(transactionId)
-    ) {
+    if (transactionId.startsWith("optimistic-")) {
+      toast({
+        title: "Still saving",
+        description: "This entry is still being saved. Try again in a moment.",
+      });
       return;
     }
+
+    if (isPendingSyncTransactionId(transactionId)) {
+      const clientId = pendingSyncClientId(transactionId);
+      if (!clientId) return;
+
+      await removeOutboxEntry(clientId);
+      notifyOutboxChanged();
+      removeTransactionFromListCaches(queryClient, businessId, transactionId);
+      toast({
+        title: "Offline entry removed",
+        description: "This unsynced entry was deleted from this device.",
+      });
+      return;
+    }
+
     await deleteMutation.mutateAsync(transactionId);
   }
 

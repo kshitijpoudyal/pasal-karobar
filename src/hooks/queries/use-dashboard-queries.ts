@@ -14,10 +14,7 @@ import { isSupabaseConfigured } from "@/utils/env";
 export function useDashboardSummaryQuery(
   businessId: string,
   params?: DashboardSummaryParams,
-  options?: Omit<
-    UseQueryOptions<DashboardSummary, Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<DashboardSummary, Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: [...queryKeys.dashboard.summary(businessId), params ?? {}],
@@ -27,8 +24,8 @@ export function useDashboardSummaryQuery(
     },
     select: (data) => normalizeDashboardSummary(data),
     enabled: isSupabaseConfigured() && Boolean(businessId),
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: false,
     ...options,
   });
 }

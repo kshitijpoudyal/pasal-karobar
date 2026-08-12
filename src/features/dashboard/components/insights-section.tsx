@@ -80,8 +80,7 @@ type CuratedInsightsPanelProps = {
 };
 
 export function CuratedInsightsPanel(props: CuratedInsightsPanelProps) {
-  const peak =
-    coalescePeakAnalysis(props.peakAnalysis) ?? EMPTY_PEAK_ANALYSIS;
+  const peak = coalescePeakAnalysis(props.peakAnalysis) ?? EMPTY_PEAK_ANALYSIS;
   const busiestDayOfWeek = peak.busiestDayOfWeek;
   const busiestWeekOfMonth = peak.busiestWeekOfMonth;
   const busiestHourRange = peak.busiestHourRange;

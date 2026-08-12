@@ -6,8 +6,6 @@ export const CUSTOMER_VISIT_FILTERS = [
   "No visits",
 ] as const satisfies readonly CustomerVisitFilter[];
 
-export function hasCustomerSecondaryFilters(
-  visitFilter: CustomerVisitFilter,
-): boolean {
+export function hasCustomerSecondaryFilters(visitFilter: CustomerVisitFilter): boolean {
   return visitFilter !== "All";
 }

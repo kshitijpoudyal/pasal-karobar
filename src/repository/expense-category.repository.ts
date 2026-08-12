@@ -44,10 +44,7 @@ export class ExpenseCategoryRepository {
     return data;
   }
 
-  async update(
-    id: string,
-    payload: ExpenseCategoryUpdate,
-  ): Promise<ExpenseCategory> {
+  async update(id: string, payload: ExpenseCategoryUpdate): Promise<ExpenseCategory> {
     const { data, error } = await this.supabase
       .from("expense_categories")
       .update(payload)

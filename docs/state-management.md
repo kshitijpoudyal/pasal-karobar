@@ -28,14 +28,14 @@ getServerAppServices() → service → repository → Supabase
 
 ### Hook modules
 
-| Hook module                         | Domain              |
-| ----------------------------------- | ------------------- |
-| `use-business-queries`              | Business            |
-| `use-transaction-queries`           | Transactions        |
-| `use-service-catalog-queries`       | Services catalog    |
-| `use-expense-category-queries`      | Expense categories  |
-| `use-business-setting-queries`      | Business settings   |
-| `use-dashboard-queries`               | Dashboard summary   |
+| Hook module                    | Domain             |
+| ------------------------------ | ------------------ |
+| `use-business-queries`         | Business           |
+| `use-transaction-queries`      | Transactions       |
+| `use-service-catalog-queries`  | Services catalog   |
+| `use-expense-category-queries` | Expense categories |
+| `use-business-setting-queries` | Business settings  |
+| `use-dashboard-queries`        | Dashboard summary  |
 
 Dashboard summaries use `refetchOnMount: "always"` and `refetchOnWindowFocus: true`. After transaction edits, `syncAfterTransactionChange` / `refreshBusinessStats` in `transaction-query-cache.ts` invalidates lists and refetches dashboard queries. See [dashboard-troubleshooting.md](./dashboard-troubleshooting.md) if KPIs look stale.
 

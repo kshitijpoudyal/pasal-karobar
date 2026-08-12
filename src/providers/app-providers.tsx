@@ -23,22 +23,22 @@ export function AppProviders({ children }: AppProvidersProps) {
       <QueryProvider>
         <PwaInstallProvider>
           <AuthProvider>
-          <BusinessProvider>
-            <SupabaseGate>
-              <BusinessGate>
-                <ConnectivityProvider>
-                <AppNavProvider>
-                  <ConfirmDrawerProvider>
-                    <RecordTransactionModalProvider>
-                      {children}
-                      <ToastViewport />
-                    </RecordTransactionModalProvider>
-                  </ConfirmDrawerProvider>
-                </AppNavProvider>
-                </ConnectivityProvider>
-              </BusinessGate>
-            </SupabaseGate>
-          </BusinessProvider>
+            <BusinessProvider>
+              <SupabaseGate>
+                <BusinessGate>
+                  <ConnectivityProvider>
+                    <AppNavProvider>
+                      <ConfirmDrawerProvider>
+                        <RecordTransactionModalProvider>
+                          {children}
+                          <ToastViewport />
+                        </RecordTransactionModalProvider>
+                      </ConfirmDrawerProvider>
+                    </AppNavProvider>
+                  </ConnectivityProvider>
+                </BusinessGate>
+              </SupabaseGate>
+            </BusinessProvider>
           </AuthProvider>
         </PwaInstallProvider>
       </QueryProvider>

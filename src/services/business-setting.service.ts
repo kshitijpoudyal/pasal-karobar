@@ -6,18 +6,13 @@ import {
 import type { BusinessSetting } from "@/types/database";
 
 export class BusinessSettingService {
-  constructor(
-    private readonly businessSettingRepository: BusinessSettingRepository,
-  ) {}
+  constructor(private readonly businessSettingRepository: BusinessSettingRepository) {}
 
   async listByBusinessId(businessId: string): Promise<BusinessSetting[]> {
     return this.businessSettingRepository.listByBusinessId(businessId);
   }
 
-  async get(
-    businessId: string,
-    settingKey: string,
-  ): Promise<BusinessSetting | null> {
+  async get(businessId: string, settingKey: string): Promise<BusinessSetting | null> {
     return this.businessSettingRepository.get(businessId, settingKey);
   }
 

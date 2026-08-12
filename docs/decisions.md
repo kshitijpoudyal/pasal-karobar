@@ -19,8 +19,8 @@
 
 ## Log
 
-| ID    | Title                                      | Status   |
-| ----- | ------------------------------------------ | -------- |
+| ID      | Title                                      | Status   |
+| ------- | ------------------------------------------ | -------- |
 | ADR-001 | Supabase data layer (repository + service) | Accepted |
 
 ### ADR-001: Supabase data layer (repository + service)

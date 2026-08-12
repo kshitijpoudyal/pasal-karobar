@@ -9,24 +9,17 @@ import {
 
 import { queryKeys } from "@/constants/query-keys";
 import { getClientAppServices } from "@/services/client";
-import type {
-  CreateServiceInput,
-  UpdateServiceInput,
-} from "@/services/schemas";
+import type { CreateServiceInput, UpdateServiceInput } from "@/services/schemas";
 import type { ServiceRecord } from "@/types/database";
 import { isSupabaseConfigured } from "@/utils/env";
 
 export function useServiceCatalogQuery(
   businessId: string,
-  options?: Omit<
-    UseQueryOptions<ServiceRecord[], Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<ServiceRecord[], Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: queryKeys.serviceCatalog.list(businessId),
-    queryFn: () =>
-      getClientAppServices().serviceCatalog.listByBusinessId(businessId),
+    queryFn: () => getClientAppServices().serviceCatalog.listByBusinessId(businessId),
     enabled: isSupabaseConfigured() && Boolean(businessId),
     ...options,
   });

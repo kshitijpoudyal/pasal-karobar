@@ -18,15 +18,11 @@ import { isSupabaseConfigured } from "@/utils/env";
 
 export function useExpenseCategoriesQuery(
   businessId: string,
-  options?: Omit<
-    UseQueryOptions<ExpenseCategory[], Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<ExpenseCategory[], Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: queryKeys.expenseCategory.list(businessId),
-    queryFn: () =>
-      getClientAppServices().expenseCategory.listByBusinessId(businessId),
+    queryFn: () => getClientAppServices().expenseCategory.listByBusinessId(businessId),
     enabled: isSupabaseConfigured() && Boolean(businessId),
     ...options,
   });

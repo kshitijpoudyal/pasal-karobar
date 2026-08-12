@@ -20,10 +20,7 @@ import {
   startOfZonedDay,
   zonedPeriodBounds,
 } from "@/utils/business-datetime";
-import {
-  adDateKeyToBs,
-  bsToAdDateKey,
-} from "@/utils/nepali-calendar";
+import { adDateKeyToBs, bsToAdDateKey } from "@/utils/nepali-calendar";
 
 export type ActivityTimeframe = "Today" | "This Week" | "This Month" | "This Year";
 
@@ -132,7 +129,13 @@ export function isDashboardAtLatest(
   timeZone: string = DEFAULT_BUSINESS_TIMEZONE,
   calendarSystem: CalendarSystem = "AD",
 ): boolean {
-  const { to } = resolveDashboardRange(granularity, anchorDate, now, timeZone, calendarSystem);
+  const { to } = resolveDashboardRange(
+    granularity,
+    anchorDate,
+    now,
+    timeZone,
+    calendarSystem,
+  );
   const todayKey = businessTodayDateKey(timeZone, now);
   const todayEnd = endOfZonedDay(todayKey, timeZone);
   return parseISO(to).getTime() >= todayEnd.getTime();

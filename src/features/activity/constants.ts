@@ -1,8 +1,5 @@
 import type { PaymentMethod } from "@/types/database";
-import type {
-  ActivityCategoryFilter,
-  ActivityTimeframe,
-} from "@/utils/date-ranges";
+import type { ActivityCategoryFilter, ActivityTimeframe } from "@/utils/date-ranges";
 import { dbPaymentToLabel } from "@/utils/payment-method";
 
 export type { ActivityCategoryFilter, ActivityTimeframe };

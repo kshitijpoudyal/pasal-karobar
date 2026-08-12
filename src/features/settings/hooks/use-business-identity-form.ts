@@ -21,9 +21,7 @@ const businessIdentityFormSchema = updateBusinessSchema.extend({
   timezone: z.string().trim().min(1, "Select a timezone"),
 });
 
-export type BusinessIdentityFormValues = z.infer<
-  typeof businessIdentityFormSchema
->;
+export type BusinessIdentityFormValues = z.infer<typeof businessIdentityFormSchema>;
 
 export function useBusinessIdentityForm() {
   const { businessId } = useActiveBusiness();

@@ -122,19 +122,21 @@ async function main() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const [{ data: services, error: servicesError }, { data: categories, error: catError }] =
-    await Promise.all([
-      supabase
-        .from("services")
-        .select("id, default_price")
-        .eq("business_id", businessId)
-        .eq("is_active", true),
-      supabase
-        .from("expense_categories")
-        .select("id")
-        .eq("business_id", businessId)
-        .eq("is_active", true),
-    ]);
+  const [
+    { data: services, error: servicesError },
+    { data: categories, error: catError },
+  ] = await Promise.all([
+    supabase
+      .from("services")
+      .select("id, default_price")
+      .eq("business_id", businessId)
+      .eq("is_active", true),
+    supabase
+      .from("expense_categories")
+      .select("id")
+      .eq("business_id", businessId)
+      .eq("is_active", true),
+  ]);
 
   if (servicesError) {
     console.error("Failed to load services:", servicesError.message);
@@ -149,7 +151,9 @@ async function main() {
     process.exit(1);
   }
   if (!categories?.length) {
-    console.error(`No expense categories for business ${businessId}. Run seed.sql first.`);
+    console.error(
+      `No expense categories for business ${businessId}. Run seed.sql first.`,
+    );
     process.exit(1);
   }
 

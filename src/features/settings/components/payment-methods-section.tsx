@@ -347,7 +347,12 @@ export function PaymentMethodsSection() {
             role="alert"
           >
             <p className="text-sm text-on-surface">{deleteError}</p>
-            <Button type="button" variant="secondary" size="sm" onClick={clearDeleteError}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={clearDeleteError}
+            >
               Dismiss
             </Button>
           </div>

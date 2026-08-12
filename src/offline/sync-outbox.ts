@@ -13,10 +13,12 @@ import {
 import {
   buildPendingTransaction,
   isPendingSyncTransactionId,
+  pendingCustomerId,
   pendingSyncTransactionId,
 } from "@/offline/pending-transaction";
 import { getClientAppServices } from "@/services/client";
 import type { Transaction } from "@/types/database";
+import { parseOptionalNepalPhone } from "@/utils/phone-np";
 
 function upsertPendingInListCaches(
   queryClient: QueryClient,
@@ -64,18 +66,45 @@ function replacePendingWithServerTransaction(
   );
 }
 
+function resolvePendingCustomerId(entry: OutboxEntry): string | null {
+  if (entry.optimisticCustomerId !== undefined) {
+    return entry.optimisticCustomerId;
+  }
+  if (entry.payload.type !== "INCOME" || !entry.payload.customer_phone) {
+    return null;
+  }
+  const parsed = parseOptionalNepalPhone(entry.payload.customer_phone);
+  if (!("normalized" in parsed)) return null;
+  return pendingCustomerId(parsed.normalized);
+}
+
 export async function mergeOutboxIntoTransactionCaches(
   queryClient: QueryClient,
   businessId: string,
 ): Promise<void> {
   const entries = await listPendingOutboxEntries(businessId);
+  const pendingLabels: Record<string, string> = {};
+
   for (const entry of entries) {
+    const customerId = resolvePendingCustomerId(entry);
     const tx = buildPendingTransaction(
       entry.clientId,
       entry.businessId,
       entry.payload,
+      { customerId },
     );
     upsertPendingInListCaches(queryClient, businessId, tx);
+
+    if (customerId && entry.customerName?.trim()) {
+      pendingLabels[customerId] = entry.customerName.trim();
+    }
+  }
+
+  if (Object.keys(pendingLabels).length > 0) {
+    queryClient.setQueryData<Record<string, string>>(
+      queryKeys.customers.pendingLabels(businessId),
+      pendingLabels,
+    );
   }
 }
 
@@ -106,9 +135,21 @@ export async function syncOutboxForBusiness(
     }
 
     try {
-      const serverTx = await getClientAppServices().transaction.create(
-        entry.payload,
-      );
+      const serverTx = await getClientAppServices().transaction.create(entry.payload);
+      if (
+        entry.customerName &&
+        entry.payload.type === "INCOME" &&
+        entry.payload.customer_phone
+      ) {
+        await getClientAppServices().customer.applyNameForNormalizedPhone(
+          entry.businessId,
+          entry.payload.customer_phone,
+          entry.customerName,
+        );
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.customers.list(entry.businessId),
+        });
+      }
       await removeOutboxEntry(entry.clientId);
       replacePendingWithServerTransaction(
         queryClient,
@@ -118,8 +159,7 @@ export async function syncOutboxForBusiness(
       );
       synced += 1;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Could not sync entry.";
+      const message = error instanceof Error ? error.message : "Could not sync entry.";
       await markOutboxEntryFailed(entry.clientId, message);
       failed += 1;
       lastError = message;

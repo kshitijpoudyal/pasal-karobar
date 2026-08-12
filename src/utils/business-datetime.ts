@@ -74,10 +74,7 @@ export function isoDayInTimeZone(iso: string, timeZone: string): number {
   return map[weekday] ?? 1;
 }
 
-export function formatTimeInBusinessZone(
-  iso: string,
-  timeZone: string,
-): string {
+export function formatTimeInBusinessZone(iso: string, timeZone: string): string {
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
     hour: "numeric",
@@ -99,7 +96,11 @@ export function businessTimeZoneShortLabel(timeZone: string): string {
   }
 }
 
-export function parseDateKey(dateKey: string): { year: number; month: number; day: number } {
+export function parseDateKey(dateKey: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
   const [yearStr, monthStr, dayStr] = dateKey.split("-");
   return {
     year: Number.parseInt(yearStr ?? "0", 10),
@@ -132,10 +133,7 @@ export function endOfZonedDay(dateKey: string, timeZone: string): Date {
   return new Date(startOfZonedDay(nextKey, timeZone).getTime() - 1);
 }
 
-export function businessTodayDateKey(
-  timeZone: string,
-  now: Date = new Date(),
-): string {
+export function businessTodayDateKey(timeZone: string, now: Date = new Date()): string {
   return dateKeyInTimeZone(now.toISOString(), timeZone);
 }
 
@@ -161,7 +159,7 @@ export function formatDayLabelForDateKey(
       return `Yesterday, ${bsShort}`;
     }
     const weekday = formatBsWeekday(dateKey);
-    return weekday ? `${weekday}, ${bsShort}` : formatBsDayLong(dateKey) ?? bsShort;
+    return weekday ? `${weekday}, ${bsShort}` : (formatBsDayLong(dateKey) ?? bsShort);
   }
 
   if (dateKey === todayKey) {
@@ -242,8 +240,8 @@ export function zonedPeriodBounds(
 
   const bounds =
     calendarSystem === "BS"
-      ? zonedPeriodBoundsBs(granularity, anchorKey, timeZone) ??
-        zonedPeriodBoundsAd(granularity, anchorKey, timeZone)
+      ? (zonedPeriodBoundsBs(granularity, anchorKey, timeZone) ??
+        zonedPeriodBoundsAd(granularity, anchorKey, timeZone))
       : zonedPeriodBoundsAd(granularity, anchorKey, timeZone);
 
   let from = startOfZonedDay(bounds.fromKey, timeZone);
@@ -275,7 +273,10 @@ function getActivityDateRangeAd(
     }
     case "This Month": {
       const { year, month } = parseDateKey(todayKey);
-      return { fromKey: `${year}-${String(month).padStart(2, "0")}-01`, toKey: todayKey };
+      return {
+        fromKey: `${year}-${String(month).padStart(2, "0")}-01`,
+        toKey: todayKey,
+      };
     }
     case "This Year": {
       const y = Number.parseInt(todayKey.slice(0, 4), 10);
@@ -324,8 +325,8 @@ export function getActivityDateRangeInTimeZone(
   const to = endOfZonedDay(todayKey, timeZone).toISOString();
   const keys =
     calendarSystem === "BS"
-      ? getActivityDateRangeBs(timeframe, todayKey, timeZone, now) ??
-        getActivityDateRangeAd(timeframe, todayKey, timeZone, now)
+      ? (getActivityDateRangeBs(timeframe, todayKey, timeZone, now) ??
+        getActivityDateRangeAd(timeframe, todayKey, timeZone, now))
       : getActivityDateRangeAd(timeframe, todayKey, timeZone, now);
 
   return {

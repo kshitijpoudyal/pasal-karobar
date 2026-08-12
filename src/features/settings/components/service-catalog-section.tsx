@@ -1,13 +1,23 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, ChevronUp, MoreVertical, Pencil, Scissors, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  MoreVertical,
+  Pencil,
+  Scissors,
+  Trash2,
+} from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
 import { runConfirmedAction, useConfirmDrawer } from "@/components/confirm-drawer";
-import { getServiceIconComponent, DEFAULT_SERVICE_ICON_ID } from "@/constants/service-icons";
+import {
+  getServiceIconComponent,
+  DEFAULT_SERVICE_ICON_ID,
+} from "@/constants/service-icons";
 import { ServiceCatalogAddCard } from "@/features/settings/components/service-catalog-add-card";
 import { RegisterServiceModal } from "@/features/settings/components/register-service-modal";
 import { useServiceCatalogSection } from "@/features/settings/hooks/use-service-catalog-section";
@@ -277,7 +287,12 @@ export function ServiceCatalogSection() {
             role="alert"
           >
             <p className="text-sm text-on-surface">{deleteError}</p>
-            <Button type="button" variant="secondary" size="sm" onClick={clearDeleteError}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={clearDeleteError}
+            >
               Dismiss
             </Button>
           </div>

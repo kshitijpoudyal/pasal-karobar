@@ -43,8 +43,7 @@ export function dismissToast(id: string) {
 }
 
 export function toast(input: ToastInput | string) {
-  const normalized: ToastInput =
-    typeof input === "string" ? { title: input } : input;
+  const normalized: ToastInput = typeof input === "string" ? { title: input } : input;
 
   const item: ToastItem = {
     id: genId(),

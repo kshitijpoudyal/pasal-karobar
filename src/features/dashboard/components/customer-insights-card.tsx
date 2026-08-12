@@ -13,9 +13,7 @@ export function CustomerInsightsCard({ insights }: CustomerInsightsCardProps) {
     <section className="squircle bg-surface-container-low p-5 shadow-natural-ink lg:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="font-headline text-lg font-bold text-primary">
-            Customers
-          </h2>
+          <h2 className="font-headline text-lg font-bold text-primary">Customers</h2>
           <p className="mt-1 text-sm text-on-surface-variant">
             New vs returning for this period (tracked by phone on income).
           </p>

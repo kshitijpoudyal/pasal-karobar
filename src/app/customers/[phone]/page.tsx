@@ -4,9 +4,7 @@ type CustomerDetailPageProps = {
   params: Promise<{ phone: string }>;
 };
 
-export default async function CustomerDetailPage({
-  params,
-}: CustomerDetailPageProps) {
+export default async function CustomerDetailPage({ params }: CustomerDetailPageProps) {
   const { phone } = await params;
   return <CustomerDetailPageView phoneRouteParam={phone} />;
 }

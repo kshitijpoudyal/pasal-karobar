@@ -2,6 +2,7 @@ import type { CustomerService } from "@/services/customer.service";
 import type { TransactionRepository } from "@/repository/transaction.repository";
 import type {
   IncomeSummaryRow,
+  IncomeSummaryFilters,
   TransactionListFilters,
 } from "@/repository/transaction.repository";
 import {
@@ -27,13 +28,15 @@ export class TransactionService {
 
   async listIncomeSummaryByBusinessId(
     businessId: string,
+    filters?: IncomeSummaryFilters,
   ): Promise<IncomeSummaryRow[]> {
-    return this.transactionRepository.listIncomeSummaryByBusinessId(businessId);
+    return this.transactionRepository.listIncomeSummaryByBusinessId(
+      businessId,
+      filters,
+    );
   }
 
-  async findEarliestTransactionDate(
-    businessId: string,
-  ): Promise<string | null> {
+  async findEarliestTransactionDate(businessId: string): Promise<string | null> {
     return this.transactionRepository.findEarliestTransactionDate(businessId);
   }
 

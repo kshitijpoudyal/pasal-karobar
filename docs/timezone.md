@@ -2,11 +2,11 @@
 
 ## Model
 
-| Layer | Rule |
-| ----- | ---- |
-| **Database** | `transactions.transaction_date` is a UTC instant (ISO 8601 with offset). New entries use `new Date().toISOString()`. |
-| **Business setting** | `businesses.timezone` is an IANA name (default `Asia/Kathmandu` from onboarding). |
-| **UI & aggregates** | All user-visible times, day grouping, and dashboard period windows use the **active business timezone**, not the device clock or server region. |
+| Layer                | Rule                                                                                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Database**         | `transactions.transaction_date` is a UTC instant (ISO 8601 with offset). New entries use `new Date().toISOString()`.                            |
+| **Business setting** | `businesses.timezone` is an IANA name (default `Asia/Kathmandu` from onboarding).                                                               |
+| **UI & aggregates**  | All user-visible times, day grouping, and dashboard period windows use the **active business timezone**, not the device clock or server region. |
 
 ## Code map
 

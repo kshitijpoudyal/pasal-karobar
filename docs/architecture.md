@@ -73,16 +73,16 @@ React Components never communicate directly with Supabase.
 
 # Data layer (Supabase)
 
-| Piece | Location |
-| ----- | -------- |
-| Browser client | `src/supabase/client.ts` |
-| Server client | `src/supabase/server.ts` |
-| Admin client (server-only) | `src/supabase/admin.ts` |
-| Types | `src/types/database.ts` |
-| Repositories | `src/repository/*.repository.ts` |
-| Services | `src/services/*.service.ts` (includes `dashboard.service.ts`) |
-| Query hooks | `src/hooks/queries/` |
-| SQL migrations | `supabase/migrations/` |
+| Piece                      | Location                                                      |
+| -------------------------- | ------------------------------------------------------------- |
+| Browser client             | `src/supabase/client.ts`                                      |
+| Server client              | `src/supabase/server.ts`                                      |
+| Admin client (server-only) | `src/supabase/admin.ts`                                       |
+| Types                      | `src/types/database.ts`                                       |
+| Repositories               | `src/repository/*.repository.ts`                              |
+| Services                   | `src/services/*.service.ts` (includes `dashboard.service.ts`) |
+| Query hooks                | `src/hooks/queries/`                                          |
+| SQL migrations             | `supabase/migrations/`                                        |
 
 Factory helpers: `createRepositories()`, `createAppServices()`, `getClientAppServices()`, `getServerAppServices()`.
 
@@ -128,13 +128,13 @@ features/
 
 # Responsibilities
 
-| Layer        | Responsibility              |
-| ------------ | --------------------------- |
-| Components   | Display UI only             |
-| Hooks        | Manage component state      |
-| Services     | Business logic              |
-| Repository   | Database communication      |
-| Supabase     | Persistence                 |
+| Layer      | Responsibility         |
+| ---------- | ---------------------- |
+| Components | Display UI only        |
+| Hooks      | Manage component state |
+| Services   | Business logic         |
+| Repository | Database communication |
+| Supabase   | Persistence            |
 
 ---
 

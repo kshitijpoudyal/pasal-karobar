@@ -188,9 +188,7 @@ function HeatmapCell({
           <p className="text-[10px] font-bold tracking-wide text-surface-bright uppercase">
             {labelDate}
           </p>
-          <p className="text-xs text-surface-container-lowest/90">
-            {customerLabel}
-          </p>
+          <p className="text-xs text-surface-container-lowest/90">{customerLabel}</p>
           <p className="text-xs font-semibold text-surface-bright">
             {formatCompactNpr(day.revenue)} income
           </p>

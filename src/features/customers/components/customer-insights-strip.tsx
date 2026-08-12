@@ -23,9 +23,7 @@ function StatTile({
       )}
     >
       <span className="text-label-sm text-on-surface-variant">{label}</span>
-      <span className="font-headline text-2xl font-bold text-primary">
-        {value}
-      </span>
+      <span className="font-headline text-2xl font-bold text-primary">{value}</span>
     </div>
   );
 }

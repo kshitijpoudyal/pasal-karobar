@@ -11,8 +11,7 @@ export function OfflineStatusBanner() {
 
   if (!connectivity) return null;
 
-  const { isOnline, syncStatus, syncError, pendingCount, retrySync } =
-    connectivity;
+  const { isOnline, syncStatus, syncError, pendingCount, retrySync } = connectivity;
 
   const showOffline = !isOnline;
   const showSyncing = isOnline && syncStatus === "syncing";
@@ -28,9 +27,11 @@ export function OfflineStatusBanner() {
     <div
       className={cn(
         "sticky top-0 z-40 w-full border-b px-4 py-2 text-center text-sm lg:px-8",
-        showOffline && "border-outline-variant bg-surface-container-high text-on-surface",
+        showOffline &&
+          "border-outline-variant bg-surface-container-high text-on-surface",
         showSyncing && "border-primary/20 bg-primary-container/30 text-on-surface",
-        showSyncError && "border-error/30 bg-error-container/40 text-on-error-container",
+        showSyncError &&
+          "border-error/30 bg-error-container/40 text-on-error-container",
         showPending &&
           !showSyncError &&
           "border-outline-variant bg-surface-container-low text-on-surface-variant",
@@ -43,9 +44,7 @@ export function OfflineStatusBanner() {
           You&apos;re offline — new entries save on this device and sync when
           you&apos;re back online.
           {pendingCount > 0 ? (
-            <span className="font-medium">
-              ({pendingCount} waiting to sync)
-            </span>
+            <span className="font-medium">({pendingCount} waiting to sync)</span>
           ) : null}
         </span>
       ) : null}
@@ -59,9 +58,7 @@ export function OfflineStatusBanner() {
 
       {showSyncError ? (
         <span className="inline-flex flex-wrap items-center justify-center gap-2">
-          <span>
-            Couldn&apos;t sync: {syncError ?? "Something went wrong."}
-          </span>
+          <span>Couldn&apos;t sync: {syncError ?? "Something went wrong."}</span>
           <Button type="button" variant="secondary" size="sm" onClick={retrySync}>
             Retry
           </Button>

@@ -11,10 +11,7 @@ type ActivityHeaderChromeProps = {
   layout: "mobile" | "tablet";
 };
 
-export function ActivityHeaderChrome({
-  activity,
-  layout,
-}: ActivityHeaderChromeProps) {
+export function ActivityHeaderChrome({ activity, layout }: ActivityHeaderChromeProps) {
   if (layout === "mobile") {
     return (
       <div className="flex shrink-0 flex-col gap-6">

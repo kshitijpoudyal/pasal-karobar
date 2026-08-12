@@ -10,15 +10,13 @@ export const queryKeys = {
     all: ["service-catalog"] as const,
     list: (businessId: string) =>
       [...queryKeys.serviceCatalog.all, "list", businessId] as const,
-    detail: (id: string) =>
-      [...queryKeys.serviceCatalog.all, "detail", id] as const,
+    detail: (id: string) => [...queryKeys.serviceCatalog.all, "detail", id] as const,
   },
   expenseCategory: {
     all: ["expense-category"] as const,
     list: (businessId: string) =>
       [...queryKeys.expenseCategory.all, "list", businessId] as const,
-    detail: (id: string) =>
-      [...queryKeys.expenseCategory.all, "detail", id] as const,
+    detail: (id: string) => [...queryKeys.expenseCategory.all, "detail", id] as const,
   },
   businessPaymentMethod: {
     all: ["business-payment-method"] as const,
@@ -31,20 +29,14 @@ export const queryKeys = {
       [...queryKeys.transactions.all, "list", businessId, filters ?? {}] as const,
     incomeSummary: (businessId: string) =>
       [...queryKeys.transactions.all, "income-summary", businessId] as const,
-    detail: (id: string) =>
-      [...queryKeys.transactions.all, "detail", id] as const,
+    detail: (id: string) => [...queryKeys.transactions.all, "detail", id] as const,
   },
   businessSettings: {
     all: ["business-settings"] as const,
     list: (businessId: string) =>
       [...queryKeys.businessSettings.all, "list", businessId] as const,
     detail: (businessId: string, settingKey: string) =>
-      [
-        ...queryKeys.businessSettings.all,
-        "detail",
-        businessId,
-        settingKey,
-      ] as const,
+      [...queryKeys.businessSettings.all, "detail", businessId, settingKey] as const,
   },
   dashboard: {
     all: ["dashboard"] as const,
@@ -55,8 +47,9 @@ export const queryKeys = {
     all: ["customers"] as const,
     list: (businessId: string) =>
       [...queryKeys.customers.all, "list", businessId] as const,
-    detail: (id: string) =>
-      [...queryKeys.customers.all, "detail", id] as const,
+    detail: (id: string) => [...queryKeys.customers.all, "detail", id] as const,
+    pendingLabels: (businessId: string) =>
+      [...queryKeys.customers.all, "pending-labels", businessId] as const,
   },
   customerPhotos: {
     all: ["customer-photos"] as const,

@@ -35,7 +35,8 @@ export function hydrateBusiness(
     calendar_system: resolveCalendarSystem(
       map.get(BUSINESS_SETTING_KEYS.calendarSystem),
     ),
-    currency: map.get(BUSINESS_SETTING_KEYS.currency)?.trim() || DEFAULT_BUSINESS_CURRENCY,
+    currency:
+      map.get(BUSINESS_SETTING_KEYS.currency)?.trim() || DEFAULT_BUSINESS_CURRENCY,
     timezone:
       map.get(BUSINESS_SETTING_KEYS.timezone)?.trim() || DEFAULT_BUSINESS_TIMEZONE,
   };

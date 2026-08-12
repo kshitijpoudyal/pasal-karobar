@@ -18,10 +18,7 @@ import {
 } from "date-fns";
 
 import type { DashboardGranularity } from "@/utils/date-ranges";
-import {
-  businessTodayDateKey,
-  dateKeyInTimeZone,
-} from "@/utils/business-datetime";
+import { businessTodayDateKey, dateKeyInTimeZone } from "@/utils/business-datetime";
 import { adDateKeyToBs } from "@/utils/nepali-calendar";
 
 export type PeriodPickerMode = Extract<
@@ -190,7 +187,11 @@ export function isFutureDay(day: Date, now: Date = new Date()): boolean {
   return isAfter(startOfDay(day), startOfDay(now));
 }
 
-export function isFutureMonth(year: number, monthIndex: number, now = new Date()): boolean {
+export function isFutureMonth(
+  year: number,
+  monthIndex: number,
+  now = new Date(),
+): boolean {
   const candidate = new Date(year, monthIndex, 1);
   return isAfter(startOfMonth(candidate), startOfMonth(now));
 }

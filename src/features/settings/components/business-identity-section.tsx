@@ -5,10 +5,7 @@ import { Pencil, Store } from "lucide-react";
 
 import { QueryState } from "@/components/layout/query-state";
 import { Button } from "@/components/ui/button";
-import {
-  CALENDAR_SYSTEMS,
-  calendarSystemLabel,
-} from "@/constants/calendar-system";
+import { CALENDAR_SYSTEMS, calendarSystemLabel } from "@/constants/calendar-system";
 import {
   DEFAULT_BUSINESS_TIMEZONE,
   timezoneOptionsIncludingCurrent,
@@ -176,8 +173,8 @@ export function BusinessIdentitySection() {
                 ))}
               </select>
               <p className="px-1 text-xs text-on-surface-variant">
-                Controls how dates and report periods are shown. Transaction
-                times stay in UTC.
+                Controls how dates and report periods are shown. Transaction times stay
+                in UTC.
               </p>
             </div>
             <div className="space-y-3 md:col-span-2">
@@ -197,8 +194,8 @@ export function BusinessIdentitySection() {
                 ))}
               </select>
               <p className="px-1 text-xs text-on-surface-variant">
-                Activity and dashboard times use this zone. Stored transactions
-                stay in UTC.
+                Activity and dashboard times use this zone. Stored transactions stay in
+                UTC.
               </p>
               {errors.timezone ? (
                 <p className="text-xs text-error">{errors.timezone.message}</p>

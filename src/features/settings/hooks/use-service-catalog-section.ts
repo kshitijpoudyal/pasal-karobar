@@ -6,7 +6,10 @@ import { useCallback, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-import { DEFAULT_SERVICE_ICON_ID, normalizeServiceIconId } from "@/constants/service-icons";
+import {
+  DEFAULT_SERVICE_ICON_ID,
+  normalizeServiceIconId,
+} from "@/constants/service-icons";
 import { queryKeys } from "@/constants/query-keys";
 import { toast } from "@/components/toast";
 import {
@@ -23,7 +26,11 @@ import {
 } from "@/hooks/queries/use-service-catalog-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { getClientAppServices } from "@/services/client";
-import { createServiceSchema, serviceIconIdSchema, updateServiceSchema } from "@/services/schemas";
+import {
+  createServiceSchema,
+  serviceIconIdSchema,
+  updateServiceSchema,
+} from "@/services/schemas";
 import type { ServiceRecord } from "@/types/database";
 
 const serviceFormSchema = z.object({
@@ -157,7 +164,10 @@ export function useServiceCatalogSection(
     const activeList = sortActiveServices(all);
     const activeCount = activeList.length;
     const targetPosition = Math.min(
-      Math.max(values.entry_position ?? entryPositionForService(all, editingService.id), 1),
+      Math.max(
+        values.entry_position ?? entryPositionForService(all, editingService.id),
+        1,
+      ),
       activeCount,
     );
     const currentPosition = entryPositionForService(all, editingService.id);

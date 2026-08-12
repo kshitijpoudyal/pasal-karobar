@@ -9,7 +9,11 @@ import {
   type ActivityPaymentFilter,
 } from "@/features/activity/constants";
 
-const CATEGORIES = ["All", "Income", "Expense"] as const satisfies readonly ActivityCategoryFilter[];
+const CATEGORIES = [
+  "All",
+  "Income",
+  "Expense",
+] as const satisfies readonly ActivityCategoryFilter[];
 
 type ActivityCategorySegmentProps = {
   category: ActivityCategoryFilter;
@@ -60,12 +64,7 @@ export function ActivityPaymentIconStrip({
   className,
 }: ActivityPaymentIconStripProps) {
   return (
-    <div
-      className={cn(
-        "hide-scrollbar flex gap-1.5 overflow-x-auto",
-        className,
-      )}
-    >
+    <div className={cn("hide-scrollbar flex gap-1.5 overflow-x-auto", className)}>
       {PAYMENT_FILTERS.map(({ value, label }) => {
         const selected = paymentMethod === value;
         return (

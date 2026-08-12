@@ -126,33 +126,35 @@ export function DashboardTimeNavigator({
             ref={periodTriggerRef}
             className="inline-flex w-fit items-center rounded-full border border-outline-variant bg-surface-container-lowest p-1.5"
           >
-          <button
-            type="button"
-            aria-label="Previous period"
-            onClick={() => step(-1)}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low"
-          >
-            <ChevronLeft className="size-4" strokeWidth={1.75} />
-          </button>
+            <button
+              type="button"
+              aria-label="Previous period"
+              onClick={() => step(-1)}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low"
+            >
+              <ChevronLeft className="size-4" strokeWidth={1.75} />
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            className="font-headline max-w-[12rem] shrink-0 rounded-full px-4 py-2 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low sm:max-w-none"
-            aria-label="Choose period"
-          >
-            <span className="block truncate sm:whitespace-nowrap">{scrubberLabel}</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="font-headline max-w-[12rem] shrink-0 rounded-full px-4 py-2 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low sm:max-w-none"
+              aria-label="Choose period"
+            >
+              <span className="block truncate sm:whitespace-nowrap">
+                {scrubberLabel}
+              </span>
+            </button>
 
-          <button
-            type="button"
-            aria-label="Next period"
-            disabled={atLatest}
-            onClick={() => step(1)}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:opacity-30"
-          >
-            <ChevronRight className="size-4" strokeWidth={1.75} />
-          </button>
+            <button
+              type="button"
+              aria-label="Next period"
+              disabled={atLatest}
+              onClick={() => step(1)}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:opacity-30"
+            >
+              <ChevronRight className="size-4" strokeWidth={1.75} />
+            </button>
           </div>
         </div>
       </div>

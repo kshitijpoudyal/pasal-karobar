@@ -69,10 +69,7 @@ export class CustomerPhotoRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const { error } = await this.supabase
-      .from("customer_photos")
-      .delete()
-      .eq("id", id);
+    const { error } = await this.supabase.from("customer_photos").delete().eq("id", id);
 
     if (error) mapRepositoryError(error);
   }
@@ -104,10 +101,7 @@ export class CustomerPhotoRepository {
     }
   }
 
-  async createSignedUrl(
-    storagePath: string,
-    expiresInSec: number,
-  ): Promise<string> {
+  async createSignedUrl(storagePath: string, expiresInSec: number): Promise<string> {
     const { data, error } = await this.supabase.storage
       .from(CUSTOMER_PHOTOS_BUCKET)
       .createSignedUrl(storagePath, expiresInSec);

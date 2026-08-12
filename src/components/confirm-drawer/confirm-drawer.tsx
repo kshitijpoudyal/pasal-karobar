@@ -74,7 +74,10 @@ export function ConfirmDrawer({
             {title}
           </h2>
           {description ? (
-            <p id={descriptionId} className="text-sm leading-relaxed text-on-surface-variant">
+            <p
+              id={descriptionId}
+              className="text-sm leading-relaxed text-on-surface-variant"
+            >
               {description}
             </p>
           ) : null}
@@ -94,7 +97,10 @@ export function ConfirmDrawer({
             type="button"
             variant={tone === "destructive" ? "destructive" : "primary"}
             size="cta"
-            className={cn("w-full sm:w-auto", tone === "destructive" && "font-semibold")}
+            className={cn(
+              "w-full sm:w-auto",
+              tone === "destructive" && "font-semibold",
+            )}
             disabled={isConfirming}
             onClick={onConfirm}
           >

@@ -40,9 +40,8 @@ export function usePaymentMethodsSection() {
   const updateMutation = useUpdateBusinessPaymentMethodMutation(businessId);
   const deactivateMutation = useDeactivateBusinessPaymentMethodMutation(businessId);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [editingMethod, setEditingMethod] = useState<BusinessPaymentMethodRecord | null>(
-    null,
-  );
+  const [editingMethod, setEditingMethod] =
+    useState<BusinessPaymentMethodRecord | null>(null);
   const [editLabel, setEditLabel] = useState("");
   const [editEntryPosition, setEditEntryPosition] = useState(1);
   const [isReordering, setIsReordering] = useState(false);
@@ -57,12 +56,12 @@ export function usePaymentMethodsSection() {
     const activeCodes = new Set(
       all.filter((row) => row.is_active).map((row) => row.method_code),
     );
-    return PAYMENT_METHOD_PRESET_CODES.filter(
-      (code) => !activeCodes.has(code),
-    ).map((code) => ({
-      code,
-      defaultLabel: PAYMENT_METHOD_DEFAULT_LABELS[code],
-    }));
+    return PAYMENT_METHOD_PRESET_CODES.filter((code) => !activeCodes.has(code)).map(
+      (code) => ({
+        code,
+        defaultLabel: PAYMENT_METHOD_DEFAULT_LABELS[code],
+      }),
+    );
   }, [methodsQuery.data]);
 
   const persistPaymentMethodOrder = useCallback(
@@ -141,9 +140,7 @@ export function usePaymentMethodsSection() {
   );
 
   async function addPreset(code: PaymentMethodPresetCode) {
-    const existing = (methodsQuery.data ?? []).find(
-      (row) => row.method_code === code,
-    );
+    const existing = (methodsQuery.data ?? []).find((row) => row.method_code === code);
     const maxOrder = activeMethods.reduce(
       (max, row) => Math.max(max, row.display_order),
       0,
@@ -238,10 +235,7 @@ export function usePaymentMethodsSection() {
     const all = methodsQuery.data ?? [];
     const activeList = sortActivePaymentMethods(all);
     const activeCount = activeList.length;
-    const targetPosition = Math.min(
-      Math.max(editEntryPosition, 1),
-      activeCount,
-    );
+    const targetPosition = Math.min(Math.max(editEntryPosition, 1), activeCount);
     const currentPosition = entryPositionForPaymentMethod(all, editingMethod.id);
 
     if (targetPosition !== currentPosition) {

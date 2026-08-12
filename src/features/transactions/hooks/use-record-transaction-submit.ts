@@ -7,14 +7,22 @@ import { queryKeys } from "@/constants/query-keys";
 import { useCreateTransactionMutation } from "@/hooks/queries/use-transaction-queries";
 import { useExpenseCategoriesQuery } from "@/hooks/queries/use-expense-category-queries";
 import { useServiceCatalogQuery } from "@/hooks/queries/use-service-catalog-queries";
+import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useConnectivity } from "@/providers/connectivity-provider";
 import { getClientAppServices } from "@/services/client";
 import { buildCombinedServiceTitle } from "@/features/transactions/utils/income-entry-title";
-import { createTransactionSchema, type CreateTransactionInput } from "@/services/schemas";
+import {
+  createTransactionSchema,
+  type CreateTransactionInput,
+} from "@/services/schemas";
 import type { PaymentMethod } from "@/types/database";
-import { shouldQueueTransactionOffline } from "@/offline/pending-transaction";
+import {
+  pendingCustomerId,
+  shouldQueueTransactionOffline,
+} from "@/offline/pending-transaction";
 import { useQueryClient } from "@tanstack/react-query";
+import { parseOptionalNepalPhone } from "@/utils/phone-np";
 
 export function useRecordTransactionSubmit(onSuccess: () => void) {
   const { businessId } = useActiveBusiness();
@@ -22,7 +30,19 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
   const queryClient = useQueryClient();
   const servicesQuery = useServiceCatalogQuery(businessId);
   const categoriesQuery = useExpenseCategoriesQuery(businessId);
+  const customersQuery = useCustomersQuery(businessId);
   const createMutation = useCreateTransactionMutation(businessId);
+
+  function resolveOptimisticCustomerId(phoneRaw?: string): string | null {
+    const parsed = parseOptionalNepalPhone(phoneRaw);
+    if (!("normalized" in parsed)) return null;
+
+    const { normalized } = parsed;
+    const existing = (customersQuery.data ?? []).find(
+      (customer) => customer.phone_normalized === normalized,
+    );
+    return existing?.id ?? pendingCustomerId(normalized);
+  }
 
   function shouldQueueOffline(): boolean {
     return shouldQueueTransactionOffline(appOnline);
@@ -65,7 +85,18 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
       ...(customerPhone ? { customer_phone: customerPhone } : {}),
     } satisfies CreateTransactionInput);
     const offlineClientId = queuedOffline ? crypto.randomUUID() : undefined;
-    await createMutation.mutateAsync({ ...payload, offlineClientId });
+    const optimisticCustomerId = resolveOptimisticCustomerId(customerPhone);
+    const offlineCustomerName =
+      input.saveCustomerName && input.customerName?.trim()
+        ? input.customerName.trim()
+        : undefined;
+
+    await createMutation.mutateAsync({
+      ...payload,
+      offlineClientId,
+      optimisticCustomerId,
+      offlineCustomerName,
+    });
 
     if (
       input.saveCustomerName &&
@@ -123,9 +154,7 @@ export function useRecordTransactionSubmit(onSuccess: () => void) {
 
   function resolveCategoryIdByName(name: string): string | undefined {
     const normalized = name.toLowerCase();
-    return categoriesQuery.data?.find(
-      (c) => c.name.toLowerCase() === normalized,
-    )?.id;
+    return categoriesQuery.data?.find((c) => c.name.toLowerCase() === normalized)?.id;
   }
 
   function validateIncome(input: unknown) {

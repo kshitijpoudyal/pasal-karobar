@@ -101,10 +101,7 @@ export function computeCustomerPeriodInsights(
 
 export function aggregateCustomerDirectoryStats(
   incomeRows: IncomeSummaryRow[] | Transaction[],
-): Map<
-  string,
-  { visitCount: number; revenue: number; lastVisitAt: string | null }
-> {
+): Map<string, { visitCount: number; revenue: number; lastVisitAt: string | null }> {
   const visitRows = asIncomeVisitRows(incomeRows);
   const visitCounts = countDistinctVisitsByCustomer(visitRows);
   const stats = new Map<

@@ -15,13 +15,9 @@ export class BusinessPaymentMethodMinimumError extends Error {
 }
 
 export class BusinessPaymentMethodService {
-  constructor(
-    private readonly repository: BusinessPaymentMethodRepository,
-  ) {}
+  constructor(private readonly repository: BusinessPaymentMethodRepository) {}
 
-  async listByBusinessId(
-    businessId: string,
-  ): Promise<BusinessPaymentMethodRecord[]> {
+  async listByBusinessId(businessId: string): Promise<BusinessPaymentMethodRecord[]> {
     return this.repository.listByBusinessId(businessId);
   }
 

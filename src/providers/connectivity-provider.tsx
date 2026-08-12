@@ -34,11 +34,7 @@ type ConnectivityContextValue = {
 
 const ConnectivityContext = createContext<ConnectivityContextValue | null>(null);
 
-export function ConnectivityProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ConnectivityProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const { businessId, isLoading: businessLoading } = useActiveBusiness();
   const [isOnline, setIsOnline] = useState(() => isBrowserOnline());
@@ -85,8 +81,7 @@ export function ConnectivityProvider({
         });
       }
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Sync failed.";
+      const message = error instanceof Error ? error.message : "Sync failed.";
       setSyncStatus("error");
       setSyncError(message);
     } finally {
@@ -118,8 +113,7 @@ export function ConnectivityProvider({
       void refreshPendingCount();
     }
     window.addEventListener(OUTBOX_CHANGED_EVENT, handleOutboxChanged);
-    return () =>
-      window.removeEventListener(OUTBOX_CHANGED_EVENT, handleOutboxChanged);
+    return () => window.removeEventListener(OUTBOX_CHANGED_EVENT, handleOutboxChanged);
   }, [refreshPendingCount]);
 
   useEffect(() => {
@@ -153,14 +147,7 @@ export function ConnectivityProvider({
       refreshPendingCount,
       retrySync,
     }),
-    [
-      isOnline,
-      syncStatus,
-      syncError,
-      pendingCount,
-      refreshPendingCount,
-      retrySync,
-    ],
+    [isOnline, syncStatus, syncError, pendingCount, refreshPendingCount, retrySync],
   );
 
   return (

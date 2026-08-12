@@ -1,11 +1,6 @@
 import type { PaymentMethod } from "@/types/database";
 
-export type UiPaymentMethod =
-  | "Cash"
-  | "eSewa"
-  | "Khalti"
-  | "eBank"
-  | "fonPay";
+export type UiPaymentMethod = "Cash" | "eSewa" | "Khalti" | "eBank" | "fonPay";
 
 const UI_TO_DB: Record<UiPaymentMethod, PaymentMethod> = {
   Cash: "CASH",

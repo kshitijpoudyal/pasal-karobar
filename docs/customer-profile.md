@@ -24,9 +24,9 @@ The directory at `/customers` lists everyone; tapping a row opens the detail URL
 
 ## Code map
 
-| Concern | Location |
-| ------- | -------- |
-| Service / validation | `src/services/customer-photo.service.ts` |
-| Hooks | `src/hooks/queries/use-customer-photo-queries.ts` |
-| UI | `customer-detail-page-view.tsx`, `customer-profile-editor.tsx`, `customer-profile-photos.tsx` |
-| Resize before upload | `src/utils/image-resize.ts` |
+| Concern              | Location                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------- |
+| Service / validation | `src/services/customer-photo.service.ts`                                                      |
+| Hooks                | `src/hooks/queries/use-customer-photo-queries.ts`                                             |
+| UI                   | `customer-detail-page-view.tsx`, `customer-profile-editor.tsx`, `customer-profile-photos.tsx` |
+| Resize before upload | `src/utils/image-resize.ts`                                                                   |

@@ -1,14 +1,15 @@
 import type { BusinessService } from "@/services/business.service";
 import type { CustomerService } from "@/services/customer.service";
-import { resolveCalendarSystem, type CalendarSystem } from "@/constants/calendar-system";
+import {
+  resolveCalendarSystem,
+  type CalendarSystem,
+} from "@/constants/calendar-system";
 import { computeCustomerPeriodInsights } from "@/services/customer-analytics.service";
 import type { TransactionService } from "@/services/transaction.service";
 import type { ServiceCatalogService } from "@/services/service-catalog.service";
 import type { Transaction } from "@/types/database";
 import type { DashboardGranularity } from "@/utils/date-ranges";
-import {
-  resolvePriorDashboardRange,
-} from "@/utils/date-ranges";
+import { resolvePriorDashboardRange } from "@/utils/date-ranges";
 import {
   businessTodayDateKey,
   dateKeyInTimeZone,
@@ -83,10 +84,7 @@ function sumByType(transactions: Transaction[], type: "INCOME" | "EXPENSE") {
     .reduce((sum, tx) => sum + Number(tx.total), 0);
 }
 
-function addToBucket(
-  bucket: { income: number; expense: number },
-  tx: Transaction,
-) {
+function addToBucket(bucket: { income: number; expense: number }, tx: Transaction) {
   if (tx.type === "INCOME") bucket.income += Number(tx.total);
   else bucket.expense += Number(tx.total);
 }
@@ -145,7 +143,9 @@ export function buildMonthDayHeatmap(
 
     for (let day = 1; day <= monthDays; day += 1) {
       const key = bsToAdDateKey(refBs.year, refBs.month, day) ?? "";
-      const stats = key ? (byDate.get(key) ?? { visitCount: 0, revenue: 0 }) : { visitCount: 0, revenue: 0 };
+      const stats = key
+        ? (byDate.get(key) ?? { visitCount: 0, revenue: 0 })
+        : { visitCount: 0, revenue: 0 };
       days.push({
         dateKey: key,
         dayOfMonth: day,
@@ -322,10 +322,7 @@ function weekdayLabelFromIsoDay(isoDay: number): string {
   return ISO_WEEKDAY_LABELS[isoDay - 1] ?? "Monday";
 }
 
-function formatMonthYearFromMonthKey(
-  periodMonthKey: string,
-  timeZone: string,
-): string {
+function formatMonthYearFromMonthKey(periodMonthKey: string, timeZone: string): string {
   return new Intl.DateTimeFormat("en-US", {
     timeZone,
     month: "long",
@@ -391,10 +388,7 @@ export function buildPeakAnalysisInsights(
   const periodVisitCount = incomeTx.length;
 
   // Busiest day of week (by visit count in period)
-  const byWeekday = new Map<
-    number,
-    { visits: number; revenue: number }
-  >();
+  const byWeekday = new Map<number, { visits: number; revenue: number }>();
   for (const tx of incomeTx) {
     const isoDay = isoDayInTimeZone(tx.transaction_date, timeZone);
     const bucket = byWeekday.get(isoDay) ?? {
@@ -694,16 +688,18 @@ export class DashboardService {
       parseISO(priorRange.from),
     ]).toISOString();
 
-    const [transactions, services, earliestTransactionDate, allTimeIncomeSummary] =
+    const [transactions, services, earliestTransactionDate, prePeriodIncomeSummary] =
       await Promise.all([
-      this.transactionService.listByBusinessId(businessId, {
-        fromDate: fetchFromIso,
-        toDate: periodToIso,
-      }),
-      this.serviceCatalogService.listByBusinessId(businessId),
-      this.transactionService.findEarliestTransactionDate(businessId),
-      this.transactionService.listIncomeSummaryByBusinessId(businessId),
-    ]);
+        this.transactionService.listByBusinessId(businessId, {
+          fromDate: fetchFromIso,
+          toDate: periodToIso,
+        }),
+        this.serviceCatalogService.listByBusinessId(businessId),
+        this.transactionService.findEarliestTransactionDate(businessId),
+        this.transactionService.listIncomeSummaryByBusinessId(businessId, {
+          toDateExclusive: periodFromIso,
+        }),
+      ]);
 
     const periodTransactions = filterTransactionsInRange(
       transactions,
@@ -745,8 +741,7 @@ export class DashboardService {
         serviceTotals.set(name, (serviceTotals.get(name) ?? 0) + Number(tx.total));
       }
       if (tx.transaction_date >= todayStart) {
-        dailyNetRevenue +=
-          tx.type === "INCOME" ? Number(tx.total) : -Number(tx.total);
+        dailyNetRevenue += tx.type === "INCOME" ? Number(tx.total) : -Number(tx.total);
       }
     }
 
@@ -789,7 +784,17 @@ export class DashboardService {
         : null;
 
     const customerInsights = computeCustomerPeriodInsights(
-      allTimeIncomeSummary,
+      [
+        ...prePeriodIncomeSummary,
+        ...periodTransactions
+          .filter((tx) => tx.type === "INCOME")
+          .map((tx) => ({
+            id: tx.id,
+            customer_id: tx.customer_id,
+            total: Number(tx.total),
+            transaction_date: tx.transaction_date,
+          })),
+      ],
       periodFromIso,
       periodToIso,
     );

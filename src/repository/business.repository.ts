@@ -1,11 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { isMissingRpcFunctionError, mapRepositoryError } from "@/repository/errors";
-import type {
-  BusinessRecord,
-  BusinessInsert,
-  Database,
-} from "@/types/database";
+import type { BusinessRecord, BusinessInsert, Database } from "@/types/database";
 
 export class BusinessRepository {
   constructor(private readonly supabase: SupabaseClient<Database>) {}

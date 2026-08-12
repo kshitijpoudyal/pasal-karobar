@@ -43,11 +43,16 @@ export function BusinessGate({ children }: { children: React.ReactNode }) {
             No business linked
           </h1>
           <p className="mt-3 text-sm text-on-surface-variant">
-            Your account is not linked to a shop yet. If you use seeded demo data,
-            add a row in <code className="text-primary">business_members</code> for
-            your user, or refresh to retry automatic setup.
+            Your account is not linked to a shop yet. If you use seeded demo data, add a
+            row in <code className="text-primary">business_members</code> for your user,
+            or refresh to retry automatic setup.
           </p>
-          <Button type="button" variant="primary" className="mt-6" onClick={() => window.location.reload()}>
+          <Button
+            type="button"
+            variant="primary"
+            className="mt-6"
+            onClick={() => window.location.reload()}
+          >
             Retry setup
           </Button>
         </div>
@@ -67,10 +72,16 @@ export function DashboardEmptyHint() {
         No transactions in this period
       </p>
       <p className="mt-2 text-sm text-on-surface-variant">
-        Record income or expenses to populate the dashboard. Try a wider period
-        filter if you expect older data.
+        Record income or expenses to populate the dashboard. Try a wider period filter
+        if you expect older data.
       </p>
-      <Button type="button" variant="primary" size="cta" className="mt-6" onClick={() => openModal()}>
+      <Button
+        type="button"
+        variant="primary"
+        size="cta"
+        className="mt-6"
+        onClick={() => openModal()}
+      >
         Record transaction
       </Button>
     </div>

@@ -37,9 +37,7 @@ export class CustomerPhotoNotFoundError extends Error {
 }
 
 function isAllowedMimeType(value: string): value is AllowedCustomerPhotoMimeType {
-  return (ALLOWED_CUSTOMER_PHOTO_MIME_TYPES as readonly string[]).includes(
-    value,
-  );
+  return (ALLOWED_CUSTOMER_PHOTO_MIME_TYPES as readonly string[]).includes(value);
 }
 
 export class CustomerPhotoService {
@@ -65,9 +63,7 @@ export class CustomerPhotoService {
   async upload(input: UploadCustomerPhotoInput): Promise<CustomerPhotoWithUrl> {
     const payload = input;
     if (!isAllowedMimeType(payload.content_type)) {
-      throw new CustomerPhotoValidationError(
-        "Use a JPEG, PNG, or WebP image.",
-      );
+      throw new CustomerPhotoValidationError("Use a JPEG, PNG, or WebP image.");
     }
     if (payload.byte_length > MAX_CUSTOMER_PHOTO_BYTES) {
       throw new CustomerPhotoValidationError("Image must be 4 MB or smaller.");

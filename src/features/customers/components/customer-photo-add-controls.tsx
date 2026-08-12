@@ -6,8 +6,7 @@ import { Camera, ImagePlus, Images, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /** Gallery picker — specific types help desktop file dialogs. */
-export const CUSTOMER_PHOTO_GALLERY_ACCEPT =
-  "image/jpeg,image/png,image/webp,image/*";
+export const CUSTOMER_PHOTO_GALLERY_ACCEPT = "image/jpeg,image/png,image/webp,image/*";
 
 /** Camera capture — image/* is required for reliable mobile camera on iOS/Android. */
 export const CUSTOMER_PHOTO_CAMERA_ACCEPT = "image/*";
@@ -50,9 +49,7 @@ export function CustomerPhotoAddControls({
     };
   }, [menuOpen]);
 
-  async function handleInputChange(
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  async function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     event.target.value = "";
     setMenuOpen(false);
@@ -99,7 +96,10 @@ export function CustomerPhotoAddControls({
             role="menuitem"
             className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
-            <Camera className="size-5 shrink-0 text-on-surface-variant" strokeWidth={1.75} />
+            <Camera
+              className="size-5 shrink-0 text-on-surface-variant"
+              strokeWidth={1.75}
+            />
             Take photo
           </label>
           <label
@@ -107,7 +107,10 @@ export function CustomerPhotoAddControls({
             role="menuitem"
             className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-low"
           >
-            <Images className="size-5 shrink-0 text-on-surface-variant" strokeWidth={1.75} />
+            <Images
+              className="size-5 shrink-0 text-on-surface-variant"
+              strokeWidth={1.75}
+            />
             Choose from library
           </label>
         </div>

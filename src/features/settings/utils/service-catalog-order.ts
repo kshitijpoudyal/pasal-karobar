@@ -42,10 +42,7 @@ export function reorderActiveList(
   const index = list.findIndex((service) => service.id === serviceId);
   if (index < 0) return list;
 
-  const targetIndex = Math.min(
-    Math.max(newPosition1Based - 1, 0),
-    list.length - 1,
-  );
+  const targetIndex = Math.min(Math.max(newPosition1Based - 1, 0), list.length - 1);
   if (targetIndex === index) return list;
 
   const reordered = [...list];

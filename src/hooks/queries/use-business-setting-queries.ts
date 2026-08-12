@@ -15,15 +15,11 @@ import { isSupabaseConfigured } from "@/utils/env";
 
 export function useBusinessSettingsQuery(
   businessId: string,
-  options?: Omit<
-    UseQueryOptions<BusinessSetting[], Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<BusinessSetting[], Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: queryKeys.businessSettings.list(businessId),
-    queryFn: () =>
-      getClientAppServices().businessSetting.listByBusinessId(businessId),
+    queryFn: () => getClientAppServices().businessSetting.listByBusinessId(businessId),
     enabled: isSupabaseConfigured() && Boolean(businessId),
     ...options,
   });
@@ -39,10 +35,8 @@ export function useBusinessSettingQuery(
 ) {
   return useQuery({
     queryKey: queryKeys.businessSettings.detail(businessId, settingKey),
-    queryFn: () =>
-      getClientAppServices().businessSetting.get(businessId, settingKey),
-    enabled:
-      isSupabaseConfigured() && Boolean(businessId) && Boolean(settingKey),
+    queryFn: () => getClientAppServices().businessSetting.get(businessId, settingKey),
+    enabled: isSupabaseConfigured() && Boolean(businessId) && Boolean(settingKey),
     ...options,
   });
 }
@@ -58,10 +52,7 @@ export function useUpsertBusinessSettingMutation(businessId: string) {
         queryKey: queryKeys.businessSettings.list(businessId),
       });
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.businessSettings.detail(
-          businessId,
-          variables.setting_key,
-        ),
+        queryKey: queryKeys.businessSettings.detail(businessId, variables.setting_key),
       });
     },
   });

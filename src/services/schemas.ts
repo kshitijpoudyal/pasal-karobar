@@ -123,10 +123,30 @@ export const createExpenseTransactionSchema = transactionBaseSchema.extend({
   total: z.coerce.number().nonnegative(),
 });
 
-export const createTransactionSchema = z.discriminatedUnion("type", [
-  createIncomeTransactionSchema,
-  createExpenseTransactionSchema,
-]);
+export const createTransactionSchema = z
+  .discriminatedUnion("type", [
+    createIncomeTransactionSchema,
+    createExpenseTransactionSchema,
+  ])
+  .superRefine((data, ctx) => {
+    if (data.type === "INCOME") {
+      if (data.total !== data.subtotal + (data.tip ?? 0)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Total must equal subtotal plus tip",
+          path: ["total"],
+        });
+      }
+      return;
+    }
+    if (data.total !== data.subtotal) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Total must equal subtotal",
+        path: ["total"],
+      });
+    }
+  });
 
 export const updateTransactionSchema = z
   .object({
@@ -153,12 +173,8 @@ export type CreateBusinessInput = z.infer<typeof createBusinessSchema>;
 export type UpdateBusinessInput = z.infer<typeof updateBusinessSchema>;
 export type CreateServiceInput = z.infer<typeof createServiceSchema>;
 export type UpdateServiceInput = z.infer<typeof updateServiceSchema>;
-export type CreateExpenseCategoryInput = z.infer<
-  typeof createExpenseCategorySchema
->;
-export type UpdateExpenseCategoryInput = z.infer<
-  typeof updateExpenseCategorySchema
->;
+export type CreateExpenseCategoryInput = z.infer<typeof createExpenseCategorySchema>;
+export type UpdateExpenseCategoryInput = z.infer<typeof updateExpenseCategorySchema>;
 export type CreateBusinessPaymentMethodInput = z.infer<
   typeof createBusinessPaymentMethodSchema
 >;
@@ -171,8 +187,8 @@ export type UpdateCustomerPhotoCaptionInput = z.infer<
   typeof updateCustomerPhotoCaptionSchema
 >;
 export type UploadCustomerPhotoInput = z.infer<typeof uploadCustomerPhotoSchema>;
-export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
+export type CreateTransactionInput =
+  | z.infer<typeof createIncomeTransactionSchema>
+  | z.infer<typeof createExpenseTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
-export type UpsertBusinessSettingInput = z.infer<
-  typeof upsertBusinessSettingSchema
->;
+export type UpsertBusinessSettingInput = z.infer<typeof upsertBusinessSettingSchema>;

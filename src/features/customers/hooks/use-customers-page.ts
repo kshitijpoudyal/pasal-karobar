@@ -11,9 +11,7 @@ import {
   type CustomerVisitFilter,
 } from "@/features/customers/constants";
 import { useCustomersQuery } from "@/hooks/queries/use-customer-queries";
-import {
-  useIncomeSummaryQuery,
-} from "@/hooks/queries/use-transaction-queries";
+import { useIncomeSummaryQuery } from "@/hooks/queries/use-transaction-queries";
 import { useActiveBusiness } from "@/providers/business-provider";
 import { useBusinessDateSettings } from "@/hooks/use-business-date-settings";
 import type { Customer } from "@/types/database";
@@ -54,25 +52,21 @@ export function useCustomersPage() {
 
   const directoryRows = useMemo(() => {
     const stats = aggregateCustomerDirectoryStats(incomeSummaryQuery.data ?? []);
-    const rows: CustomerDirectoryRow[] = (customersQuery.data ?? []).map(
-      (customer) => {
-        const bucket = stats.get(customer.id);
-        return {
-          customer,
-          visitCount: bucket?.visitCount ?? 0,
-          revenue: bucket?.revenue ?? 0,
-          lastVisitAt: bucket?.lastVisitAt ?? null,
-          displayPhone: formatNepalPhoneDisplay(customer.phone_normalized),
-        };
-      },
-    );
+    const rows: CustomerDirectoryRow[] = (customersQuery.data ?? []).map((customer) => {
+      const bucket = stats.get(customer.id);
+      return {
+        customer,
+        visitCount: bucket?.visitCount ?? 0,
+        revenue: bucket?.revenue ?? 0,
+        lastVisitAt: bucket?.lastVisitAt ?? null,
+        displayPhone: formatNepalPhoneDisplay(customer.phone_normalized),
+      };
+    });
     rows.sort((a, b) => {
       const aTime = a.lastVisitAt ? Date.parse(a.lastVisitAt) : 0;
       const bTime = b.lastVisitAt ? Date.parse(b.lastVisitAt) : 0;
       if (aTime !== bTime) return bTime - aTime;
-      return (
-        Date.parse(b.customer.created_at) - Date.parse(a.customer.created_at)
-      );
+      return Date.parse(b.customer.created_at) - Date.parse(a.customer.created_at);
     });
     return rows;
   }, [incomeSummaryQuery.data, customersQuery.data]);
@@ -101,11 +95,7 @@ export function useCustomersPage() {
 
   const groupedCustomers = useMemo(
     () =>
-      groupCustomersByLastVisitWithLabels(
-        filteredDirectory,
-        timeZone,
-        calendarSystem,
-      ),
+      groupCustomersByLastVisitWithLabels(filteredDirectory, timeZone, calendarSystem),
     [filteredDirectory, timeZone, calendarSystem],
   );
 
@@ -129,18 +119,10 @@ export function useCustomersPage() {
     setSearchQuery,
     hasSecondaryFilters,
     hasActiveSearch,
-    isLoading:
-      customersQuery.isLoading ||
-      incomeSummaryQuery.isLoading,
-    error:
-      customersQuery.error ??
-      incomeSummaryQuery.error ??
-      null,
+    isLoading: customersQuery.isLoading || incomeSummaryQuery.isLoading,
+    error: customersQuery.error ?? incomeSummaryQuery.error ?? null,
     refetch: async () => {
-      await Promise.all([
-        customersQuery.refetch(),
-        incomeSummaryQuery.refetch(),
-      ]);
+      await Promise.all([customersQuery.refetch(), incomeSummaryQuery.refetch()]);
     },
   };
 }

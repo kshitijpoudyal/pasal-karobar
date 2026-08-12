@@ -12,13 +12,7 @@ export function AppMain({ className, children }: AppMainProps) {
   const { mainOffsetClass } = useAppNav();
 
   return (
-    <main
-      className={cn(
-        appShellTransitionClass,
-        mainOffsetClass,
-        className,
-      )}
-    >
+    <main className={cn(appShellTransitionClass, mainOffsetClass, className)}>
       {children}
     </main>
   );

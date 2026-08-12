@@ -8,9 +8,7 @@ import {
 import type { ServiceRecord } from "@/types/database";
 
 export class ServiceCatalogService {
-  constructor(
-    private readonly serviceCatalogRepository: ServiceCatalogRepository,
-  ) {}
+  constructor(private readonly serviceCatalogRepository: ServiceCatalogRepository) {}
 
   async listByBusinessId(businessId: string): Promise<ServiceRecord[]> {
     return this.serviceCatalogRepository.listByBusinessId(businessId);

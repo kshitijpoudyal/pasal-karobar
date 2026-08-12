@@ -31,22 +31,22 @@ export function CustomersMain() {
     <>
       <section className="hidden min-h-0 w-full min-w-0 flex-1 flex-col gap-8 overflow-hidden p-6 xl:flex xl:gap-10 xl:p-12">
         <div className="flex shrink-0 flex-col gap-4">
-            <CustomerInsightsStrip
-              insights={page.periodInsights}
-              totalCustomers={page.totalCustomers}
-              onAddCustomer={openAddCustomer}
-              layout="desktop"
-            />
-            <CustomerFilters
-              timeframe={page.timeframe}
-              visitFilter={page.visitFilter}
-              searchQuery={page.searchQuery}
-              onTimeframeChange={page.setTimeframe}
-              onVisitFilterChange={page.setVisitFilter}
-              onSearchQueryChange={page.setSearchQuery}
-              onAddCustomer={openAddCustomer}
-              showDesktopAdd
-            />
+          <CustomerInsightsStrip
+            insights={page.periodInsights}
+            totalCustomers={page.totalCustomers}
+            onAddCustomer={openAddCustomer}
+            layout="desktop"
+          />
+          <CustomerFilters
+            timeframe={page.timeframe}
+            visitFilter={page.visitFilter}
+            searchQuery={page.searchQuery}
+            onTimeframeChange={page.setTimeframe}
+            onVisitFilterChange={page.setVisitFilter}
+            onSearchQueryChange={page.setSearchQuery}
+            onAddCustomer={openAddCustomer}
+            showDesktopAdd
+          />
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           <CustomerListBody

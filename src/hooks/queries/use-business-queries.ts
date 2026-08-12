@@ -9,18 +9,12 @@ import {
 
 import { queryKeys } from "@/constants/query-keys";
 import { getClientAppServices } from "@/services/client";
-import type {
-  CreateBusinessInput,
-  UpdateBusinessInput,
-} from "@/services/schemas";
+import type { CreateBusinessInput, UpdateBusinessInput } from "@/services/schemas";
 import type { Business } from "@/types/database";
 import { isSupabaseConfigured } from "@/utils/env";
 
 export function useBusinessListQuery(
-  options?: Omit<
-    UseQueryOptions<Business[], Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<Business[], Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: queryKeys.business.list(),
@@ -32,10 +26,7 @@ export function useBusinessListQuery(
 
 export function useBusinessQuery(
   businessId: string,
-  options?: Omit<
-    UseQueryOptions<Business | null, Error>,
-    "queryKey" | "queryFn"
-  >,
+  options?: Omit<UseQueryOptions<Business | null, Error>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: queryKeys.business.detail(businessId),

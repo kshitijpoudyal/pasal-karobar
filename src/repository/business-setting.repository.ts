@@ -37,10 +37,7 @@ export class BusinessSettingRepository {
     return data ?? [];
   }
 
-  async get(
-    businessId: string,
-    settingKey: string,
-  ): Promise<BusinessSetting | null> {
+  async get(businessId: string, settingKey: string): Promise<BusinessSetting | null> {
     const { data, error } = await this.supabase
       .from("business_settings")
       .select("*")

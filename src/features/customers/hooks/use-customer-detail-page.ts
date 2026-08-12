@@ -70,9 +70,7 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
   );
 
   const displayPhone =
-    customer && parsedPhone.ok
-      ? formatNepalPhoneDisplay(parsedPhone.normalized)
-      : null;
+    customer && parsedPhone.ok ? formatNepalPhoneDisplay(parsedPhone.normalized) : null;
 
   return {
     businessId,
@@ -91,10 +89,7 @@ export function useCustomerDetailPage(phoneRouteParam: string) {
       customerIncomeQuery.isLoading ||
       servicesQuery.isLoading,
     error:
-      customersQuery.error ??
-      customerIncomeQuery.error ??
-      servicesQuery.error ??
-      null,
+      customersQuery.error ?? customerIncomeQuery.error ?? servicesQuery.error ?? null,
     refetch: async () => {
       await Promise.all([
         customersQuery.refetch(),

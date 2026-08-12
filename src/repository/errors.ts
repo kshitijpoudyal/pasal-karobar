@@ -19,7 +19,8 @@ export function isMissingRpcFunctionError(
   functionName: string,
 ): boolean {
   if (!error) return false;
-  const haystack = `${error.code ?? ""} ${error.message} ${error.details ?? ""}`.toLowerCase();
+  const haystack =
+    `${error.code ?? ""} ${error.message} ${error.details ?? ""}`.toLowerCase();
   const needle = functionName.toLowerCase();
   return (
     error.code === "PGRST202" ||

@@ -87,9 +87,7 @@ export function CustomerTimeline({
                 row={row}
                 timeZone={timeZone}
                 onSelect={() => onSelect(row.customer.phone_normalized)}
-                onRecordForPhone={() =>
-                  onRecordForPhone(row.customer.phone_normalized)
-                }
+                onRecordForPhone={() => onRecordForPhone(row.customer.phone_normalized)}
               />
             ))}
           </div>
@@ -156,9 +154,7 @@ function CustomerActivityCard({
               </button>
             ) : null}
             <div className="mt-0.5 flex flex-wrap items-center gap-2">
-              <span className="text-[10px] text-on-surface-variant">
-                {visitMeta}
-              </span>
+              <span className="text-[10px] text-on-surface-variant">{visitMeta}</span>
               {row.lastVisitAt ? (
                 <span className="text-[10px] text-on-surface-variant">
                   · {timeLabel}

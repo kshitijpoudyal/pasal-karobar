@@ -79,30 +79,30 @@ export function TransactionTimeline({
                 timeZone,
                 "activity-timeline",
               );
-              const time = formatTimeInBusinessZone(
-                tx.transaction_date,
-                timeZone,
-              );
+              const time = formatTimeInBusinessZone(tx.transaction_date, timeZone);
 
               const pendingSync = isPendingSyncTransactionId(tx.id);
 
-              const deleteHandler =
-                isDeleting || pendingSync
-                  ? undefined
-                  : () => {
-                      const entryKind = isIncome ? "income entry" : "expense";
-                      void runConfirmedAction(
-                        confirm,
-                        {
-                          title: "Delete this entry?",
-                          description: `Remove "${title}" (${formatNpr(total)}) from your activity. This ${entryKind} will be permanently deleted.`,
-                          confirmLabel: "Delete",
-                          cancelLabel: "Keep",
-                          tone: "destructive",
-                        },
-                        () => onDelete(tx.id),
-                      );
-                    };
+              const deleteHandler = isDeleting
+                ? undefined
+                : () => {
+                    const entryKind = isIncome ? "income entry" : "expense";
+                    void runConfirmedAction(
+                      confirm,
+                      {
+                        title: pendingSync
+                          ? "Remove offline entry?"
+                          : "Delete this entry?",
+                        description: pendingSync
+                          ? `Remove "${title}" (${formatNpr(total)}) from this device. It has not synced yet.`
+                          : `Remove "${title}" (${formatNpr(total)}) from your activity. This ${entryKind} will be permanently deleted.`,
+                        confirmLabel: pendingSync ? "Remove" : "Delete",
+                        cancelLabel: "Keep",
+                        tone: "destructive",
+                      },
+                      () => onDelete(tx.id),
+                    );
+                  };
 
               return (
                 <TransactionActivityCard

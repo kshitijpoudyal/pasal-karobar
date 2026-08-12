@@ -16,15 +16,15 @@ Pasal Karobar records income and expenses while offline, then syncs them to Supa
 
 ## Architecture
 
-| Piece | Location |
-| ----- | -------- |
-| Outbox (IndexedDB) | `src/offline/outbox-store.ts` |
-| Sync engine | `src/offline/sync-outbox.ts` |
-| Pending row ids | `src/offline/pending-transaction.ts` (`pending-sync:{clientId}`) |
-| Connectivity + sync UI state | `src/providers/connectivity-provider.tsx` |
-| Status banner | `src/components/layout/offline-status-banner.tsx` |
-| Query persistence filter | `src/lib/query-persist.ts` |
-| Service worker (app shell) | `src/sw.ts` (Serwist) |
+| Piece                        | Location                                                         |
+| ---------------------------- | ---------------------------------------------------------------- |
+| Outbox (IndexedDB)           | `src/offline/outbox-store.ts`                                    |
+| Sync engine                  | `src/offline/sync-outbox.ts`                                     |
+| Pending row ids              | `src/offline/pending-transaction.ts` (`pending-sync:{clientId}`) |
+| Connectivity + sync UI state | `src/providers/connectivity-provider.tsx`                        |
+| Status banner                | `src/components/layout/offline-status-banner.tsx`                |
+| Query persistence filter     | `src/lib/query-persist.ts`                                       |
+| Service worker (app shell)   | `src/sw.ts` (Serwist)                                            |
 
 Offline creates enqueue a `CreateTransactionInput` payload. When online, sync calls the same `TransactionService.create` path as live entry (including customer phone resolution).
 

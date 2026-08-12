@@ -1,10 +1,4 @@
-import {
-  LineChart,
-  Scissors,
-  Sparkles,
-  UserPlus,
-  UserRound,
-} from "lucide-react";
+import { LineChart, Scissors, Sparkles, UserPlus, UserRound } from "lucide-react";
 
 import { formatCompactNpr } from "@/utils/format";
 import { MonthDayHeatmapCard } from "@/features/dashboard/components/month-day-heatmap-card";
@@ -45,7 +39,9 @@ export function DashboardBottomSection({
                     <div className="squircle flex size-12 items-center justify-center bg-primary/10 text-primary">
                       <Icon className="size-6" strokeWidth={1.75} />
                     </div>
-                    <span className="min-w-0 truncate font-bold text-on-surface">{name}</span>
+                    <span className="min-w-0 truncate font-bold text-on-surface">
+                      {name}
+                    </span>
                   </div>
                   <span className="font-bold text-primary">
                     {formatCompactNpr(total)}
@@ -70,7 +66,9 @@ export function DashboardBottomSection({
                 <span className="text-label-sm mb-1 font-bold tracking-widest text-on-surface-variant uppercase">
                   Target Yield
                 </span>
-                <span className="text-2xl font-bold text-on-surface xl:text-3xl">रू 52,000</span>
+                <span className="text-2xl font-bold text-on-surface xl:text-3xl">
+                  रू 52,000
+                </span>
               </div>
               <div className="flex items-center gap-1 text-sm font-bold text-on-surface-variant uppercase">
                 +23% <LineChart className="size-[18px]" strokeWidth={2.25} />
@@ -81,7 +79,9 @@ export function DashboardBottomSection({
                 <span className="text-label-sm mb-1 font-bold tracking-widest text-on-surface-variant uppercase">
                   Patron Count
                 </span>
-                <span className="text-2xl font-bold text-on-surface xl:text-3xl">182</span>
+                <span className="text-2xl font-bold text-on-surface xl:text-3xl">
+                  182
+                </span>
               </div>
               <div className="flex items-center gap-1 text-sm font-bold text-on-surface-variant uppercase">
                 +34 <UserPlus className="size-[18px]" strokeWidth={2.25} />

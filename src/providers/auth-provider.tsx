@@ -30,10 +30,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const supabase = createSupabaseBrowserClient();
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setIsLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setIsLoading(false);
+      })
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error ? error.message : "Could not restore session.";
+        setAuthError(message);
+        setIsLoading(false);
+      });
 
     const {
       data: { subscription },

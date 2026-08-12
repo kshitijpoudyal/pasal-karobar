@@ -90,9 +90,7 @@ export async function syncAfterTransactionChange(
 }
 
 /** Manual refresh from Dashboard (same invalidation path as after entry edits). */
-export async function refreshBusinessStats(
-  queryClient: QueryClient,
-): Promise<void> {
+export async function refreshBusinessStats(queryClient: QueryClient): Promise<void> {
   await queryClient.refetchQueries({
     queryKey: queryKeys.dashboard.all,
     type: "active",

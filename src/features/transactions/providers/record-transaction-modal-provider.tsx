@@ -26,9 +26,7 @@ const RecordTransactionModalContext =
 
 export function RecordTransactionModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [initialCustomerPhone, setInitialCustomerPhone] = useState<string | null>(
-    null,
-  );
+  const [initialCustomerPhone, setInitialCustomerPhone] = useState<string | null>(null);
 
   const openModal = useCallback((options?: OpenRecordTransactionOptions) => {
     const phone = options?.customerPhone?.trim();

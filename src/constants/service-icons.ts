@@ -72,8 +72,6 @@ export function getServiceIconDefinition(
   return BY_ID.get(id) ?? BY_ID.get(DEFAULT_SERVICE_ICON_ID)!;
 }
 
-export function getServiceIconComponent(
-  value: string | null | undefined,
-): LucideIcon {
+export function getServiceIconComponent(value: string | null | undefined): LucideIcon {
   return getServiceIconDefinition(value).icon;
 }

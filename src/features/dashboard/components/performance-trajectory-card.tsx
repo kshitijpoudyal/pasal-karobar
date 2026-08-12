@@ -15,10 +15,7 @@ export function PerformanceTrajectoryCard({
 }: PerformanceTrajectoryCardProps) {
   const safePoints = points ?? [];
 
-  const maxValue = Math.max(
-    1,
-    ...safePoints.flatMap((p) => [p.income, p.expense]),
-  );
+  const maxValue = Math.max(1, ...safePoints.flatMap((p) => [p.income, p.expense]));
 
   const peak = safePoints.reduce<TrajectoryPoint | null>((best, point) => {
     if (!best || point.income > best.income) return point;
@@ -101,7 +98,10 @@ export function PerformanceTrajectoryCard({
           </div>
           <div className="text-label-sm absolute bottom-0 flex w-full justify-between gap-1 border-t border-surface-container-high pt-6 font-bold text-on-surface-variant uppercase">
             {safePoints.map((point) => (
-              <span key={point.id} className="flex-1 truncate text-center text-[10px] sm:text-xs">
+              <span
+                key={point.id}
+                className="flex-1 truncate text-center text-[10px] sm:text-xs"
+              >
                 {point.label}
               </span>
             ))}

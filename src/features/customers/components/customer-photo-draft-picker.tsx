@@ -10,10 +10,7 @@ import {
   CustomerPhotoLimitError,
   CustomerPhotoValidationError,
 } from "@/services/customer-photo.service";
-import {
-  fileToArrayBuffer,
-  resizeImageFileForUpload,
-} from "@/utils/image-resize";
+import { fileToArrayBuffer, resizeImageFileForUpload } from "@/utils/image-resize";
 
 const FIELD_LABEL =
   "font-body block text-xs font-light tracking-[0.15em] text-on-surface-variant uppercase";
@@ -79,9 +76,7 @@ export function CustomerPhotoDraftPicker({
         setPickError(error.message);
         return;
       }
-      setPickError(
-        error instanceof Error ? error.message : "Could not add photo.",
-      );
+      setPickError(error instanceof Error ? error.message : "Could not add photo.");
     }
   }
 
@@ -92,9 +87,7 @@ export function CustomerPhotoDraftPicker({
   }
 
   function updateCaption(localId: string, caption: string) {
-    onChange(
-      photos.map((p) => (p.localId === localId ? { ...p, caption } : p)),
-    );
+    onChange(photos.map((p) => (p.localId === localId ? { ...p, caption } : p)));
   }
 
   return (
@@ -128,9 +121,7 @@ export function CustomerPhotoDraftPicker({
                 placeholder="Label (optional)"
                 value={photo.caption}
                 disabled={disabled}
-                onChange={(event) =>
-                  updateCaption(photo.localId, event.target.value)
-                }
+                onChange={(event) => updateCaption(photo.localId, event.target.value)}
                 className="font-body w-full rounded-lg border border-outline-variant/50 bg-surface-container-low px-2 py-1.5 text-xs"
               />
               <button
@@ -147,10 +138,7 @@ export function CustomerPhotoDraftPicker({
         ))}
         {canAddMore ? (
           <li>
-            <CustomerPhotoAddControls
-              disabled={disabled}
-              onFile={addPhotoFile}
-            />
+            <CustomerPhotoAddControls disabled={disabled} onFile={addPhotoFile} />
           </li>
         ) : null}
       </ul>

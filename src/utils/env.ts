@@ -31,9 +31,7 @@ export const env = {
 export type ClientEnv = z.infer<typeof clientEnvSchema>;
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(
-    env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  );
+  return Boolean(env.NEXT_PUBLIC_SUPABASE_URL && env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
 
 export function getRequiredSupabasePublicEnv(): {

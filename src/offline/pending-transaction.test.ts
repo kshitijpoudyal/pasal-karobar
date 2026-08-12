@@ -33,5 +33,13 @@ describe("pending transaction helpers", () => {
     expect(tx.business_id).toBe("biz-1");
     expect(tx.total).toBe(550);
     expect(tx.service_id).toBe("svc-1");
+    expect(tx.customer_id).toBeNull();
+  });
+
+  it("preserves optimistic customer id", () => {
+    const tx = buildPendingTransaction("client-1", "biz-1", sampleIncome, {
+      customerId: "pending-customer:9801234567",
+    });
+    expect(tx.customer_id).toBe("pending-customer:9801234567");
   });
 });

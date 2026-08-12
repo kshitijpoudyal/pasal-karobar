@@ -80,9 +80,7 @@ export function AppNavProvider({ children }: { children: React.ReactNode }) {
     [collapsed, toggleCollapsed],
   );
 
-  return (
-    <AppNavContext.Provider value={value}>{children}</AppNavContext.Provider>
-  );
+  return <AppNavContext.Provider value={value}>{children}</AppNavContext.Provider>;
 }
 
 export function useAppNav() {

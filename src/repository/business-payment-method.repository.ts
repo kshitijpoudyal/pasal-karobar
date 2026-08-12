@@ -11,9 +11,7 @@ import type {
 export class BusinessPaymentMethodRepository {
   constructor(private readonly supabase: SupabaseClient<Database>) {}
 
-  async listByBusinessId(
-    businessId: string,
-  ): Promise<BusinessPaymentMethodRecord[]> {
+  async listByBusinessId(businessId: string): Promise<BusinessPaymentMethodRecord[]> {
     const { data, error } = await this.supabase
       .from("business_payment_methods")
       .select("*")

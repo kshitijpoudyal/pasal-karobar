@@ -27,11 +27,7 @@ describe("computeCustomerPeriodInsights", () => {
       incomeRow({ customer_id: null }),
       incomeRow({ customer_id: "c1" }),
     ];
-    const result = computeCustomerPeriodInsights(
-      allTimeRows,
-      periodStart,
-      periodEnd,
-    );
+    const result = computeCustomerPeriodInsights(allTimeRows, periodStart, periodEnd);
     expect(result.anonymousVisits).toBe(1);
     expect(result.trackedVisits).toBe(1);
     expect(result.uniqueTrackedCustomers).toBe(1);
@@ -52,11 +48,7 @@ describe("computeCustomerPeriodInsights", () => {
         transaction_date: "2026-08-11T12:00:00.000Z",
       }),
     ];
-    const result = computeCustomerPeriodInsights(
-      allTimeRows,
-      periodStart,
-      periodEnd,
-    );
+    const result = computeCustomerPeriodInsights(allTimeRows, periodStart, periodEnd);
     expect(result.newCustomers).toBe(1);
     expect(result.returningCustomers).toBe(1);
   });
@@ -76,11 +68,7 @@ describe("computeCustomerPeriodInsights", () => {
         transaction_date: "2026-08-10T12:00:00.000Z",
       }),
     ];
-    const result = computeCustomerPeriodInsights(
-      allTimeRows,
-      periodStart,
-      periodEnd,
-    );
+    const result = computeCustomerPeriodInsights(allTimeRows, periodStart, periodEnd);
     expect(result.returningCustomers).toBe(1);
     expect(result.newCustomers).toBe(0);
   });
@@ -96,11 +84,7 @@ describe("computeCustomerPeriodInsights", () => {
         transaction_date: "2026-08-20T10:00:00.000Z",
       }),
     ];
-    const result = computeCustomerPeriodInsights(
-      allTimeRows,
-      periodStart,
-      periodEnd,
-    );
+    const result = computeCustomerPeriodInsights(allTimeRows, periodStart, periodEnd);
     expect(result.returningCustomers).toBe(1);
     expect(result.newCustomers).toBe(0);
   });

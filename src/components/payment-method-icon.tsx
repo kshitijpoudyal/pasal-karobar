@@ -11,11 +11,7 @@ type PaymentMethodIconProps = {
   iconClassName?: string;
 };
 
-function brandBadge(
-  text: string,
-  className: string,
-  label: string,
-): ReactNode {
+function brandBadge(text: string, className: string, label: string): ReactNode {
   return (
     <span
       role="img"

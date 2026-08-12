@@ -21,9 +21,7 @@ export type Repositories = {
   customerPhoto: CustomerPhotoRepository;
 };
 
-export function createRepositories(
-  supabase: SupabaseClient<Database>,
-): Repositories {
+export function createRepositories(supabase: SupabaseClient<Database>): Repositories {
   return {
     business: new BusinessRepository(supabase),
     serviceCatalog: new ServiceCatalogRepository(supabase),
@@ -37,4 +35,8 @@ export function createRepositories(
 }
 
 export { RepositoryError } from "@/repository/errors";
-export type { IncomeSummaryRow, TransactionListFilters } from "@/repository/transaction.repository";
+export type {
+  IncomeSummaryRow,
+  IncomeSummaryFilters,
+  TransactionListFilters,
+} from "@/repository/transaction.repository";

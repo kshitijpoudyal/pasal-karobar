@@ -13,6 +13,10 @@ export type OutboxEntry = {
   createdAt: string;
   status: "pending" | "failed";
   lastError?: string;
+  /** Applied to customer after the transaction syncs. */
+  customerName?: string;
+  /** Resolved customer id (or pending-customer:* placeholder) for UI until sync. */
+  optimisticCustomerId?: string | null;
 };
 
 interface OutboxDbSchema extends DBSchema {
@@ -62,9 +66,7 @@ export async function listPendingOutboxEntries(
   );
 }
 
-export async function countPendingOutboxEntries(
-  businessId?: string,
-): Promise<number> {
+export async function countPendingOutboxEntries(businessId?: string): Promise<number> {
   const pending = await listPendingOutboxEntries(businessId);
   return pending.length;
 }

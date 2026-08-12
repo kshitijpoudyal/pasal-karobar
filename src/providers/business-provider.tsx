@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { createContext, useContext, useEffect, useMemo, useRef } from "react";
 
 import {
   useBusinessListQuery,
@@ -79,8 +73,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     enabled &&
     !listQuery.isLoading &&
     (listQuery.data?.length ?? 0) === 0 &&
-    (createMutation.isPending ||
-      (!bootstrapped.current && !createMutation.isError));
+    (createMutation.isPending || (!bootstrapped.current && !createMutation.isError));
 
   const cachedBusinessId = readCachedBusinessId();
   const offlineWithCache =
@@ -95,9 +88,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
         !session ||
         (offlineWithCache
           ? false
-          : listQuery.isLoading ||
-            createMutation.isPending ||
-            bootstrapPending),
+          : listQuery.isLoading || createMutation.isPending || bootstrapPending),
       error: offlineWithCache
         ? null
         : ((listQuery.error ?? createMutation.error) as Error | null),
@@ -115,9 +106,7 @@ export function BusinessProvider({ children }: { children: React.ReactNode }) {
     ],
   );
 
-  return (
-    <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>
-  );
+  return <BusinessContext.Provider value={value}>{children}</BusinessContext.Provider>;
 }
 
 export function useActiveBusiness() {

@@ -42,7 +42,10 @@ import {
   YEARS_PER_PAGE,
 } from "@/components/period-picker/period-picker-utils";
 import type { CalendarSystem } from "@/constants/calendar-system";
-import { DEFAULT_BUSINESS_TIMEZONE, businessTodayDateKey } from "@/utils/business-datetime";
+import {
+  DEFAULT_BUSINESS_TIMEZONE,
+  businessTodayDateKey,
+} from "@/utils/business-datetime";
 import { cn } from "@/lib/utils";
 import { clampAnchorToDataBounds } from "@/utils/date-ranges";
 import {
@@ -72,9 +75,7 @@ function usePickerAnchorPosition(
   open: boolean,
   anchorRef?: RefObject<HTMLElement | null>,
 ) {
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(
-    null,
-  );
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -240,8 +241,7 @@ function DayWeekPickerBody({
                 }}
                 className={cn(
                   "flex h-8 w-full items-center justify-center rounded-full text-sm transition-colors",
-                  !inMonth &&
-                    "pointer-events-none text-outline-variant",
+                  !inMonth && "pointer-events-none text-outline-variant",
                   inMonth &&
                     !future &&
                     !beforeData &&
@@ -293,8 +293,7 @@ function MonthPickerBody({
   const now = new Date();
   const draftMonth = anchorDate.getMonth();
   const draftYear = getYear(anchorDate);
-  const atEarliestYear =
-    minSelectableDate && viewYear <= getYear(minSelectableDate);
+  const atEarliestYear = minSelectableDate && viewYear <= getYear(minSelectableDate);
 
   return (
     <>
@@ -308,9 +307,7 @@ function MonthPickerBody({
         >
           <ChevronLeft className="size-5" strokeWidth={1.75} />
         </button>
-        <h2 className="font-headline text-lg font-medium text-primary">
-          {viewYear}
-        </h2>
+        <h2 className="font-headline text-lg font-medium text-primary">{viewYear}</h2>
         <button
           type="button"
           aria-label="Next year"
@@ -406,8 +403,7 @@ function YearPickerBody({
         {years.map((year) => {
           const selected = draftYear === year;
           const disabled =
-            isFutureYear(year, now) ||
-            isBeforeEarliestYear(year, minSelectableDate);
+            isFutureYear(year, now) || isBeforeEarliestYear(year, minSelectableDate);
           return (
             <button
               key={year}
@@ -614,8 +610,7 @@ function BsMonthPickerBody({
 
       <div className="grid grid-cols-3 gap-x-2 gap-y-3">
         {months.map(({ value, label }) => {
-          const selected =
-            anchorBs?.year === viewBsYear && anchorBs.month === value;
+          const selected = anchorBs?.year === viewBsYear && anchorBs.month === value;
           const disabled =
             isFutureBsMonth(viewBsYear, value, timeZone) ||
             isBeforeEarliestBsMonth(viewBsYear, value, minSelectableDate, timeZone);
@@ -628,7 +623,12 @@ function BsMonthPickerBody({
                 const anchor = bsDateToAnchorDate(viewBsYear, value, 1, timeZone);
                 if (!anchor) return;
                 onSelect(
-                  clampAnchorToDataBounds(anchor, minSelectableDate, new Date(), timeZone),
+                  clampAnchorToDataBounds(
+                    anchor,
+                    minSelectableDate,
+                    new Date(),
+                    timeZone,
+                  ),
                 );
               }}
               className={cn(
@@ -708,7 +708,12 @@ function BsYearPickerBody({
                 const anchor = bsDateToAnchorDate(year, 1, 1, timeZone);
                 if (!anchor) return;
                 onSelect(
-                  clampAnchorToDataBounds(anchor, minSelectableDate, new Date(), timeZone),
+                  clampAnchorToDataBounds(
+                    anchor,
+                    minSelectableDate,
+                    new Date(),
+                    timeZone,
+                  ),
                 );
               }}
               className={cn(

@@ -27,8 +27,7 @@ function detectInstalled(): boolean {
   const standaloneMq = window.matchMedia("(display-mode: standalone)").matches;
   const iosStandalone =
     "standalone" in window.navigator &&
-    (window.navigator as Navigator & { standalone?: boolean }).standalone ===
-      true;
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
   return standaloneMq || iosStandalone;
 }
 
@@ -42,8 +41,9 @@ function detectIos(): boolean {
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [isInstalled, setIsInstalled] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] =
-    useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(
+    null,
+  );
   const [isIos, setIsIos] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
 
@@ -106,9 +106,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   }, [deferredPrompt, install, isInstalled, isInstalling, isIos]);
 
   return (
-    <PwaInstallContext.Provider value={value}>
-      {children}
-    </PwaInstallContext.Provider>
+    <PwaInstallContext.Provider value={value}>{children}</PwaInstallContext.Provider>
   );
 }
 

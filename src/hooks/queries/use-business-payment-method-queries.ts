@@ -17,9 +17,7 @@ import type {
 import type { BusinessPaymentMethodRecord } from "@/types/database";
 import { isSupabaseConfigured } from "@/utils/env";
 
-function fallbackPaymentMethods(
-  businessId: string,
-): BusinessPaymentMethodRecord[] {
+function fallbackPaymentMethods(businessId: string): BusinessPaymentMethodRecord[] {
   const now = new Date(0).toISOString();
   return DEFAULT_BUSINESS_PAYMENT_METHODS.map((row, index) => ({
     id: `fallback-${row.method_code}-${index}`,
@@ -44,9 +42,7 @@ export function useBusinessPaymentMethodsQuery(
     queryKey: queryKeys.businessPaymentMethod.list(businessId),
     queryFn: async () => {
       const rows =
-        await getClientAppServices().businessPaymentMethod.listByBusinessId(
-          businessId,
-        );
+        await getClientAppServices().businessPaymentMethod.listByBusinessId(businessId);
       if (rows.length === 0) {
         return fallbackPaymentMethods(businessId);
       }
@@ -101,11 +97,7 @@ export function useUpdateBusinessPaymentMethodMutation(businessId: string) {
     }: {
       paymentMethodId: string;
       input: UpdateBusinessPaymentMethodInput;
-    }) =>
-      getClientAppServices().businessPaymentMethod.update(
-        paymentMethodId,
-        input,
-      ),
+    }) => getClientAppServices().businessPaymentMethod.update(paymentMethodId, input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: listKey });
     },

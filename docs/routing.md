@@ -8,9 +8,9 @@ Routes live under `src/app/` following Next.js App Router conventions.
 
 ## Current routes
 
-| Path | Description                         |
-| ---- | ----------------------------------- |
-| `/`         | Dashboard (overview)              |
+| Path        | Description                     |
+| ----------- | ------------------------------- |
+| `/`         | Dashboard (overview)            |
 | `/activity` | Activity (transaction timeline) |
 | `/settings` | Settings (business & catalog)   |
 

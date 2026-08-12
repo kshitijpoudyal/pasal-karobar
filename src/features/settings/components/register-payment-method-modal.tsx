@@ -191,7 +191,9 @@ export function RegisterPaymentMethodModal({
                       className={cn(FIELD_INPUT, "cursor-pointer")}
                       value={presetCode}
                       onChange={(event) =>
-                        onPresetCodeChange(event.target.value as PaymentMethodPresetCode)
+                        onPresetCodeChange(
+                          event.target.value as PaymentMethodPresetCode,
+                        )
                       }
                     >
                       {inactivePresets.map((preset) => (
@@ -223,7 +225,11 @@ export function RegisterPaymentMethodModal({
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" variant="primary" disabled={!canSubmit || isSubmitting}>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!canSubmit || isSubmitting}
+            >
               {isSubmitting ? "Saving…" : submitLabel}
             </Button>
           </div>

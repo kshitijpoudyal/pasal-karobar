@@ -19,10 +19,7 @@ import { Button } from "@/components/ui/button";
 import { APP_NAME, APP_TAGLINE } from "@/constants/app";
 import { useRecordTransactionModal } from "@/features/transactions";
 import { cn } from "@/lib/utils";
-import {
-  appShellTransitionClass,
-  useAppNav,
-} from "@/providers/app-nav-provider";
+import { appShellTransitionClass, useAppNav } from "@/providers/app-nav-provider";
 import { useAuth } from "@/providers/auth-provider";
 
 const APP_LEFT_NAV_ITEMS = [
@@ -61,10 +58,7 @@ export function AppLeftNav() {
     >
       <div className={cn("mb-10", collapsed ? "px-2" : "px-6")}>
         <div
-          className={cn(
-            "flex items-center gap-3",
-            collapsed ? "flex-col" : "flex-row",
-          )}
+          className={cn("flex items-center gap-3", collapsed ? "flex-col" : "flex-row")}
         >
           <div
             className={cn(
@@ -110,8 +104,7 @@ export function AppLeftNav() {
         aria-label="Main"
       >
         {APP_LEFT_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -127,19 +120,12 @@ export function AppLeftNav() {
               )}
             >
               <Icon className="size-6 shrink-0" strokeWidth={active ? 2.25 : 1.75} />
-              {!collapsed ? (
-                <span className="font-medium">{label}</span>
-              ) : null}
+              {!collapsed ? <span className="font-medium">{label}</span> : null}
             </Link>
           );
         })}
       </nav>
-      <div
-        className={cn(
-          "mt-auto flex flex-col gap-3",
-          collapsed ? "px-2" : "px-6",
-        )}
-      >
+      <div className={cn("mt-auto flex flex-col gap-3", collapsed ? "px-2" : "px-6")}>
         <Button
           type="button"
           variant="primary"
@@ -167,9 +153,7 @@ export function AppLeftNav() {
           )}
         >
           <LogOut className="size-5 shrink-0" strokeWidth={1.75} />
-          {!collapsed ? (
-            <span>{signingOut ? "Signing out…" : "Sign out"}</span>
-          ) : null}
+          {!collapsed ? <span>{signingOut ? "Signing out…" : "Sign out"}</span> : null}
         </Button>
       </div>
     </aside>

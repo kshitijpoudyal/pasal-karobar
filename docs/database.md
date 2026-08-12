@@ -35,12 +35,12 @@ Business
 
 ## `business`
 
-| Column         | Notes |
-| -------------- | ----- |
-| id             |       |
-| name           |       |
-| created_at     |       |
-| updated_at     |       |
+| Column     | Notes |
+| ---------- | ----- |
+| id         |       |
+| name       |       |
+| created_at |       |
+| updated_at |       |
 
 Shop profile fields **`business_type`**, **`currency`**, and **`timezone`** live in [`business_settings`](#business_settings) (keys of the same name). The app hydrates them onto the `Business` type after load.
 
@@ -48,38 +48,38 @@ Shop profile fields **`business_type`**, **`currency`**, and **`timezone`** live
 
 ## `business_settings`
 
-| Column         | Notes |
-| -------------- | ----- |
-| business_id    |       |
-| setting_key    |       |
-| setting_value  |       |
+| Column        | Notes |
+| ------------- | ----- |
+| business_id   |       |
+| setting_key   |       |
+| setting_value |       |
 
 Primary key: `(business_id, setting_key)`.
 
 **Profile keys (MVP):**
 
-| setting_key      | Example value     |
-| ---------------- | ----------------- |
-| `business_type`  | `BARBER`          |
-| `currency`       | `NPR`             |
-| `timezone`       | `Asia/Kathmandu`  |
+| setting_key     | Example value    |
+| --------------- | ---------------- |
+| `business_type` | `BARBER`         |
+| `currency`      | `NPR`            |
+| `timezone`      | `Asia/Kathmandu` |
 
 ---
 
 ## `services`
 
-| Column         | Notes |
-| -------------- | ----- |
-| id             |       |
-| business_id    |       |
-| name           |       |
-| default_price  |       |
-| icon           |       |
-| color          |       |
-| display_order  |       |
-| is_active      |       |
-| created_at     |       |
-| updated_at     |       |
+| Column        | Notes |
+| ------------- | ----- |
+| id            |       |
+| business_id   |       |
+| name          |       |
+| default_price |       |
+| icon          |       |
+| color         |       |
+| display_order |       |
+| is_active     |       |
+| created_at    |       |
+| updated_at    |       |
 
 **Remove from catalog (app):** sets `is_active = false` (soft remove). Income rows keep their `service_id`; no FK cascade or check-constraint updates.
 
@@ -87,33 +87,33 @@ Primary key: `(business_id, setting_key)`.
 
 ## `expense_categories`
 
-| Column         | Notes |
-| -------------- | ----- |
-| id             |       |
-| business_id    |       |
-| name           |       |
-| icon           |       |
-| color          |       |
-| display_order  |       |
-| is_active      |       |
-| created_at     |       |
-| updated_at     |       |
+| Column        | Notes |
+| ------------- | ----- |
+| id            |       |
+| business_id   |       |
+| name          |       |
+| icon          |       |
+| color         |       |
+| display_order |       |
+| is_active     |       |
+| created_at    |       |
+| updated_at    |       |
 
 ---
 
 ## `customers`
 
-| Column             | Notes |
-| ------------------ | ----- |
-| id                 |       |
-| business_id        |       |
-| phone              | Display formatting (as entered) |
-| phone_normalized   | Dedup key; unique per business (10-digit Nepal mobile) |
-| name               | Optional profile label |
-| profile_note       | Optional free-text note (hairstyle preferences, etc.) |
-| first_visit_at     | First linked income; used for new vs returning analytics |
-| created_at         |       |
-| updated_at         |       |
+| Column           | Notes                                                    |
+| ---------------- | -------------------------------------------------------- |
+| id               |                                                          |
+| business_id      |                                                          |
+| phone            | Display formatting (as entered)                          |
+| phone_normalized | Dedup key; unique per business (10-digit Nepal mobile)   |
+| name             | Optional profile label                                   |
+| profile_note     | Optional free-text note (hairstyle preferences, etc.)    |
+| first_visit_at   | First linked income; used for new vs returning analytics |
+| created_at       |                                                          |
+| updated_at       |                                                          |
 
 Unique: `(business_id, phone_normalized)`.
 
@@ -125,16 +125,16 @@ Phone normalization (app): strip spaces/dashes; accept `98xxxxxxxx`, `977…`, `
 
 Hairstyle reference images for a customer profile (max **5** per customer enforced in app).
 
-| Column        | Notes |
-| ------------- | ----- |
-| id            |       |
-| business_id   |       |
-| customer_id   | FK → `customers` (CASCADE on delete) |
-| storage_path  | Key in Storage bucket `customer-photos` |
-| caption       | Optional label (e.g. “Fade”) |
-| sort_order    | `0`–`4` display order |
-| created_at    |       |
-| updated_at    |       |
+| Column       | Notes                                   |
+| ------------ | --------------------------------------- |
+| id           |                                         |
+| business_id  |                                         |
+| customer_id  | FK → `customers` (CASCADE on delete)    |
+| storage_path | Key in Storage bucket `customer-photos` |
+| caption      | Optional label (e.g. “Fade”)            |
+| sort_order   | `0`–`4` display order                   |
+| created_at   |                                         |
+| updated_at   |                                         |
 
 Files live in private bucket **`customer-photos`** at path `{business_id}/{customer_id}/{photo_id}.{ext}`. RLS on `storage.objects` uses `is_business_member` on the first path segment.
 
@@ -142,22 +142,22 @@ Files live in private bucket **`customer-photos`** at path `{business_id}/{custo
 
 ## `transactions`
 
-| Column               | Notes |
-| -------------------- | ----- |
-| id                   |       |
-| business_id          |       |
-| type                 |       |
-| service_id           |       |
-| expense_category_id  |       |
-| customer_id          | Optional; income only (links to `customers`) |
-| subtotal             |       |
-| tip                  |       |
-| total                |       |
-| payment_method       |       |
-| note                 |       |
-| transaction_date     |       |
-| created_at           |       |
-| updated_at           |       |
+| Column              | Notes                                        |
+| ------------------- | -------------------------------------------- |
+| id                  |                                              |
+| business_id         |                                              |
+| type                |                                              |
+| service_id          |                                              |
+| expense_category_id |                                              |
+| customer_id         | Optional; income only (links to `customers`) |
+| subtotal            |                                              |
+| tip                 |                                              |
+| total               |                                              |
+| payment_method      |                                              |
+| note                |                                              |
+| transaction_date    |                                              |
+| created_at          |                                              |
+| updated_at          |                                              |
 
 ### Rules
 
@@ -177,12 +177,12 @@ Files live in private bucket **`customer-photos`** at path `{business_id}/{custo
 
 Links Supabase Auth users to a business for row-level isolation. Not a product domain table; required for policies.
 
-| Column       | Notes                          |
-| ------------ | ------------------------------ |
-| id           | UUID primary key               |
-| business_id  | FK → `business`                |
-| user_id      | FK → `auth.users`              |
-| created_at   |                                |
+| Column      | Notes             |
+| ----------- | ----------------- |
+| id          | UUID primary key  |
+| business_id | FK → `business`   |
+| user_id     | FK → `auth.users` |
+| created_at  |                   |
 
 Unique `(business_id, user_id)`. On `business` insert, the creator is added via trigger when authenticated. The app creates businesses through `create_business_for_owner()` (see migration `20260730194500_create_business_for_owner.sql`) so membership and RLS stay consistent.
 
@@ -204,14 +204,14 @@ ON CONFLICT DO NOTHING;
 
 SQL migrations live in `supabase/migrations/`.
 
-| Migration                               | Description        |
-| --------------------------------------- | ------------------ |
-| `20260330183000_initial_schema.sql`     | MVP schema + RLS   |
-| `20260730194500_create_business_for_owner.sql` | Onboarding RPC (avoids business INSERT 403) |
-| `20260807150000_business_profile_to_settings.sql` | Profile fields → `business_settings`; slim `business` |
+| Migration                                           | Description                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------- |
+| `20260330183000_initial_schema.sql`                 | MVP schema + RLS                                                           |
+| `20260730194500_create_business_for_owner.sql`      | Onboarding RPC (avoids business INSERT 403)                                |
+| `20260807150000_business_profile_to_settings.sql`   | Profile fields → `business_settings`; slim `business`                      |
 | `20260807153000_seed_default_catalog_on_create.sql` | Default services/categories on create; `seed_default_business_catalog` RPC |
-| `20260808120000_customers.sql` | `customers` table; `transactions.customer_id`; RLS |
-| `20260809140000_customer_profile_photos.sql` | `profile_note`; `customer_photos`; Storage bucket `customer-photos` |
+| `20260808120000_customers.sql`                      | `customers` table; `transactions.customer_id`; RLS                         |
+| `20260809140000_customer_profile_photos.sql`        | `profile_note`; `customer_photos`; Storage bucket `customer-photos`        |
 
 Apply with the Supabase CLI (`supabase db push`) or the SQL editor in the Supabase dashboard.
 

@@ -74,9 +74,7 @@ export function DashboardContent() {
     clampAnchorToDataBounds(date, minSelectableDate, new Date(), timeZone);
 
   const isEmptyPeriod =
-    summary.patronCount === 0 &&
-    summary.revenue === 0 &&
-    summary.expenses === 0;
+    summary.patronCount === 0 && summary.revenue === 0 && summary.expenses === 0;
 
   function handleGranularityChange(next: DashboardGranularity) {
     setGranularity(next);
@@ -130,7 +128,7 @@ export function DashboardContent() {
         <DashboardBottomSection
           topServices={summary.serviceRevenue}
           monthDayHeatmap={
-            granularity === "month" ? summary.monthDayHeatmap ?? null : null
+            granularity === "month" ? (summary.monthDayHeatmap ?? null) : null
           }
         />
       </QueryState>

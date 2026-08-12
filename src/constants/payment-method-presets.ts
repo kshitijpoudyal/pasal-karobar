@@ -10,10 +10,7 @@ export const PAYMENT_METHOD_PRESET_CODES = [
   "FONEPAY",
 ] as const satisfies readonly PaymentMethodPresetCode[];
 
-export const PAYMENT_METHOD_DEFAULT_LABELS: Record<
-  PaymentMethodPresetCode,
-  string
-> = {
+export const PAYMENT_METHOD_DEFAULT_LABELS: Record<PaymentMethodPresetCode, string> = {
   CASH: "Cash",
   ESEWA: "eSewa",
   KHALTI: "Khalti",

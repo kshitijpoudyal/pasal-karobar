@@ -94,7 +94,11 @@ function getNepaliModuleSync(): NepaliModule | null {
   return nepaliModule;
 }
 
-function adPartsFromDateKey(dateKey: string): { year: number; month: number; day: number } {
+function adPartsFromDateKey(dateKey: string): {
+  year: number;
+  month: number;
+  day: number;
+} {
   return parseDateKey(dateKey);
 }
 
@@ -139,7 +143,11 @@ function safeNepaliDateFromBs(
     return new mod.NepaliDate(year, toBsMonthIndex(monthOneIndexed), day);
   } catch {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[nepali-calendar] unsupported BS date", { year, monthOneIndexed, day });
+      console.warn("[nepali-calendar] unsupported BS date", {
+        year,
+        monthOneIndexed,
+        day,
+      });
     }
     return null;
   }

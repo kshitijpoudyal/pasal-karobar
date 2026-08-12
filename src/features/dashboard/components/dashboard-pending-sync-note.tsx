@@ -15,8 +15,8 @@ export function DashboardPendingSyncNote() {
       {pendingCount === 1
         ? "1 entry is saved on this device and "
         : `${pendingCount} entries are saved on this device and `}
-      {isOnline ? "waiting to sync." : "will sync when you're back online."}{" "}
-      Dashboard totals below reflect your synced account only.
+      {isOnline ? "waiting to sync." : "will sync when you're back online."} Dashboard
+      totals below reflect your synced account only.
     </p>
   );
 }
